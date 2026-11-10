@@ -9,6 +9,9 @@ Ein vollständig spielbarer, kleiner Ausschnitt mit einem charakteristischen Bü
 - einige NPCs mit einfachen Routinen und Interaktionen
 - Beleuchtung, Audio-Platzhalter und klare Interaktionspunkte
 
+## Gleichwertige Spielsäulen
+Das Spiel verbindet drei Ebenen: (1) den wirtschaftlichen Büdchen-Alltag, (2) die sozialen Beziehungen und Geschichten im Viertel und (3) dynamische Ereignisse und lokale Traditionen. Das soziale System ist kein späteres Dekorationsfeature, sondern muss bereits im Vertical Slice sichtbar sein. Details: [Das Viertel lebt](08-das-viertel-lebt.md).
+
 ## Produktionsphasen
 ### Phase 0 – Projektbestand aufnehmen
 Bestehende Three.js-Szene, Kamera, Steuerung, Skalierung, Asset-Pipeline, Ladepfade und Codekonventionen prüfen. Keine bestehende Architektur ohne Grund ersetzen.
@@ -25,7 +28,10 @@ Zunächst 20–30 gut lesbare Warenobjekte. Später Ausbau auf etwa 100–105 Pr
 ### Phase 4 – Umgebung und NPCs
 Straße, Gehweg, Laternen, Bänke, Mülltonnen, Fahrräder, Bäume und angrenzende Häuser. Danach NPCs und einfache Tagesabläufe.
 
-### Phase 5 – Polish
+### Phase 5 – Soziales Vertical Slice
+Drei bis fünf wiederkehrende NPCs, zwei kleine Geschichten/Quests, ein einfaches Beziehungssystem, ein dynamischer Spieltag oder Wochenanlass und eine vom Spieler entwickelte Kiosk-Spezialität. Dialoge und Konsequenzen sollen über mehrere Spieltage fortbestehen.
+
+### Phase 6 – Polish
 Lichtstimmung, Materialdetails, kleine Animationen, Audio, Performance und LOD-/Sichtweitenprüfung.
 
 ## Asset-Katalog – Gebäude K-001
