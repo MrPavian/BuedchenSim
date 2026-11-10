@@ -17,8 +17,11 @@ Aufgaben:
 3. Vorhandene Szene, Kamera, Licht, Steuerung, Interaktion, Kollision und UI prüfen.
 4. Asset-Pipeline, Dateiformate und Ladepfade prüfen.
 5. Vorhandene Spielfunktionen und technische Schulden benennen.
+6. Zielbild aus `docs/ARCHITEKTUR-ZIELBILD.md` auf die reale Codebasis abbilden.
+7. Modulgrenzen, Abhängigkeitsregeln, Datenverträge, Eventkommunikation und Savegame-Versionierung konzipieren.
+8. Minimalen Architektur-Unterbau für die ersten Gameplay-Module festlegen und offene Architekturentscheidungen als ADR dokumentieren.
 
-**Abnahme:** dokumentierter Ist-Zustand, Startanleitung, Risiken und priorisierte Umsetzungsschritte. In dieser Phase keine unnötigen Codeänderungen.
+**Abnahme:** dokumentierter Ist-Zustand, Startanleitung, Risiken, Modul-/Abhängigkeitsübersicht, minimale Schnittstellenplanung und priorisierte Umsetzungsschritte. In dieser Phase keine unnötigen Codeänderungen. Das Ziel ist eine tragfähige Struktur für spätere Features, nicht die sofortige Implementierung aller Systeme.
 
 ## Phase 1 – Spielbarer Kern und Greybox
 **Ziel:** eine begehbare, testbare Kiosk-Grundszene.
