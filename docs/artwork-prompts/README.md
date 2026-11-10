@@ -1,5 +1,7 @@
 # Büdchen Simulator – Artworks & Produktionsdokumentation
 
+**Verbindliche Claude-Code-Einstiegsdatei:** Lies zuerst [CLAUDE.md](../../CLAUDE.md) und danach den [Implementierungsplan](../IMPLEMENTIERUNGSPLAN.md). Claude Code muss alle Inhalte als konkrete Three.js-Entwicklungsaufträge interpretieren.
+
 Dieser Ordner bündelt die visuelle Leitlinie, Welt- und Assetplanung sowie direkt verwendbare Arbeitsaufträge für Konzept-Artworks und die Umsetzung mit Claude Code / Three.js.
 
 ## Start hier
