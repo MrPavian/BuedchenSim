@@ -10,6 +10,7 @@ Dieser Ordner bündelt die visuelle Leitlinie, Welt- und Assetplanung sowie dire
 5. [Claude-Code-Prompts](05-claude-prompts.md) – kopierbare Produktionsprompts
 6. [Three.js Asset-Standard](06-threejs-asset-standard.md) – technische Konventionen
 7. [Artwork-Register](07-artwork-register.md) – Status- und Qualitätskontrolle
+8. [Das Viertel lebt](08-das-viertel-lebt.md) – soziale Systeme, NPCs, Geschichten, Quests und Ereignisse
 
 ## Verbindliche Grundregel
 Keine realen Marken, Logos, Produktnamen, Vereinswappen, Firmenwerbung oder nachgebildeten Markenverpackungen. Alle Marken, Verpackungen, Beschriftungen und Grafiken sind fiktiv und originär. Regionale Authentizität entsteht über Architektur, Stadtmöblierung, Typografie, Farben, Warenmix und Atmosphäre.
