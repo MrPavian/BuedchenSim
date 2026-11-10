@@ -25,3 +25,11 @@ Ergänze eine glaubwürdige Ruhrgebiets-Straßenszene mit Gehweg, Bordstein, Lat
 - Keine Platzhalter als fertige Features ausgeben.
 - Nach jedem Schritt Fehler, Startbarkeit und betroffene Szenen prüfen.
 - Neue Assets und IDs im Artwork-Register dokumentieren.
+
+
+## Prompt F – Lebendiges Viertel und soziale Gameplay-Systeme
+Entwirf und implementiere inkrementell die soziale Ebene von BuedchenSim. Lies zuerst `docs/artwork-prompts/08-das-viertel-lebt.md` und untersuche die vorhandene Codearchitektur. Ziel ist kein isoliertes Quest-Menü, sondern ein Viertel mit wiederkehrenden Bewohnern, Tagesroutinen, Beziehungen, Erinnerungen, kleinen Alltagsgeschichten, Ereignissen und lokalen Traditionen.
+
+Beginne mit einem technischen Konzept für drei bis fünf NPCs: stabile IDs, Profile, Besuchszeiten, Vorlieben, Beziehungen und gespeicherte Erinnerungsflags. Ergänze danach ein kleines Dialog-/Quest-System mit mindestens zwei kurzen Geschichten, einem einfachen Vertrauenswert und nachvollziehbaren Konsequenzen. Verbinde einen Spieltag oder ein Wetterereignis mit der Waren-Nachfrage. Baue eine Kiosk-Spezialität ein, die durch Gespräche und wiederholtes Angebot zur lokalen Tradition werden kann (Beispiel: selbstgemachte Frikadellen).
+
+Wichtig: Vor Änderungen betroffene Dateien nennen, bestehende Architektur respektieren und in kleinen Schritten arbeiten. Keine komplexe KI-Simulation voraussetzen. Geschichten müssen optional sein und dürfen nicht alle als reine Geldoptimierung funktionieren. NPCs sind eigenständige Menschen, keine Quest-Automaten. Alle Vereine, Marken, Produkte und Grafiken bleiben fiktiv; keine realen Vereinswappen oder Marken verwenden. Nach jedem Schritt testen und dokumentieren, wie Weltzustände gespeichert und wieder geladen werden.
