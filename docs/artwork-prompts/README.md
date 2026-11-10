@@ -2,6 +2,8 @@
 
 **Verbindliche Claude-Code-Einstiegsdatei:** Lies zuerst [CLAUDE.md](../../CLAUDE.md) und danach den [Implementierungsplan](../IMPLEMENTIERUNGSPLAN.md). Claude Code muss alle Inhalte als konkrete Three.js-Entwicklungsaufträge interpretieren.
 
+Übergeordnete Entwicklungssteuerung: [CLAUDE.md](../../CLAUDE.md), [Architektur-Zielbild](../ARCHITEKTUR-ZIELBILD.md) und [Implementierungsplan](../IMPLEMENTIERUNGSPLAN.md). Diese Dateien legen fest, wie Claude die folgenden Inhalte in konkrete Three.js-Aufträge übersetzt.
+
 Dieser Ordner bündelt die visuelle Leitlinie, Welt- und Assetplanung sowie direkt verwendbare Arbeitsaufträge für Konzept-Artworks und die Umsetzung mit Claude Code / Three.js.
 
 ## Start hier
