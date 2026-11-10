@@ -4,15 +4,18 @@ Diese Datei ist die zentrale Arbeitsanweisung für Claude Code. **Alle Projektun
 
 ## 1. Zuerst lesen – verpflichtende Reihenfolge
 Vor jeder größeren Aufgabe diese Dokumente in genau dieser Reihenfolge lesen:
-1. `docs/artwork-prompts/README.md` – Dokumentationsindex und Grundregeln
-2. `docs/artwork-prompts/01-art-direction.md` – verbindliche visuelle Richtung
-3. `docs/artwork-prompts/03-regionen-und-welten.md` – regionale Identität
-4. `docs/artwork-prompts/04-marken-und-produktwelt.md` – fiktive Produktwelt
-5. `docs/artwork-prompts/06-threejs-asset-standard.md` – technische 3D-Standards
-6. `docs/artwork-prompts/02-roadmap-und-artwork-katalog.md` – Produktionsreihenfolge und Assets
-7. `docs/artwork-prompts/08-das-viertel-lebt.md` – soziale Systeme, NPCs, Quests und Events
-8. `docs/artwork-prompts/07-artwork-register.md` – Asset-IDs und Status
-9. `docs/artwork-prompts/05-claude-prompts.md` – aufgabenspezifische Umsetzungsaufträge
+1. `CLAUDE.md` (diese Datei)
+2. `docs/ARCHITEKTUR-ZIELBILD.md` – langfristige Modulstruktur und Erweiterungspunkte
+3. `docs/IMPLEMENTIERUNGSPLAN.md` – chronologische Umsetzung
+4. `docs/artwork-prompts/README.md` – Dokumentationsindex und Grundregeln
+5. `docs/artwork-prompts/01-art-direction.md` – verbindliche visuelle Richtung
+6. `docs/artwork-prompts/03-regionen-und-welten.md` – regionale Identität
+7. `docs/artwork-prompts/04-marken-und-produktwelt.md` – fiktive Produktwelt
+8. `docs/artwork-prompts/06-threejs-asset-standard.md` – technische 3D-Standards
+9. `docs/artwork-prompts/02-roadmap-und-artwork-katalog.md` – Produktionsreihenfolge und Assets
+10. `docs/artwork-prompts/08-das-viertel-lebt.md` – soziale Systeme, NPCs, Quests und Events
+11. `docs/artwork-prompts/07-artwork-register.md` – Asset-IDs und Status
+12. `docs/artwork-prompts/05-claude-prompts.md` – aufgabenspezifische Umsetzungsaufträge
 
 Zusätzlich immer zuerst den tatsächlichen Codebestand untersuchen. Diese Dokumente ersetzen keine Codeanalyse.
 
@@ -48,7 +51,10 @@ Bei jeder Aufgabe:
 
 Keine Features als fertig melden, wenn sie nur als Platzhalter, Mockup oder Konzept existieren. Wenn ein Detail unklar ist, zuerst die Codebasis und Dokumentation prüfen; nicht eigenmächtig widersprüchliche Systeme erfinden.
 
-## 6. Produktionsreihenfolge
+## 6. Architektur vor Feature-Ausbau
+Das langfristige modulare Zielbild steht in `docs/ARCHITEKTUR-ZIELBILD.md`. Bereits in Phase 0 muss Claude die spätere Systemlandschaft (Wirtschaft, NPCs/Beziehungen, Dialoge/Quests, Events/Wetter/Kalender, Produkte/Inventar, Savegames, UI, 3D-Welt und regionale Pakete) berücksichtigen und sinnvolle Schnittstellen planen. Nicht alles sofort implementieren: erst Ist-Zustand analysieren, Modulgrenzen und Datenverträge definieren, dann nur die minimal nötige Grundlage bauen. Neue Features sollen später möglichst als Module oder Dateninhalte ergänzt werden können, ohne große Umbauten.
+
+## 7. Produktionsreihenfolge
 Der verbindliche Plan steht in `docs/IMPLEMENTIERUNGSPLAN.md`. Grundsätzlich:
 - Bestand aufnehmen und technische Basis verstehen
 - spielbare Greybox und grundlegenden Kiosk-Loop herstellen
@@ -61,5 +67,5 @@ Der verbindliche Plan steht in `docs/IMPLEMENTIERUNGSPLAN.md`. Grundsätzlich:
 
 Nicht alle Systeme gleichzeitig anfangen. Erst einen stabilen, testbaren Vertical Slice fertigstellen.
 
-## 7. Umgang mit Dokumentationsänderungen
+## 8. Umgang mit Dokumentationsänderungen
 Wenn sich Anforderungen ändern, aktualisiere die zuständigen Dokumente und diesen Auftrag bei Bedarf. Halte Links, Asset-IDs und Produktionsreihenfolge konsistent. Nutzerentscheidungen haben Vorrang vor älteren Vorschlägen.
