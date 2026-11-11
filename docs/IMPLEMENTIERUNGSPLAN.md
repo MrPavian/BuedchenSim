@@ -26,7 +26,10 @@ Aufgaben:
 ## Phase 1 – Spielbarer Kern und Greybox
 **Ziel:** eine begehbare, testbare Kiosk-Grundszene.
 
+**Anpassung nach Auftrag 00 (2026-11-11):** Das Repository enthielt keinen Code. Phase 1 beginnt deshalb mit dem Projektgerüst und dem minimalen Fundament aus `docs/MODUL-UND-DATENVERTRAEGE.md` (Abschnitte 11 und 12). Formulierungen wie „bestehende Szene" beziehen sich ab hier auf dieses Fundament. Voraussetzung: Entscheidungen O-1 und O-2 aus `docs/ARCHITEKTUR-ENTSCHEIDUNGEN.md`.
+
 Aufgaben:
+0. Projektgerüst (Vite, TypeScript, Three.js, Lint, Tests) und Schichten `core`, `game`, `content`, `world`, `ui` anlegen; Maßstab 1 Unit = 1 Meter, Y nach oben festschreiben.
 1. Maßstab und Koordinatensystem der bestehenden Szene feststellen.
 2. Kiosk-Greybox mit Außenkörper, Verkaufsöffnung, Eingang, Dach und Innenraum bauen.
 3. Gehweg und kleinen Außenbereich ergänzen.

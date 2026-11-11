@@ -17,6 +17,8 @@ Vor jeder größeren Aufgabe diese Dokumente in genau dieser Reihenfolge lesen:
 11. `docs/artwork-prompts/07-artwork-register.md` – Asset-IDs und Status
 12. `docs/artwork-prompts/05-claude-prompts.md` – aufgabenspezifische Umsetzungsaufträge
 
+Ergebnisse der Phase 0, ebenfalls verbindlich: `docs/TECHNISCHER-IST-STAND.md`, `docs/ARCHITEKTUR-ENTSCHEIDUNGEN.md` (ADRs und offene Entscheidungen) und `docs/MODUL-UND-DATENVERTRAEGE.md` (Schichten, Schnittstellen, IDs, Savegame).
+
 Zusätzlich immer zuerst den tatsächlichen Codebestand untersuchen. Diese Dokumente ersetzen keine Codeanalyse.
 
 ## 2. Technischer Auftrag: Three.js
