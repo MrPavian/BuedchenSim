@@ -111,7 +111,9 @@ Noch ist nichts davon implementiert.
 Diese Punkte kann die Analyse nicht entscheiden. Bis zur Antwort gilt jeweils die Empfehlung als Arbeitsannahme.
 
 ### O-1 – Spielperspektive und Steuerung
-**Empfehlung:** Spielfigur in der dritten Person mit schräger, leicht erhöhter Kamera; Bewegung mit WASD, Interaktion mit E bzw. Mausklick.
+**Status: Entschieden (2026-11-11).** Third Person mit schräger, leicht erhöhter Kamera; WASD und E, Mausklick als ergänzende Interaktion.
+
+**Ursprüngliche Empfehlung:** Spielfigur in der dritten Person mit schräger, leicht erhöhter Kamera; Bewegung mit WASD, Interaktion mit E bzw. Mausklick.
 
 **Warum:** Passt zu „mittlerer Spielkamera" und „lesbaren Silhouetten" der Art Direction, zeigt Kiosk, Kundschaft und Gehweg gleichzeitig und kommt mit moderatem Asset-Detail aus.
 
@@ -120,7 +122,9 @@ Diese Punkte kann die Analyse nicht entscheiden. Bis zur Antwort gilt jeweils di
 **Auswirkung:** Kamera, Steuerung, Kollision, Detailgrad aller Assets. Muss vor der Greybox feststehen.
 
 ### O-2 – Zielplattform
-**Empfehlung:** Desktop-Browser mit Maus und Tastatur zuerst; Touch später.
+**Status: Entschieden (2026-11-11).** Desktop-Browser mit Maus und Tastatur zuerst; Touch-Unterstützung wird später geprüft.
+
+**Ursprüngliche Empfehlung:** Desktop-Browser mit Maus und Tastatur zuerst; Touch später.
 
 **Auswirkung:** Eingabesystem, UI-Größen, Leistungsbudget.
 
