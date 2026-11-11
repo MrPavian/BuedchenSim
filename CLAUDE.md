@@ -53,6 +53,14 @@ Bei jeder Aufgabe:
 
 Keine Features als fertig melden, wenn sie nur als Platzhalter, Mockup oder Konzept existieren. Wenn ein Detail unklar ist, zuerst die Codebasis und Dokumentation prüfen; nicht eigenmächtig widersprüchliche Systeme erfinden.
 
+### Befehle im Repository
+- `npm install` – Abhängigkeiten installieren
+- `npm run dev` – Entwicklungsserver
+- `npm run typecheck`, `npm run lint`, `npm run test`, `npm run build` – müssen vor jedem Abschluss grün sein
+- `npm run check:browser` – Prüfung der laufenden Szene in Chromium mit Screenshots nach `docs/screenshots/`
+
+Die Schichtenregel (`core` ← `game` ← `world`/`ui`, `content` liefert Daten) wird von ESLint erzwungen.
+
 ## 6. Architektur vor Feature-Ausbau
 Das langfristige modulare Zielbild steht in `docs/ARCHITEKTUR-ZIELBILD.md`. Bereits in Phase 0 muss Claude die spätere Systemlandschaft (Wirtschaft, NPCs/Beziehungen, Dialoge/Quests, Events/Wetter/Kalender, Produkte/Inventar, Savegames, UI, 3D-Welt und regionale Pakete) berücksichtigen und sinnvolle Schnittstellen planen. Nicht alles sofort implementieren: erst Ist-Zustand analysieren, Modulgrenzen und Datenverträge definieren, dann nur die minimal nötige Grundlage bauen. Neue Features sollen später möglichst als Module oder Dateninhalte ergänzt werden können, ohne große Umbauten.
 

@@ -1,106 +1,150 @@
 # Technischer Ist-Stand
 
-**Stand:** 2026-11-11 · Commit `61d2146` · Ergebnis von [Auftrag 00](auftraege/00-bestandsaufnahme-und-architektur.md)
+**Stand:** 2026-11-11 · nach [Auftrag 01](auftraege/01-threejs-projektgeruest-und-greybox.md)
 
-Dieses Dokument enthält nur geprüfte Fakten. Vorschläge stehen in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md) und [MODUL-UND-DATENVERTRAEGE.md](MODUL-UND-DATENVERTRAEGE.md).
+Dieses Dokument enthält nur geprüfte Fakten. Entscheidungen stehen in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md), Verträge in [MODUL-UND-DATENVERTRAEGE.md](MODUL-UND-DATENVERTRAEGE.md).
 
 ## 1. Kernaussage
-**Das Repository enthält keinen Spielcode.** Es besteht ausschließlich aus 14 Markdown-Dateien (ca. 59 KB) in 20 Dokumentations-Commits. Es gibt keine Szene, keinen Renderer, keine Abhängigkeit und keinen Build. `main` und der Arbeitsbranch zeigen auf denselben Commit.
+Das Repository enthält eine startbare Three.js-Anwendung mit einer begehbaren Kiosk-Greybox: Third-Person-Kamera, Bewegung mit WASD, Kollision, zwei Interaktionen (Tür, Verkaufsklappe) und ein versioniertes Savegame. Wirtschaft, Produkte, NPCs, Quests, Zeit, Wetter und Audio existieren noch nicht.
 
-## 2. Vorhandene Dateien (vollständig)
-```
-CLAUDE.md
-README.md
-docs/ARCHITEKTUR-ZIELBILD.md
-docs/IMPLEMENTIERUNGSPLAN.md
-docs/auftraege/00-bestandsaufnahme-und-architektur.md
-docs/artwork-prompts/README.md
-docs/artwork-prompts/01-art-direction.md
-docs/artwork-prompts/02-roadmap-und-artwork-katalog.md
-docs/artwork-prompts/03-regionen-und-welten.md
-docs/artwork-prompts/04-marken-und-produktwelt.md
-docs/artwork-prompts/05-claude-prompts.md
-docs/artwork-prompts/06-threejs-asset-standard.md
-docs/artwork-prompts/07-artwork-register.md
-docs/artwork-prompts/08-das-viertel-lebt.md
-```
+## 2. Werkzeuge und Versionen
+Geprüft mit Node.js 22.23.4 und npm 10.9.9. Alle Pakete sind exakt gepinnt, `package-lock.json` ist eingecheckt.
 
-## 3. Prüfpunkte aus Arbeitsschritt A
-| Prüfpunkt | Befund |
+| Paket | Version | Zweck |
+|---|---|---|
+| three | 0.187.0 | 3D-Darstellung |
+| @types/three | 0.187.0 | Typen |
+| vite | 8.3.8 | Dev-Server und Build |
+| typescript | 6.0.3 | Sprache, `strict` |
+| vitest | 5.1.0 | Unit-Tests |
+| eslint | 10.14.0 | Lint und Schichtenregel |
+| @eslint/js | 10.0.1 | ESLint-Grundregeln |
+| typescript-eslint | 8.72.2 | TypeScript-Regeln |
+| playwright | 1.63.0 | Browserprüfung mit Screenshots |
+
+TypeScript 7 wurde nicht gewählt, weil typescript-eslint 8.72.2 nur TypeScript bis unter 6.1 unterstützt.
+
+## 3. Scripts
+| Befehl | Wirkung |
 |---|---|
-| `package.json`, Scripts | nicht vorhanden |
-| Three.js und sonstige Abhängigkeiten | nicht vorhanden, keine Lockfile |
-| Einstiegspunkt / Bootstrap (`index.html`, `main.*`) | nicht vorhanden |
-| Szene, Renderer, Kamera, Controls, Licht | nicht vorhanden |
-| UI und Interaktionssystem | nicht vorhanden |
-| Asset-Pipeline, 3D-Dateien, Texturen, Audio | nicht vorhanden, keine Binärdateien |
-| Datenhaltung, Savegames | nicht vorhanden |
-| Tests, Linting, Formatierung | nicht vorhanden |
-| Build, CI, Deployment (`.github/` o. Ä.) | nicht vorhanden |
-| Gameplay-Systeme | nicht vorhanden |
-| TODO-/FIXME-Marker | keine (nur das Wort „TODOs" in zwei Auftragstexten) |
-| `.gitignore`, Lizenzdatei | nicht vorhanden |
+| `npm install` | Abhängigkeiten installieren |
+| `npm run dev` | Entwicklungsserver (Vite) |
+| `npm run build` | Typprüfung und statischer Build nach `dist/` |
+| `npm run preview` | gebauten Stand lokal ausliefern |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint inklusive Schichtenregel |
+| `npm run test` | Vitest |
+| `npm run check:browser` | baut, startet die Anwendung in Chromium, prüft sie mit echten Tastendrücken und schreibt Screenshots nach `docs/screenshots/` (ca. 2–3 Minuten) |
 
-## 4. Was die Dokumentation festlegt
-- **Technik:** Three.js, 1 Unit = 1 Meter als Planungsannahme, GLB/glTF bevorzugt für externe Assets, keine unnötigen Libraries.
-- **Spielvision:** drei gleichwertige Säulen – Wirtschaft, Gemeinschaft, Viertelleben.
-- **Erster Vertical Slice:** Ruhrgebiets-Büdchen (Startmaß ca. 6 × 4 × 3,2 m), Innenausstattung I-001 bis I-012, 20–30 fiktive Waren, 3–5 wiederkehrende NPCs, zwei Quest-Ketten, ein Event, eine Kiosk-Spezialität.
-- **Architektur-Zielbild:** Module Core, 3D World, Gameplay-Domänen, UI, Data/Persistence, Audio; datengetriebene Inhalte; versionierte Savegames; Regionen als Pakete.
-- **Markenregel:** ausschließlich fiktive Marken, Vereine und Grafiken.
+`check:browser` braucht einen zu Playwright 1.63.0 passenden Chromium. Auf einem frischen Rechner einmalig `npx playwright install chromium` ausführen.
 
-## 5. Was die Dokumentation nicht festlegt
-Diese Lücken wurden in der Analyse gefunden und sind als offene Entscheidungen in den ADRs geführt:
-- Spielperspektive und Steuerung (nur „mittlere Spielkamera" und „begehbar")
-- Zielplattform (Desktop, Mobil, Touch)
-- Zeitmodell (Tageslänge, Echtzeit oder Phasen, Pause)
-- Sprache/Build-Werkzeuge (TypeScript oder JavaScript, Bundler)
-- Herkunft der 3D-Assets (prozedural oder extern modelliert)
-- Verkaufbarkeit von Alkohol und Tabak im Spiel
-- Hosting, Lizenz
+## 4. Struktur
+```
+index.html                     Einstieg, lädt src/main.ts
+src/main.ts                    einzige Verdrahtung: Inhalt prüfen, Spielstand laden, Game/World/UI/Loop starten, Autosave, Fehleranzeige
+src/core/                      loop.ts (fester Zeitschritt), signals.ts (typisierter Emitter), log.ts
+src/game/                      game.ts (Fassade), state.ts (GameState), types.ts (Inhaltsverträge),
+                               interaction.ts, result.ts, save/save.ts, testing/fixture-pack.ts
+src/content/                   validate.ts, regions/ruhrgebiet/{index,layout}.ts
+src/world/                     world.ts, renderer.ts, camera.ts, input.ts, collision.ts, kioskGeometry.ts,
+                               materials.ts, occlusion.ts, playerFigure.ts,
+                               assets/{registry,kioskK001,furniture,ground}.ts, views/{kioskView,markerView}.ts
+src/ui/                        ui.ts, texts.ts, styles.css
+scripts/browser-check.mjs      Browserprüfung
+docs/screenshots/              Screenshots aus der laufenden Anwendung
+```
+Tests liegen als `*.test.ts` neben dem Code.
 
-## 6. Unstimmigkeiten in der bestehenden Dokumentation
-- Viele Formulierungen setzen vorhandenen Code voraus („bestehende Szene", „vorhandene Architektur respektieren"). Dieser existiert nicht; die Regel „bestehende Konventionen haben Vorrang" greift erst ab dem ersten Code.
-- Der Katalog (`02`) nennt zehn NPC-Typen, das Register (`07`) führt nur N-001 bis N-007. Lieferant, Nachtkunde und Vierteloriginal fehlen.
-- Fahrradständer, Hausfassaden, Fenster/Türen der Nachbarhäuser und Schilder stehen im Katalog, haben aber keine Register-ID.
-- P-001 bis P-030 sind ein Sammeleintrag; einzelne Produkte sind noch nicht definiert.
-- Quests, Events und die Kiosk-Spezialität haben bisher kein ID-Schema (Vorschlag in den Datenverträgen).
+## 5. Implementierte Funktionen
+**Szene und Darstellung**
+- WebGL-Renderer mit Schatten, Himmelslicht, warmem Richtungslicht und warmem Punktlicht im Kiosk.
+- Kiosk-Greybox 6 × 4 × 3,2 m aus den Layoutdaten: vier Wände mit ausgeschnittenem Verkaufsfenster und Türöffnung, Flachdach, Innenboden, Theke, Wandregal, Schild „BÜDCHEN AM ECK" (fiktiv, als Canvas-Textur).
+- Gehweg mit Plattenfugen, Bordstein, Straße, Grünfläche.
+- Asset-Fabriken sind unter ihrer Asset-ID registriert: `K-001`, `I-001`, `I-003`, `E-001`, `E-002`.
+- Maßstab 1 Unit = 1 Meter, Y nach oben, +X Osten (rechts), +Z Süden (zur Kamera).
 
-Diese Punkte werden nicht jetzt, sondern beim Anlegen der jeweiligen Inhalte im Register bereinigt (Phase 3 und 4).
+**Spielfigur, Kamera, Steuerung**
+- Stilisierte Figur von etwa 1,75 m mit erkennbarer Vorderseite, dreht sich in Laufrichtung.
+- Third-Person-Kamera schräg von Süden, feste Ausrichtung, weicher Nachlauf.
+- WASD und Pfeiltasten, bildschirmbezogen, 3,5 m/s, Diagonale normalisiert.
+- Simulation in festen Schritten (60 Hz), Darstellung interpoliert.
 
-## 7. Umgebung, in der geprüft wurde
-| Werkzeug | Version |
-|---|---|
-| Node.js | 22.23.4 |
-| npm | 10.9.9 |
+**Kollision**
+- Kreis (Radius 0,3 m) gegen achsparallele Rechtecke mit Gleiten an Wänden; Grenzen des begehbaren Bereichs.
+- Wandsegmente für Darstellung und Kollision entstehen aus derselben Funktion (`kioskGeometry.ts`).
+- Die geschlossene Tür blockiert, die offene nicht.
 
-Aktuelle Registry-Versionen am Prüftag (nicht installiert, nur abgefragt): `three` 0.187.0, `vite` 8.3.8, `typescript` 7.0.2, `vitest` 5.1.0.
+**Sichtfreistellung**
+- Im Kiosk wird das Dach ausgeblendet und die Südwand samt Schild und Klappe durchscheinend.
+- Verdeckt das Gebäude die Figur (z. B. hinter dem Kiosk), werden die verdeckenden Teile durchscheinend.
 
-## 8. Ausgeführte Befehle
+**Interaktion**
+- Zwei Interaktionspunkte: Tür und Verkaufsklappe, jeweils öffnen/schließen.
+- `game` bestimmt den verfügbaren Punkt aus Spielerposition und Layout; die UI zeigt den Prompt, die Welt eine Markierung.
+- Auslösen mit E oder Mausklick auf den Prompt. Tür und Klappe sind animiert.
+
+**UI**
+- Steuerungshinweis, Interaktionsprompt, Meldungen, Schaltfläche „Neues Spiel" (zweiter Klick bestätigt), sichtbare Fehleranzeige bei Start- oder Laufzeitfehlern.
+- Alle Spieltexte in `src/ui/texts.ts`.
+
+**Speichern und Laden**
+- `GameState` Version 1: `regionId`, `player` (Position, Blickrichtung), `kiosk` (`doorOpen`, `shutterOpen`).
+- JSON mit `schemaVersion` in `localStorage` unter `buedchensim.save.slot1`.
+- Automatisch nach jeder Tür-/Klappenänderung, alle 10 Sekunden und beim Verlassen der Seite; Laden beim Start.
+- Strenge Prüfung beim Laden. Ein unlesbarer oder zu neuer Spielstand wird nach `buedchensim.save.slot1.backup` kopiert, dann startet ein neues Spiel mit Hinweis.
+- Migrationskette ist vorhanden und getestet, enthält aber noch keine Migration.
+
+**Inhaltsvalidierung**
+- `validateContent` prüft IDs, Präfixe, Rechtecke, Öffnungen, Möbel, Startpunkt und Interaktionspunkte. Im Entwicklungsmodus verhindert ein Fehler den Start und wird angezeigt.
+
+## 6. Prüfergebnisse (2026-11-11)
 | Befehl | Ergebnis |
 |---|---|
-| `git ls-files`, `find` | 14 Markdown-Dateien, sonst nichts |
-| `git log --oneline` | 20 Commits, alle `docs:` |
-| `git rev-parse HEAD origin/main` | identisch (`61d2146`) |
-| `grep -rniE "TODO\|FIXME"` | keine echten Marker |
-| `node -v`, `npm -v`, `npm view <paket> version` | siehe Abschnitt 7 |
+| `npm run typecheck` | fehlerfrei |
+| `npm run lint` | fehlerfrei |
+| `npm run test` | 8 Dateien, 96 Tests bestanden |
+| `npm run build` | erfolgreich; JS 579 kB (149 kB gzip), CSS 2,7 kB. Vite warnt wegen der Größe über 500 kB; das ist Three.js |
+| `npm run check:browser` | 19 von 19 Prüfungen bestanden |
 
-Build-, Lint- und Testbefehle wurden nicht ausgeführt, weil es keine gibt.
+Die Browserprüfung lief in Headless-Chromium mit Software-Rendering (ca. 33 Bilder/s) und deckt ab: Canvas rendert, Figur sichtbar, Bewegung in alle Richtungen, Diagonalgeschwindigkeit, Kamera folgt, Wand und geschlossene Tür blockieren, Tür öffnen und hindurchgehen, Klappe von innen bedienen, Kiosk umrunden, Zustand nach Neuladen wiederhergestellt, keine Konsolenfehler.
 
-## 9. Ist-/Soll-Abgleich
+Screenshots aus der laufenden Anwendung:
+- `docs/screenshots/auftrag-01-aussen.png`
+- `docs/screenshots/auftrag-01-innen.png`
+- `docs/screenshots/auftrag-01-rueckseite.png`
+
+**Schichtenregel:** Mit absichtlich falschen Testdateien geprüft; ESLint meldete Fehler für `three` und DOM-Globals in `core`/`game`, für `content` in `game`, für `world`/`three`/`content` in `ui` und für `ui`/`content` in `world`. Die Testdateien wurden wieder entfernt.
+
+## 7. Bekannte Einschränkungen
+- Nicht auf echter Grafikhardware und nicht in Firefox oder Safari geprüft; Bildrate dort ist ungemessen.
+- Die Browserprüfung löst das Speichern vor dem Neuladen selbst über ein `pagehide`-Ereignis aus. Ob der Browser dieses Ereignis beim Neuladen zuverlässig sendet, ist nicht separat belegt; das 10-Sekunden-Intervall fängt das ab.
+- Die drei Screenshots entstehen aus vorbereiteten Spielständen, nicht am Ende des Tastenablaufs.
+- Steht die Figur hinter dem Kiosk, erscheint das Gebäude als durchscheinender Kasten. Funktional, aber noch nicht schön.
+- Die Markierung der Verkaufsklappe liegt im Volumen der Theke; ihr Bodenring ist deshalb verdeckt, nur der schwebende Marker ist sichtbar.
+- Die Straße ist nicht begehbar. Es gibt keine Höhenunterschiede und keine vertikale Kollision.
+- Jenseits des Layouts liegt eine einfarbige Fläche im Dunst; es gibt noch keine Nachbarbebauung.
+- `npm install` meldet 10 Hinweise mittlerer Stufe aus `npm audit`; sie betreffen Entwicklungswerkzeuge und wurden nicht bearbeitet.
+- Kein CI, kein Deployment, keine Lizenzdatei.
+
+## 8. Ist-/Soll-Abgleich
 | Zielsystem | Status | Bemerkung |
 |---|---|---|
-| Core / Game Runtime | nicht vorhanden | Fundament für Phase 1 |
-| Three.js World | nicht vorhanden | Fundament für Phase 1; Perspektive noch zu entscheiden |
-| Kiosk und Einrichtung | nicht vorhanden | nur Asset-IDs und Startmaße dokumentiert |
-| Produkte, Inventar, Warenwirtschaft | nicht vorhanden | Datenfeld-Vorschlag in `04`; Alkohol/Tabak noch zu entscheiden |
-| Finanzen, Kasse, Tagesabschluss | nicht vorhanden | – |
-| NPCs, Routinen, Beziehungen | nicht vorhanden | Konzept in `08` |
-| Dialoge, Quests, Geschichten | nicht vorhanden | Konzept in `08` |
-| Kalender, Wetter, Events | nicht vorhanden | Zeitmodell noch zu entscheiden |
-| Rezepte und Kiosk-Traditionen | nicht vorhanden | Konzept in `08` |
-| UI | nicht vorhanden | – |
-| Savegames und Datenmigration | nicht vorhanden | Anforderungen im Zielbild |
-| Audio | nicht vorhanden | laut Plan erst Phase 6 |
-| Regionale Content-Pakete | nicht vorhanden | nur Ruhrgebiet für den Slice geplant |
+| Core / Game Runtime | teilweise vorhanden | Loop, Signale, Log, Fassade; keine Spielzeit (O-3 offen) |
+| Three.js World | teilweise vorhanden | Greybox, Figur, Kamera, Kollision, Interaktion; keine Umgebung, kein Wetter |
+| Kiosk und Einrichtung | teilweise vorhanden | Greybox mit Theke und Wandregal als Blöcke |
+| Produkte, Inventar, Warenwirtschaft | nicht vorhanden | Phase 3; O-4 offen |
+| Finanzen, Kasse, Tagesabschluss | nicht vorhanden | Phase 3 |
+| NPCs, Routinen, Beziehungen | nicht vorhanden | Phase 4 |
+| Dialoge, Quests, Geschichten | nicht vorhanden | Phase 4 |
+| Kalender, Wetter, Events | nicht vorhanden | Phase 5; O-3 offen |
+| Rezepte und Kiosk-Traditionen | nicht vorhanden | Phase 5 |
+| UI | teilweise vorhanden | Hinweise, Prompt, Meldungen |
+| Savegames und Datenmigration | teilweise vorhanden | Version 1, Migrationskette leer |
+| Audio | nicht vorhanden | Phase 6 |
+| Regionale Content-Pakete | teilweise vorhanden | Ruhrgebiet mit Layoutdaten |
 
-Kein System ist „vorhanden" oder „teilweise vorhanden". Konzeptuell beschrieben sind alle.
+## 9. Unstimmigkeiten in der Konzeptdokumentation (unverändert offen)
+- Der Katalog (`02`) nennt zehn NPC-Typen, das Register (`07`) führt nur N-001 bis N-007.
+- Fahrradständer, Hausfassaden und Schilder haben keine Register-ID.
+- P-001 bis P-030 sind ein Sammeleintrag ohne Einzelprodukte.
+- Der Bordstein hat keine eigene Asset-ID; er wird derzeit unter E-001 mitgebaut.

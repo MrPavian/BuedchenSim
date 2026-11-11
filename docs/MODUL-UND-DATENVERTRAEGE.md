@@ -2,7 +2,7 @@
 
 **Stand:** 2026-11-11 · Ergebnis von [Auftrag 00](auftraege/00-bestandsaufnahme-und-architektur.md)
 
-**Dies ist ein Plan, kein Bestand.** Keine der hier genannten Dateien existiert bisher ([Ist-Stand](TECHNISCHER-IST-STAND.md)). Begründungen stehen in den [ADRs](ARCHITEKTUR-ENTSCHEIDUNGEN.md). Typen sind Vertragsskizzen; Feldnamen können sich bei der Umsetzung der jeweiligen Phase noch präzisieren, die Grundform nicht.
+**Plan und Bestand:** Die Abschnitte 1–12 sind der Plan aus Auftrag 00. Was davon umgesetzt ist und wo die Umsetzung abweicht, steht in Abschnitt 13 und im [Ist-Stand](TECHNISCHER-IST-STAND.md). Begründungen stehen in den [ADRs](ARCHITEKTUR-ENTSCHEIDUNGEN.md). Typen sind Vertragsskizzen; Feldnamen können sich bei der Umsetzung der jeweiligen Phase noch präzisieren, die Grundform nicht.
 
 ## 1. Modulübersicht
 
@@ -326,3 +326,25 @@ Audio, weitere Regionen, GLB-Modelle und Animationen, Bau-/Umstellmodus für Ein
 5. Greybox nach Prompt B: Kiosk (ca. 6 × 4 × 3,2 m) mit Verkaufsöffnung, Eingang, Innenraum, Gehweg; als `layout.ts` und Asset-Fabriken K-001-A, E-001, E-002.
 6. Interaktionspunkte (Tür, Theke) mit HUD-Hinweis.
 7. Prüfung im Browser per Screenshot, Ergebnisse und Registerstatus dokumentieren.
+
+## 13. Stand nach Auftrag 01: Konkretisierungen und Abweichungen
+
+Maßgeblich sind die Typen im Code (`src/game/types.ts`, `src/game/state.ts`, `src/game/game.ts`, `src/game/save/save.ts`). Hier stehen nur die Unterschiede zum Plan oben.
+
+**Abweichungen**
+- **`GameState` ist kleiner als in Abschnitt 9.** Version 1 enthält nur `regionId`, `player` und `kiosk: { doorOpen, shutterOpen }`. Die Abschnitte für Kalender, Wirtschaft, Menschen, Geschichten und Spezialitäten kommen mit ihrer Phase per Migration hinzu, statt von Beginn an leer im Schema zu stehen. Grund: Auftrag 01 schließt vorgezogene Systeme aus.
+- **`Game.tick` und `rngState` gibt es noch nicht.** Ohne Spielzeit (O-3 offen) und ohne Zufall hat `game` nichts zu simulieren. Der Loop treibt derzeit nur die Welt an.
+- **Kiosk-Layout als Baukörper statt Platzierungsliste.** `RegionLayout` beschreibt den Kiosk über Grundfläche, Höhe, Wandstärke und Öffnungen; Möbel sind Rechtecke mit Höhe und Asset-ID. Eine verschiebbare Platzierungsliste mit Lagerplätzen folgt in Phase 2/3.
+- **Aktionen sind noch nicht nach Domänen gruppiert.** Die Fassade hat `player.setPose`, `interact`, `getAvailableInteraction`, `save`, `load`, `reset`.
+
+**Konkretisierte Verträge**
+- **Koordinaten:** 1 Unit = 1 m, Y oben, +X Osten, +Z Süden. Blickrichtung in Radiant, 0 zeigt nach +Z, `atan2(dx, dz)`.
+- **Signale:** `kiosk.door.changed { open }`, `kiosk.shutter.changed { open }`, `interaction.available.changed { interaction }`, `game.state.replaced {}` (nach Laden oder Zurücksetzen; Darstellungen lesen dann den Zustand neu).
+- **Interaktion:** `game` ermittelt den nächstgelegenen Punkt innerhalb seines Radius und die mögliche Aktion (`door.open`, `door.close`, `shutter.open`, `shutter.close`). Welt und UI zeigen nur an und rufen `interact()`.
+- **Spielerposition:** Die Welt berechnet Bewegung und Kollision und meldet das Ergebnis über `player.setPose`; `game` begrenzt auf `walkBounds`.
+- **Savegame:** `parseSave` liefert `ok`, `empty`, `corrupt` oder `unsupported_version`. `createSaveStore` kapselt den Speicher, fängt Speicherfehler ab und legt bei unlesbaren Ständen eine Sicherung unter `<Schlüssel>.backup` an. Der Zugriff auf `localStorage` selbst geschieht nur in `main.ts`.
+- **Inhalts-IDs:** zusätzliche Präfixe `opening.`, `furniture.`, `interaction.`, `ground.`.
+- **Schichtenregel in Tests:** Tests gehören zu ihrer Schicht. `game`- und `world`-Tests nutzen deshalb `src/game/testing/fixture-pack.ts` statt des echten Inhaltspakets.
+- **Asset-Fabriken:** Registrierung in `src/world/assets/registry.ts`. Die Kiosk-Fabrik liefert ein `Object3D` mit benannten Kindern (Tür, Klappe, Dach, Wände, Schild), die `kioskView` ansteuert. Namen sind Darstellungsdetails, keine Spieldaten.
+- **Kollision und Wandgeometrie** sind reine Funktionen ohne Three.js-Import (`collision.ts`, `kioskGeometry.ts`) und einzeln getestet.
+- **Entwicklungshilfe:** Im Entwicklungsmodus oder mit `?debug` in der Adresse stellt `main.ts` `window.__buedchen.game` bereit; die Browserprüfung liest darüber den Zustand.

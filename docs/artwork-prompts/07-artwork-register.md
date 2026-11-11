@@ -4,8 +4,8 @@ Dieses Register ist die zentrale Liste für geplante und umgesetzte Artworks. St
 
 | ID | Asset | Region | Priorität | Status |
 |---|---|---|---|---|
-| K-001 | Musterkiosk / Gebäude | Ruhrgebiet | P0 | Geplant |
-| K-001-A | Gebäudegrundkörper | Ruhrgebiet | P0 | Geplant |
+| K-001 | Musterkiosk / Gebäude | Ruhrgebiet | P0 | In Arbeit |
+| K-001-A | Gebäudegrundkörper | Ruhrgebiet | P0 | In Arbeit |
 | K-001-B | Fassadenmaterial / Backstein | Ruhrgebiet | P0 | Geplant |
 | K-001-C | Markise | Ruhrgebiet | P0 | Geplant |
 | K-001-D | Verkaufsfenster | Ruhrgebiet | P0 | Geplant |
@@ -13,9 +13,9 @@ Dieses Register ist die zentrale Liste für geplante und umgesetzte Artworks. St
 | K-001-F | Dach / Attika | Ruhrgebiet | P0 | Geplant |
 | K-001-G | Fiktive Beschilderung | Ruhrgebiet | P0 | Geplant |
 | K-001-H | Beleuchtung | Ruhrgebiet | P1 | Geplant |
-| I-001 | Verkaufstheke | Ruhrgebiet | P0 | Geplant |
+| I-001 | Verkaufstheke | Ruhrgebiet | P0 | In Arbeit |
 | I-002 | Kasse / POS | Ruhrgebiet | P0 | Geplant |
-| I-003 | Wandregal | Ruhrgebiet | P0 | Geplant |
+| I-003 | Wandregal | Ruhrgebiet | P0 | In Arbeit |
 | I-004 | Mittelregal | Ruhrgebiet | P1 | Geplant |
 | I-005 | Getränkekühlschrank | Ruhrgebiet | P0 | Geplant |
 | I-006 | Eistruhe | Ruhrgebiet | P1 | Geplant |
@@ -26,8 +26,8 @@ Dieses Register ist die zentrale Liste für geplante und umgesetzte Artworks. St
 | I-011 | Lagerregal | Ruhrgebiet | P1 | Geplant |
 | I-012 | Leergut-/Kistenbereich | Ruhrgebiet | P1 | Geplant |
 | P-001 bis P-030 | Erste Produktserie | Ruhrgebiet | P0 | Geplant |
-| E-001 | Gehweg / Bordstein | Ruhrgebiet | P0 | Geplant |
-| E-002 | Straßenbelag | Ruhrgebiet | P0 | Geplant |
+| E-001 | Gehweg / Bordstein | Ruhrgebiet | P0 | In Arbeit |
+| E-002 | Straßenbelag | Ruhrgebiet | P0 | In Arbeit |
 | E-003 | Laterne | Ruhrgebiet | P1 | Geplant |
 | E-004 | Bank | Ruhrgebiet | P2 | Geplant |
 | E-005 | Mülleimer | Ruhrgebiet | P1 | Geplant |
@@ -43,3 +43,7 @@ Dieses Register ist die zentrale Liste für geplante und umgesetzte Artworks. St
 
 ## Änderungsprotokoll
 Bei jeder neuen oder geänderten Asset-Version Datum, Änderung, verantwortliche Person und betroffene Dateien ergänzen. Ein Asset erst auf „Freigegeben“ setzen, wenn es die Qualitätskriterien aus der Art Direction erfüllt.
+
+| Datum | Änderung | Verantwortlich | Dateien |
+|---|---|---|---|
+| 2026-11-11 | Greybox-Fassungen für K-001 (inkl. K-001-A), I-001, I-003, E-001 (mit Bordstein) und E-002 im Spiel; Status „In Arbeit", da noch keine ausgearbeiteten Assets | Claude Code (Auftrag 01) | `src/world/assets/kioskK001.ts`, `furniture.ts`, `ground.ts`, `registry.ts` |

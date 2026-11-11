@@ -56,6 +56,27 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // Node script; its page.evaluate callbacks run in the browser, so both global sets apply.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        localStorage: 'readonly',
+        performance: 'readonly',
+        requestAnimationFrame: 'readonly',
+        getComputedStyle: 'readonly',
+        Image: 'readonly',
+        MutationObserver: 'readonly',
+        Event: 'readonly',
+      },
+    },
+  },
+  {
     files: ['src/core/**/*.ts'],
     rules: {
       ...restrict([threePatterns, layerGlobs(['game', 'content', 'world', 'ui'])], 'core'),

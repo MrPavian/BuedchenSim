@@ -6,14 +6,14 @@ Grundlage: Das Repository enthält keinen Code ([Ist-Stand](TECHNISCHER-IST-STAN
 
 **Statuswerte:** *Vorgeschlagen* = technische Empfehlung, gilt als Arbeitsgrundlage für Phase 1, solange der Projektinhaber nicht widerspricht. *Offen* = Produktentscheidung, die der Projektinhaber treffen muss. *Entschieden* = bestätigt.
 
-Noch ist nichts davon implementiert.
+Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angibt.
 
 ---
 
 ## Teil A – Technische Entscheidungen
 
 ### ADR-001 – Build-Stack: Vite, TypeScript, Three.js über npm
-**Status:** Vorgeschlagen
+**Status:** Entschieden (umgesetzt in Auftrag 01). Gepinnt: three 0.187.0, vite 8.3.8, typescript 6.0.3 (nicht 7.x, weil typescript-eslint 8.72.2 nur TypeScript < 6.1 unterstützt).
 
 **Kontext:** Kein Stack vorhanden. Gefordert sind Three.js, datengetriebene Inhalte mit Validierung, stabile Datenverträge und Überschaubarkeit für eine Einzelperson.
 
@@ -22,7 +22,7 @@ Noch ist nichts davon implementiert.
 **Konsequenzen:** Datenverträge werden vom Compiler geprüft; schneller Start mit `npm run dev`; statischer Build, der auf jedem Webspace läuft. Es entsteht ein Build-Schritt; Three.js-Upgrades erfolgen bewusst und einzeln.
 
 ### ADR-002 – Vier Schichten mit gerichteten Abhängigkeiten
-**Status:** Vorgeschlagen
+**Status:** Entschieden (umgesetzt in Auftrag 01). Die ESLint-Regel wurde mit absichtlichen Verstößen geprüft.
 
 **Kontext:** Das Zielbild verlangt, dass Spielzustand nicht in Meshes steckt und UI keine Geschäftslogik dupliziert.
 
@@ -31,7 +31,7 @@ Noch ist nichts davon implementiert.
 **Konsequenzen:** Die gesamte Spiellogik ist ohne Browser testbar. Die Regel wird per ESLint-Importregel erzwungen, nicht nur dokumentiert. Preis: Darstellung muss Zustand aktiv abfragen oder abonnieren.
 
 ### ADR-003 – Ein serialisierbarer Spielzustand, Aktionen und typisierte Signale
-**Status:** Vorgeschlagen
+**Status:** Entschieden (umgesetzt in Auftrag 01).
 
 **Kontext:** Auftrag 00 verlangt, einen globalen Event-Bus nur bei nachgewiesenem Nutzen einzuführen.
 
@@ -46,7 +46,7 @@ Noch ist nichts davon implementiert.
 **Konsequenzen:** Kein untypisierter Bus, keine versteckten Abläufe in der Logik. Ereignisnamen sind ein Vertrag und werden in den Datenverträgen gepflegt.
 
 ### ADR-004 – Inhalte als typisierte TypeScript-Datenmodule mit Laufzeitvalidierung
-**Status:** Vorgeschlagen
+**Status:** Entschieden (umgesetzt in Auftrag 01 für Layoutdaten; weitere Inhaltstypen folgen in ihren Phasen).
 
 **Kontext:** Produkte, NPCs, Dialoge, Quests und Events sollen ohne Änderung der Kernlogik ergänzbar sein; ungültige Daten sollen verständliche Fehler liefern.
 
@@ -55,7 +55,7 @@ Noch ist nichts davon implementiert.
 **Konsequenzen:** Tippfehler in Feldern fallen beim Kompilieren auf, kaputte Referenzen beim Test. Bedingungen und Effekte in Dialogen/Quests werden als kleine, feste Menge von Datentypen modelliert, nicht als freier Code in den Daten. Ein späterer Wechsel auf JSON bleibt möglich, weil die Definitionen reine Daten sind.
 
 ### ADR-005 – Versioniertes Savegame im Browser-Speicher
-**Status:** Vorgeschlagen
+**Status:** Entschieden (umgesetzt in Auftrag 01). Noch nicht umgesetzt, weil es noch keinen Zufall gibt: geseedeter Zufallsgenerator. Geldbeträge in Cent folgen mit Phase 3.
 
 **Kontext:** Geschichten und Beziehungen müssen über Spielstände hinweg bestehen; das Format muss sich weiterentwickeln können.
 
@@ -64,7 +64,7 @@ Noch ist nichts davon implementiert.
 **Konsequenzen:** Reproduzierbare Spielstände und Tests. Jede Änderung am `GameState` erfordert eine Versionserhöhung mit Migration und Test. Unbekannte IDs (entfernte Inhalte) werden beim Laden mit Warnung verworfen statt abzustürzen. Export/Import als Datei kann später ergänzt werden.
 
 ### ADR-006 – Assets zuerst prozedural, GLB als Erweiterungspunkt
-**Status:** Vorgeschlagen
+**Status:** Entschieden für prozedurale Fabriken (umgesetzt in Auftrag 01). Der GLB-Weg ist vorgesehen, aber noch nicht erprobt.
 
 **Kontext:** Die Doku bevorzugt GLB für externe Assets, es gibt aber keine Modelle und keine Modellierpipeline. CLAUDE.md verlangt echte Geometrie statt Konzeptbilder.
 
@@ -73,7 +73,7 @@ Noch ist nichts davon implementiert.
 **Konsequenzen:** Keine Abhängigkeit von externen Werkzeugen, kleine Ladezeiten, einheitlicher Stil. Der Detailgrad ist begrenzt; für Figuren kann GLB früher nötig werden.
 
 ### ADR-007 – UI als HTML/CSS-Overlay ohne Framework
-**Status:** Vorgeschlagen
+**Status:** Entschieden (umgesetzt in Auftrag 01).
 
 **Kontext:** Kasse, Warenverwaltung, Dialoge und Kalender sind text- und listenlastig.
 
@@ -82,7 +82,7 @@ Noch ist nichts davon implementiert.
 **Konsequenzen:** Gute Lesbarkeit, Tastaturbedienung und Barrierefreiheit mit Bordmitteln. Sollte die UI in Phase 3–5 unhandlich werden, wird ein leichtgewichtiges Framework per neuem ADR geprüft; die Schichtentrennung macht das ohne Eingriff in `game` möglich.
 
 ### ADR-008 – Keine Physik-Engine; einfache Kollision und Wegpunkt-Navigation
-**Status:** Vorgeschlagen
+**Status:** Kollision entschieden (umgesetzt in Auftrag 01). Wegpunkt-Navigation für NPCs bleibt vorgeschlagen bis Phase 4.
 
 **Kontext:** Ein kleiner Kiosk mit Gehweg braucht keine Starrkörperphysik.
 
@@ -91,14 +91,14 @@ Noch ist nichts davon implementiert.
 **Konsequenzen:** Keine zusätzliche Abhängigkeit, deterministisch, leicht zu debuggen. Für eine deutlich größere Welt müsste ein Navigationsnetz ergänzt werden.
 
 ### ADR-009 – Qualitätssicherung
-**Status:** Vorgeschlagen
+**Status:** Entschieden (umgesetzt in Auftrag 01). Zusätzliches Script `check:browser`; Playwright 1.63.0 als Entwicklungsabhängigkeit.
 
 **Entscheidung:** `tsc --noEmit`, ESLint (inklusive Schichtenregel), Vitest für `core`, `game` und Inhaltsvalidierung. Die 3D-Szene wird je Schritt per Playwright-Screenshot im echten Browser geprüft. Scripts: `dev`, `build`, `preview`, `typecheck`, `lint`, `test`.
 
 **Konsequenzen:** Die Forderung „in der tatsächlichen Three.js-Szene prüfen" ist reproduzierbar erfüllbar. CI wird erst eingerichtet, wenn gewünscht.
 
 ### ADR-010 – Sprache im Code
-**Status:** Vorgeschlagen
+**Status:** Entschieden (umgesetzt in Auftrag 01).
 
 **Entscheidung:** Bezeichner und Code-Kommentare auf Englisch, Dokumentation und sämtliche Spieltexte auf Deutsch. Spieltexte liegen in den Inhaltsdaten bzw. einer zentralen Textdatei der UI, nicht verstreut in der Logik.
 

@@ -38,6 +38,14 @@ Aufgaben:
 
 **Abnahme:** Szene startet stabil; Spieler kann den relevanten Bereich erkunden; Kiosk und Laufwege sind räumlich verständlich.
 
+**Status (2026-11-11): abgeschlossen mit Auftrag 01.** Typecheck, Lint, 96 Tests, Build und die Browserprüfung (19 von 19) sind grün; Screenshots liegen unter `docs/screenshots/`. Details und Einschränkungen: `docs/TECHNISCHER-IST-STAND.md`.
+
+Offene Restpunkte, die in Phase 2 mitgenommen werden:
+- Darstellung, wenn die Figur hinter dem Kiosk steht (derzeit durchscheinender Kasten).
+- Markierung der Verkaufsklappe liegt im Thekenvolumen.
+- Prüfung auf echter Grafikhardware und in weiteren Browsern.
+- Layout von festen Rechtecken auf eine verschiebbare Platzierungsliste umstellen, sobald Einrichtung modular wird.
+
 ## Phase 2 – Kiosk als modularer 3D-Ort
 **Ziel:** das erste Ruhrgebiets-Büdchen bekommt seine erkennbare Identität.
 
