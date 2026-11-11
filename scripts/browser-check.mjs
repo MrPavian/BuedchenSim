@@ -194,7 +194,6 @@ try {
   record('1b Spielfigur im Bild sichtbar', first.figure !== null, first.figure ? `${first.figure.n} Pixel` : 'nicht gefunden');
 
   // 2. Movement.
-  const start = await st();
   const right = await hold(['KeyD'], 500);
   const left = await hold(['KeyA'], 500);
   const up = await hold(['KeyW'], 250);
