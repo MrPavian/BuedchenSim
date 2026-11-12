@@ -39,11 +39,13 @@ export function createMarkerView(game: Game, points: readonly InteractionPointDe
     gemMaterial.depthTest = false; // stays readable through the wall it hangs in
     const ring = new Mesh(ringGeometry, ringMaterial);
     ring.rotation.x = -Math.PI / 2;
-    ring.position.set(point.position.x, SIDEWALK_HEIGHT + 0.02, point.position.z);
+    // Visual marker position: the point's own marker override (e.g. on the sill), else the ground at the point.
+    const at = point.marker?.position ?? point.position;
+    ring.position.set(at.x, point.marker ? point.marker.height + 0.02 : SIDEWALK_HEIGHT + 0.02, at.z);
     ring.renderOrder = 2;
     const baseY = opening ? (point.kind === 'door' ? opening.head + 0.35 : (opening.sill + opening.head) / 2) : 2;
     const gem = new Mesh(gemGeometry, gemMaterial);
-    gem.position.set(point.position.x, baseY, point.position.z);
+    gem.position.set(at.x, baseY, at.z);
     gem.renderOrder = 10;
     root.add(ring, gem);
     markers.push({ id: point.id, ring, gem, baseY, ringMaterial, gemMaterial });

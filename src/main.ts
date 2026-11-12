@@ -92,7 +92,7 @@ function start(): void {
   window.addEventListener('pagehide', persist);
 
   if (import.meta.env.DEV || new URLSearchParams(window.location.search).has('debug')) {
-    (window as unknown as { __buedchen: { game: Game } }).__buedchen = { game };
+    (window as unknown as { __buedchen: { game: Game; world: World } }).__buedchen = { game, world };
   }
 
   const loop = createLoop({

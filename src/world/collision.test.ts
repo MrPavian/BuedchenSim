@@ -1,15 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { testPack } from '../game/testing/fixture-pack';
 import { moveCircle, resolvePosition } from './collision';
-import { kioskColliders } from './kioskGeometry';
+import { buildWorldColliders } from './colliders';
 
 const ruhrgebietLayout = testPack.layout;
 
 const R = 0.3;
 const bounds = ruhrgebietLayout.walkBounds;
-const { kiosk, furniture } = ruhrgebietLayout;
-const closed = kioskColliders(kiosk, furniture, false);
-const open = kioskColliders(kiosk, furniture, true);
+const { closed, open } = buildWorldColliders(ruhrgebietLayout, testPack.assets);
 
 /** Walks with a fixed step like the game loop and returns the final position. */
 function walk(

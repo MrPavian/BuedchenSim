@@ -239,6 +239,8 @@ try {
   record('2d Diagonale ~ gleiche Geschwindigkeit wie geradeaus', ratio > 0.9 && ratio < 1.1 && speedStraight > 3.1 && speedStraight < 3.9 && diag.dx > 0 && diag.dz < 0 && Math.abs(Math.abs(diag.dx) - Math.abs(diag.dz)) < 0.2, `gerade ${f(speedStraight)} m/s, diagonal ${f(speedDiag)} m/s, Verhältnis ${f(ratio)}; erwartet ~3.5 m/s`);
 
   // 3. Camera follows: walk 6 m east, the figure stays in the same screen region.
+  // Waypoint west of the kiosk first: a pure diagonal from the yard can wedge the player in the building's NW corner.
+  await walkTo({ x: -6, z: 3.6 });
   await walkTo({ x: 0.9, z: 3.6 });
   await sleep(900);
   const before = await analyse();

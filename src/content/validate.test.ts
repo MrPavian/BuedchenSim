@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ContentPack } from '../game/types';
+import { placementColliders, placementFootprint } from '../game/placement';
+import type { ContentPack, PlacementDef } from '../game/types';
 import { ruhrgebietPack } from './regions/ruhrgebiet';
 import { validateContent } from './validate';
 
@@ -8,6 +9,12 @@ function broken(mutate: (pack: ContentPack) => void): string[] {
   mutate(pack);
   return validateContent(pack);
 }
+
+const place = (pack: ContentPack, id: string): PlacementDef => {
+  const found = pack.layout.placements.find((p) => p.id === id);
+  if (!found) throw new Error(`fixture missing: ${id}`);
+  return found;
+};
 
 const first = <T>(items: T[]): T => {
   const item = items[0];
@@ -32,10 +39,10 @@ describe('validateContent', () => {
   it('rejects duplicate ids and wrong prefixes', () => {
     const errors = broken((p) => {
       first(p.layout.kiosk.openings).id = 'opening.door';
-      first(p.layout.furniture).id = 'counter';
+      first(p.layout.placements).id = 'counter';
     });
     expect(errors).toContain('duplicate opening id "opening.door"');
-    expect(errors).toContain('furniture id "counter" must start with "furniture."');
+    expect(errors).toContain('placement id "counter" must start with "placement."');
   });
 
   it('rejects inverted rects', () => {
@@ -71,18 +78,11 @@ describe('validateContent', () => {
     expect(errors).toContain('openings "opening.sales-window" and "opening.door" overlap on the south wall');
   });
 
-  it('rejects furniture outside the interior', () => {
-    const errors = broken((p) => {
-      first(p.layout.furniture).rect = { minX: 10, maxX: 11, minZ: 10, maxZ: 11 };
-    });
-    expect(errors).toContain('furniture "furniture.counter" is not inside the kiosk interior');
-  });
-
   it('rejects a spawn outside walkBounds, in a wall or in furniture', () => {
     expect(broken((p) => (p.layout.spawn.position = { x: 50, z: 0 }))).toContain('spawn position is outside walkBounds');
     expect(broken((p) => (p.layout.spawn.position = { x: 0, z: 1.9 }))).toContain('spawn position is inside a kiosk wall');
     expect(broken((p) => (p.layout.spawn.position = { x: -1, z: 1.5 }))).toContain(
-      'spawn position is inside furniture "furniture.counter"',
+      'spawn position is inside placement "placement.counter"',
     );
   });
 
@@ -112,5 +112,119 @@ describe('validateContent', () => {
       p.layout.spawn.heading = Number.NaN;
     });
     expect(errors).toEqual(['layout.spawn.heading is not a finite number']);
+  });
+
+  describe('placement list and catalog', () => {
+    const has = (errors: string[], ...needles: string[]) =>
+      expect(errors.some((e) => needles.every((n) => e.includes(n)))).toBe(true);
+
+    it('has the expected content shape', () => {
+      const { layout, assets } = ruhrgebietPack;
+      expect(layout.layoutVersion).toBe(1);
+      for (const [key, asset] of Object.entries(assets)) expect(asset.assetId).toBe(key);
+      for (const p of layout.placements) expect(assets[p.assetId]).toBeDefined();
+      const count = (assetId: string) => layout.placements.filter((p) => p.assetId === assetId);
+      expect(count('I-003').length).toBe(2);
+      expect(new Set(count('I-003').map((p) => p.rotation)).size).toBe(2);
+      expect(count('I-012').length).toBe(2);
+      expect(new Set(count('I-012').map((p) => p.position.z < -2)).size).toBe(2); // one inside, one in the yard
+    });
+
+    it('rejects a non-positive layoutVersion', () => {
+      has(broken((p) => (p.layout.layoutVersion = 0)), 'layoutVersion');
+      has(broken((p) => (p.layout.layoutVersion = 1.5)), 'layoutVersion');
+    });
+
+    it('rejects catalog problems (key mismatch, bad size)', () => {
+      has(broken((p) => { first(Object.values(p.assets)).assetId = 'X-9'; }), 'catalog key', 'X-9');
+      has(broken((p) => { (p.assets['I-001'] as { size: { width: number } }).size.width = 0; }), 'asset "I-001"', 'size');
+      expect(broken((p) => { (p.assets['I-001'] as { size: { width: number } }).size.width = Number.NaN; })).toEqual([
+        'assets.I-001.size.width is not a finite number',
+      ]);
+    });
+
+    it('rejects duplicate placement ids', () => {
+      expect(broken((p) => { (p.layout.placements[1] as PlacementDef).id = 'placement.counter'; })).toContain(
+        'duplicate placement id "placement.counter"',
+      );
+    });
+
+    it('rejects an unknown asset', () => {
+      has(broken((p) => (place(p, 'placement.fridge').assetId = 'I-999')), 'placement.fridge', 'unknown asset "I-999"');
+    });
+
+    it('rejects a rotation the asset does not allow', () => {
+      has(broken((p) => (place(p, 'placement.counter').rotation = 90)), 'placement.counter', 'rotation 90');
+    });
+
+    it('rejects scale on a non-scalable asset, and non-positive scale on a scalable one', () => {
+      has(broken((p) => (place(p, 'placement.fridge').scale = 1.2)), 'placement.fridge', 'not scalable');
+      has(
+        broken((p) => {
+          (p.assets['I-005'] as { scalable: boolean }).scalable = true;
+          place(p, 'placement.fridge').scale = -1;
+        }),
+        'placement.fridge',
+        'scale',
+      );
+    });
+
+    it('rejects overlapping colliding placements', () => {
+      has(broken((p) => (place(p, 'placement.storage-shelf').position.x = 1.2)), 'placement.storage-shelf', 'overlaps');
+    });
+
+    it('rejects a placement that straddles a wall, and one outside walkBounds', () => {
+      has(broken((p) => (place(p, 'placement.fridge').position.z = -1.9)), 'placement.fridge', 'straddles');
+      has(broken((p) => (place(p, 'placement.returns-yard').position.z = -6.9)), 'placement.returns-yard', 'walkBounds');
+    });
+
+    it('rejects furniture in the door swing area', () => {
+      has(broken((p) => (place(p, 'placement.returns-inside').position.x = 1.9)), 'placement.returns-inside', 'swing area', 'opening.door');
+    });
+
+    it('rejects furniture whose front cannot be reached', () => {
+      // Middle shelf 0.3 m in front of the fridge leaves no room for the player circle.
+      has(
+        broken((p) => (place(p, 'placement.middle-shelf').position = { x: -0.1, z: -0.6 })),
+        'placement.fridge',
+        'cannot be used from the front',
+      );
+    });
+
+    it('rejects a blocked walkway (door sealed from outside)', () => {
+      const errors = broken((p) => {
+        place(p, 'placement.returns-yard').position = { x: 2.0, z: 2.35 };
+        place(p, 'placement.returns-yard').rotation = 0;
+      });
+      has(errors, 'interior is not reachable');
+    });
+
+    it('rejects bad support relations', () => {
+      has(broken((p) => (place(p, 'placement.register').on = 'placement.nope')), 'placement.register', 'unknown placement');
+      has(broken((p) => (place(p, 'placement.register').on = 'placement.register')), 'placement.register', 'itself');
+      has(broken((p) => (place(p, 'placement.counter').on = 'placement.wall-shelf-north')), 'placement.register', 'max. one level');
+      has(broken((p) => delete place(p, 'placement.register').on), 'placement.register', 'requires support');
+      has(broken((p) => (place(p, 'placement.register').position.x = 1.0)), 'placement.register', 'supporter');
+    });
+
+    it('can be rearranged purely by data and stays valid', () => {
+      const pack = structuredClone(ruhrgebietPack);
+      const beforeColliders = placementColliders(pack.layout, pack.assets);
+      const shelf = place(pack, 'placement.middle-shelf');
+      const crate = place(pack, 'placement.returns-yard');
+      const shelfBefore = placementFootprint(shelf, pack.assets['I-004'] as never);
+      shelf.position = { x: 0.9, z: -0.3 };
+      shelf.rotation = 180;
+      crate.position = { x: -4.5, z: -2.4 };
+      crate.rotation = 90;
+      expect(validateContent(pack)).toEqual([]);
+      const afterColliders = placementColliders(pack.layout, pack.assets);
+      expect(afterColliders).toHaveLength(beforeColliders.length);
+      const rectOf = (list: typeof afterColliders, id: string) => list.find((c) => c.placementId === id)?.rect;
+      expect(rectOf(afterColliders, 'placement.middle-shelf')).not.toEqual(rectOf(beforeColliders, 'placement.middle-shelf'));
+      expect(rectOf(afterColliders, 'placement.middle-shelf')).toEqual(placementFootprint(shelf, pack.assets['I-004'] as never));
+      expect(placementFootprint(shelf, pack.assets['I-004'] as never)).not.toEqual(shelfBefore);
+      expect(rectOf(afterColliders, 'placement.returns-yard')).toEqual(placementFootprint(crate, pack.assets['I-012'] as never));
+    });
   });
 });

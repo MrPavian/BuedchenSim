@@ -1,6 +1,6 @@
 import { BoxGeometry, Group, Mesh, type Material, type Object3D } from 'three';
 import type { KioskDef, WallOpening, WallSide } from '../../game/types';
-import { buildWallPieces, wallRect, type Box } from '../kioskGeometry';
+import { buildWallPieces, wallRect, type Box } from '../../game/kioskGeometry';
 import { createSignTexture, type Materials } from '../materials';
 
 /** Names the views look up (not gameplay data). */

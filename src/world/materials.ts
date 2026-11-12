@@ -152,6 +152,10 @@ export interface Materials {
   base: MeshLambertMaterial;
   /** Tinted placeholder for unknown asset ids. */
   placeholder: MeshLambertMaterial;
+  /** Light front plate of generic furniture placeholders (makes rotation visible). */
+  placeholderFront: MeshLambertMaterial;
+  /** Per-asset tinted bodies of generic placeholders, created on demand. */
+  placeholderTints: Map<string, MeshLambertMaterial>;
   marker: MeshBasicMaterial;
   playerJacket: MeshLambertMaterial;
   playerPants: MeshLambertMaterial;
@@ -182,6 +186,8 @@ export function createMaterials(): Materials {
     roadLine: lambert(palette.roadLine),
     base: lambert(palette.base),
     placeholder: lambert(0xd05fd0),
+    placeholderFront: lambert(0xf2ead2),
+    placeholderTints: new Map(),
     marker: new MeshBasicMaterial({ color: palette.marker, transparent: true }),
     playerJacket: lambert(palette.player.jacket),
     playerPants: lambert(palette.player.pants),

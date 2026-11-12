@@ -4,7 +4,7 @@ import { PLAYER_HEIGHT, buildWallPieces, kioskColliders, wallExtent, wallRect, W
 
 const ruhrgebietLayout = testPack.layout;
 
-const { kiosk, furniture } = ruhrgebietLayout;
+const { kiosk } = ruhrgebietLayout;
 
 describe('kioskGeometry', () => {
   const pieces = buildWallPieces(kiosk);
@@ -59,18 +59,13 @@ describe('kioskGeometry', () => {
     rects.some((r) => x > r.minX && x < r.maxX && midZ > r.minZ && midZ < r.maxZ);
 
   it('closed door adds a collider across the opening, open door removes it', () => {
-    const closed = kioskColliders(kiosk, furniture, false);
-    const open = kioskColliders(kiosk, furniture, true);
+    const closed = kioskColliders(kiosk, false);
+    const open = kioskColliders(kiosk, true);
     const mid = (doorGap.minX + doorGap.maxX) / 2;
     expect(covers(closed, mid)).toBe(true);
     expect(covers(open, mid)).toBe(false);
     // The sales window wall always blocks.
     expect(covers(open, -1)).toBe(true);
     expect(covers(closed, -1)).toBe(true);
-  });
-
-  it('furniture is always part of the colliders', () => {
-    const open = kioskColliders(kiosk, furniture, true);
-    for (const f of furniture) expect(open).toContainEqual(f.rect);
   });
 });

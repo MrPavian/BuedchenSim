@@ -9,16 +9,19 @@ import {
   PointLight,
   Scene,
   type BufferGeometry,
+  type Object3D,
   type Material,
   type Texture,
 } from 'three';
 import type { Game } from '../game/game';
 import type { Vec2 } from '../game/types';
+import { quarterTurnToRadians, placementBaseHeight } from '../game/placement';
+import { PLAYER_RADIUS } from '../game/constants';
 import { createFurniture, createGround, createKiosk } from './assets/registry';
 import { createFollowCamera } from './camera';
 import { moveCircle, resolvePosition } from './collision';
 import { createInput } from './input';
-import { kioskColliders } from './kioskGeometry';
+import { buildWorldColliders } from './colliders';
 import { createMaterials, palette } from './materials';
 import { createOcclusion } from './occlusion';
 import { createPlayerFigure } from './playerFigure';
@@ -35,9 +38,10 @@ export interface World {
   render(alpha: number): void;
   resize(): void;
   dispose(): void;
+  /** Debug accessor: pose of a placement read from the actual scene object (null for unknown ids). */
+  getPlacementTransform(id: string): { x: number; y: number; z: number; rotationDeg: number } | null;
 }
 
-const PLAYER_RADIUS = 0.3;
 const PLAYER_SPEED = 3.5; // m/s
 const PLAYER_FOOT_Y = 0.02;
 
@@ -86,7 +90,22 @@ export function createWorld(game: Game, container: HTMLElement): World {
   for (const area of layout.ground) scene.add(createGround(area, materials));
   const kioskRoot = createKiosk(layout.kiosk, materials);
   scene.add(kioskRoot);
-  for (const item of layout.furniture) scene.add(createFurniture(item, materials));
+  const placementObjects = new Map<string, Object3D>();
+  for (const placement of layout.placements) {
+    const asset = game.content.assets[placement.assetId];
+    if (!asset) throw new Error(`Placement "${placement.id}" references unknown asset "${placement.assetId}"`);
+    const object = createFurniture(asset, materials);
+    object.name = placement.id;
+    object.position.set(
+      placement.position.x,
+      placementBaseHeight(placement, layout, game.content.assets),
+      placement.position.z,
+    );
+    object.rotation.y = quarterTurnToRadians(placement.rotation);
+    if (placement.scale !== undefined) object.scale.setScalar(placement.scale);
+    scene.add(object);
+    placementObjects.set(placement.id, object);
+  }
 
   const kioskView = createKioskView(game, kioskRoot);
   const occlusion = createOcclusion({ ...kioskView.parts, footprint: fp });
@@ -96,8 +115,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
   const figure = createPlayerFigure(materials);
   scene.add(figure.root);
 
-  const closedColliders = kioskColliders(layout.kiosk, layout.furniture, false);
-  const openColliders = kioskColliders(layout.kiosk, layout.furniture, true);
+  const { closed: closedColliders, open: openColliders } = buildWorldColliders(layout, game.content.assets);
 
   const followCamera = createFollowCamera(1);
   const input = createInput(() => {
@@ -179,6 +197,18 @@ export function createWorld(game: Game, container: HTMLElement): World {
     },
 
     resize,
+
+    getPlacementTransform(id) {
+      const object = placementObjects.get(id);
+      if (!object) return null;
+      scene.updateMatrixWorld(true);
+      return {
+        x: object.position.x,
+        y: object.position.y,
+        z: object.position.z,
+        rotationDeg: Math.round(((object.rotation.y * 180) / Math.PI + 360) % 360),
+      };
+    },
 
     dispose() {
       window.removeEventListener('resize', resize);

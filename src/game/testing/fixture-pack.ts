@@ -1,9 +1,67 @@
-import type { ContentPack, RegionLayout } from '../types';
+import type { AssetDef, ContentPack, RegionLayout } from '../types';
 
 /**
  * Self-contained test fixture so game tests do not depend on the content layer
  * (game imports core only). Mirrors the shape of a real region pack.
  */
+const assets: Record<string, AssetDef> = {
+  'K-001': {
+    assetId: 'K-001',
+    name: 'Test building',
+    category: 'building',
+    size: { width: 6, depth: 4, height: 3.2 },
+    collides: false,
+    allowedRotations: [0],
+    scalable: false,
+  },
+  'I-001': {
+    assetId: 'I-001',
+    name: 'Test counter',
+    category: 'furniture',
+    size: { width: 2.8, depth: 0.65, height: 1.0 },
+    collides: true,
+    allowedRotations: [0, 180],
+    scalable: false,
+  },
+  'I-002': {
+    assetId: 'I-002',
+    name: 'Test register',
+    category: 'furniture',
+    size: { width: 0.45, depth: 0.4, height: 0.35 },
+    collides: false,
+    allowedRotations: [0, 90, 180, 270],
+    scalable: false,
+    requiresSupport: true,
+  },
+  'I-003': {
+    assetId: 'I-003',
+    name: 'Test wall shelf',
+    category: 'furniture',
+    size: { width: 2.4, depth: 0.4, height: 2.0 },
+    collides: true,
+    allowedRotations: [0, 90, 180, 270],
+    scalable: false,
+  },
+  'E-001': {
+    assetId: 'E-001',
+    name: 'Test sidewalk',
+    category: 'ground',
+    size: { width: 24, depth: 3, height: 0.03 },
+    collides: false,
+    allowedRotations: [0],
+    scalable: false,
+  },
+  'E-002': {
+    assetId: 'E-002',
+    name: 'Test street',
+    category: 'ground',
+    size: { width: 24, depth: 5.8, height: 0.02 },
+    collides: false,
+    allowedRotations: [0],
+    scalable: false,
+  },
+};
+
 const layout: RegionLayout = {
   kiosk: {
     assetId: 'K-001',
@@ -16,19 +74,18 @@ const layout: RegionLayout = {
     ],
     signText: 'TEST KIOSK',
   },
-  furniture: [
+  layoutVersion: 1,
+  placements: [
+    { id: 'placement.counter', assetId: 'I-001', position: { x: -1.0, z: 1.525 }, rotation: 0 },
     {
-      id: 'furniture.counter',
-      assetId: 'I-001',
-      rect: { minX: -2.4, maxX: 0.4, minZ: 1.2, maxZ: 1.85 },
-      height: 1.0,
+      id: 'placement.register',
+      assetId: 'I-002',
+      position: { x: -0.2, z: 1.525 },
+      rotation: 180,
+      on: 'placement.counter',
     },
-    {
-      id: 'furniture.wall-shelf',
-      assetId: 'I-003',
-      rect: { minX: -2.6, maxX: 1.0, minZ: -1.85, maxZ: -1.45 },
-      height: 2.0,
-    },
+    { id: 'placement.wall-shelf-north', assetId: 'I-003', position: { x: -1.65, z: -1.65 }, rotation: 0 },
+    { id: 'placement.wall-shelf-west', assetId: 'I-003', position: { x: -2.65, z: -0.2 }, rotation: 90 },
   ],
   ground: [
     { id: 'ground.sidewalk', assetId: 'E-001', kind: 'sidewalk', rect: { minX: -12, maxX: 12, minZ: 2, maxZ: 5 } },
@@ -46,8 +103,9 @@ const layout: RegionLayout = {
       position: { x: -1.0, z: 1.6 },
       radius: 1.7,
       openingId: 'opening.sales-window',
+      marker: { position: { x: -1.0, z: 1.95 }, height: 1.03 },
     },
   ],
 };
 
-export const testPack: ContentPack = { regionId: 'region.test', name: 'Test', layout };
+export const testPack: ContentPack = { regionId: 'region.test', name: 'Test', assets, layout };

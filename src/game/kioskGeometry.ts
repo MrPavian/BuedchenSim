@@ -1,5 +1,5 @@
-import type { FurnitureDef, KioskDef, Rect, WallOpening, WallSide } from '../game/types';
-import { mergeRects } from './collision';
+import { mergeRects } from './rects';
+import type { KioskDef, Rect, WallOpening, WallSide } from './types';
 
 /**
  * Pure kiosk geometry derived from the KioskDef. The SAME wall boxes feed the meshes
@@ -97,18 +97,16 @@ export function openingRect(kiosk: KioskDef, opening: WallOpening): Rect {
 }
 
 /**
- * Obstacles for the player circle: wall pieces reaching below head height (sill walls
- * block, lintels over doors do not), all furniture, and the closed door leaves.
- * Shutter state is irrelevant: the sill wall and the counter stay either way.
+ * Wall obstacles for the player circle: wall pieces reaching below head height (sill walls
+ * block, lintels over doors do not) and the closed door leaves. Furniture colliders come
+ * from placements (see colliders.ts). Shutter state is irrelevant: the sill wall stays either way.
  */
-export function kioskColliders(kiosk: KioskDef, furniture: readonly FurnitureDef[], doorOpen: boolean): Rect[] {
+export function kioskColliders(kiosk: KioskDef, doorOpen: boolean): Rect[] {
   const rects: Rect[] = buildWallPieces(kiosk)
     .filter((p) => p.box.minY < PLAYER_HEIGHT)
     .map((p) => boxToRect(p.box));
   if (!doorOpen) {
     for (const o of kiosk.openings) if (o.kind === 'door') rects.push(openingRect(kiosk, o));
   }
-  const merged = mergeRects(rects);
-  for (const f of furniture) merged.push({ ...f.rect });
-  return merged;
+  return mergeRects(rects);
 }
