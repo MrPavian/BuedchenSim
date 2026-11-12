@@ -43,7 +43,7 @@ Phase 1 ist abgeschlossen ([Auftrag 01](docs/auftraege/01-threejs-projektgeruest
 - **Offen:** O-3 Zeitmodell, O-4 Alkohol und Tabak, O-5 Hosting und Lizenz.
 
 ## Nächster Schritt
-Phase 2 laut [Implementierungsplan](docs/IMPLEMENTIERUNGSPLAN.md): den Kiosk und seine Einrichtung modular ausarbeiten.
+[Auftrag 02 – Modularer Kiosk und Einrichtung](docs/auftraege/02-modularer-kiosk-und-einrichtung.md): Fassade und Einrichtung als wiederverwendbare Assets mit verschiebbarer Platzierungsliste ausarbeiten. Der Auftrag enthält außerdem die gezielte Prüfung der zehn npm-Audit-Hinweise und die Nacharbeit an Sichtfreistellung und Klappenmarkierung.
 
 ## Projekt-Dokumentation
 Die Art-Direction, Produktionsplanung, Regionen, fiktive Produktwelt, Claude-Code-Prompts und Three.js-Asset-Standards liegen unter [docs/artwork-prompts](docs/artwork-prompts/README.md).
