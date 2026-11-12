@@ -3,6 +3,7 @@ import type { Game } from '../../game/game';
 import type { InteractionPointDef } from '../../game/types';
 import type { Materials } from '../materials';
 import { SIDEWALK_HEIGHT } from '../assets/ground';
+import { doorPlateTop } from '../assets/kiosk/signage';
 
 export interface MarkerInfo {
   highlighted: boolean;
@@ -17,6 +18,10 @@ export interface MarkerView {
   dispose(): void;
   root: Group;
 }
+
+const GEM_RADIUS = 0.13;
+/** Gem centre above the door plate: largest pulse scale, bob amplitude and a small gap. */
+const GEM_CLEARANCE = GEM_RADIUS * 1.25 + 0.05 + 0.03;
 
 interface Marker {
   id: string;
@@ -37,29 +42,38 @@ export function createMarkerView(game: Game, points: readonly InteractionPointDe
   root.name = 'interaction-markers';
   const openings = game.content.layout.kiosk.openings;
   const markers: Marker[] = [];
-  const ringGeometries = new Map<number, RingGeometry>();
-  const ringFor = (radius: number): RingGeometry => {
-    let g = ringGeometries.get(radius);
+  const ringGeometries = new Map<string, RingGeometry>();
+  const ringFor = (radius: number, radiusZ: number): RingGeometry => {
+    const key = `${radius}x${radiusZ}`;
+    let g = ringGeometries.get(key);
     if (!g) {
-      g = new RingGeometry(radius - Math.max(0.1, radius * 0.3), radius, 40);
-      ringGeometries.set(radius, g);
+      if (radiusZ < radius) {
+        // Too narrow for a readable band: a filled ellipse (ring local y becomes world -z after the flat rotation).
+        g = new RingGeometry(0, radius, 40);
+        g.scale(1, radiusZ / radius, 1);
+      } else {
+        g = new RingGeometry(radius - Math.max(0.1, radius * 0.3), radius, 40);
+      }
+      ringGeometries.set(key, g);
     }
     return g;
   };
-  const gemGeometry = new OctahedronGeometry(0.13);
+  const gemGeometry = new OctahedronGeometry(GEM_RADIUS);
 
   for (const point of points) {
     const opening = openings.find((o) => o.id === point.openingId);
     const ringMaterial = m.marker.clone();
     const gemMaterial = m.marker.clone();
     gemMaterial.depthTest = false; // stays readable through the wall it hangs in
-    const ring = new Mesh(ringFor(point.marker?.radius ?? 0.42), ringMaterial);
+    const radius = point.marker?.radius ?? 0.42;
+    const ring = new Mesh(ringFor(radius, point.marker?.radiusZ ?? radius), ringMaterial);
     ring.rotation.x = -Math.PI / 2;
     // Visual marker position: the point's own marker override (e.g. on the sill), else the ground at the point.
     const at = point.marker?.position ?? point.position;
     ring.position.set(at.x, point.marker ? point.marker.height + 0.02 : SIDEWALK_HEIGHT + 0.02, at.z);
     ring.renderOrder = 2;
-    const baseY = opening ? (point.kind === 'door' ? opening.head + 0.35 : (opening.sill + opening.head) / 2) : 2;
+    // Doors: above the plate that sits over the door head; windows: middle of the opening.
+    const baseY = opening ? (point.kind === 'door' ? doorPlateTop(opening.head) + GEM_CLEARANCE : (opening.sill + opening.head) / 2) : 2;
     const gem = new Mesh(gemGeometry, gemMaterial);
     gem.position.set(at.x, baseY, at.z);
     gem.renderOrder = 10;

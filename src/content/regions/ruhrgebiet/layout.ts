@@ -61,9 +61,9 @@ export const ruhrgebietLayout: RegionLayout = {
       position: { x: -1.0, z: 1.6 },
       radius: 1.7,
       openingId: 'opening.sales-window',
-      // Ring on the continuous work surface (counter top = wall top = outer ledge, all at 1.0 m); centred on the wall so it
-      // stays visible on the outer ledge even when the flap is closed.
-      marker: { position: { x: -1.0, z: 1.98 }, height: 1.0, radius: 0.27 },
+      // Marker on the outer zinc ledge (wall outer face z 2.075, ledge to z 2.355, top at 1.0 m), in front of the closed flap
+      // (front face z 2.17) and clear of the open one: a flat ellipse of x 1.0 / z 0.085 around z 2.265.
+      marker: { position: { x: -1.0, z: 2.265 }, height: 1.0, radius: 1.0, radiusZ: 0.085 },
     },
   ],
 };

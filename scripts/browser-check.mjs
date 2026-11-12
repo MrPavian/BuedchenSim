@@ -606,6 +606,9 @@ try {
     const v = await visibility();
     const blue = await figureCheck('blue');
     record('9d3 Seitlich (West, neben den Kisten): Figur erkennbar, Gebäude deckend', blue.n >= 500 && v.roof && v.southUpper, `${blue.n} Jacken-Pixel, ${JSON.stringify(v)}`);
+    const silC = await figureCheck('silhouette');
+    const silOn = await page.evaluate(() => window.__buedchen.world.isSilhouetteVisible());
+    record('9d3b Seitlich neben den Kisten: keine Silhouette (nur Möbel/Kisten verdecken)', !silOn && silC.n < 60, `${silC.n} Silhouetten-Pixel, sichtbar=${silOn}`);
   });
 
   // ---------------------------------------------------------------- 9b collision follows the layout data
@@ -662,6 +665,8 @@ try {
     const blue = await figureCheck('blue');
     const v = await visibility();
     record('9d5 Innen: Figur erkennbar', blue.n >= 500, `${blue.n} Jacken-Pixel`);
+    const silI = await figureCheck('silhouette');
+    record('9d5b Innen: keine Silhouette', silI.n < 60 && !(await page.evaluate(() => window.__buedchen.world.isSilhouetteVisible())), `${silI.n} Silhouetten-Pixel`);
     record('9d6 Innen: Dach ausgeblendet, obere Südwand ausgeblendet, untere Wand sichtbar', !v.roof && !v.southUpper && v.lowerWalls, JSON.stringify(v));
     await markerCheck('innen', false);
     await markerCheck('innen', true);

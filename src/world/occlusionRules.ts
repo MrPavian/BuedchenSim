@@ -95,3 +95,21 @@ export function decideCut(kiosk: KioskDef, cutHeight: number, player: Vec2, came
   }
   return { roof: true, walls };
 }
+
+/** Sample heights (chest, head) used to decide whether the building hides the figure; the feet are ignored. */
+export const SILHOUETTE_HEIGHTS: readonly number[] = [0.9, 1.65];
+/** Hysteresis (m): while the silhouette is shown the kiosk volume is grown by this much, so it does not flicker. */
+export const SILHOUETTE_HYSTERESIS = 0.15;
+
+/**
+ * Whether the x-ray silhouette should be drawn: only while the player is outside and the kiosk volume
+ * (footprint x height) lies between camera and the chest or head. Furniture, crates and the low south wall
+ * never trigger it, so hidden feet simply stay hidden.
+ */
+export function shouldShowSilhouette(kiosk: KioskDef, camera: Vec3, figure: Vec2, wasShown = false): boolean {
+  if (isInsideKiosk(figure, kiosk.footprint)) return false;
+  const f = kiosk.footprint;
+  const g = wasShown ? SILHOUETTE_HYSTERESIS : 0;
+  const box: Bounds = { minX: f.minX - g, maxX: f.maxX + g, minY: 0, maxY: kiosk.height + g, minZ: f.minZ - g, maxZ: f.maxZ + g };
+  return SILHOUETTE_HEIGHTS.some((y) => segmentHitsBox(camera, { x: figure.x, y, z: figure.z }, box));
+}

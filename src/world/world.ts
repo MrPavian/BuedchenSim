@@ -24,6 +24,7 @@ import { createInput } from './input';
 import { buildWorldColliders } from './colliders';
 import { createMaterials, palette } from './materials';
 import { createOcclusion } from './occlusion';
+import { shouldShowSilhouette } from './occlusionRules';
 import { createPlayerFigure } from './playerFigure';
 import { createRenderer } from './renderer';
 import { createKioskView } from './views/kioskView';
@@ -53,6 +54,8 @@ export interface World {
   getMarkerInfo(pointId: string): MarkerScreenInfo | null;
   /** Debug accessor: projected screen position (CSS pixels, relative to the canvas) of the figure's torso. */
   getFigureScreen(): { x: number; y: number; visible: boolean };
+  /** Whether the x-ray silhouette of the player is currently drawn. */
+  isSilhouetteVisible(): boolean;
 }
 
 export interface KioskVisibility {
@@ -137,6 +140,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
   scene.add(markers.root);
 
   const figure = createPlayerFigure(materials);
+  const silhouetteCamera = new Vector3();
   scene.add(figure.root);
 
   const { closed: closedColliders, open: openColliders } = buildWorldColliders(layout, game.content.assets);
@@ -230,6 +234,8 @@ export function createWorld(game: Game, container: HTMLElement): World {
       markers.update(elapsed);
       scene.updateMatrixWorld(true);
       occlusion.update(dt, followCamera.camera, pose, needsSnap);
+      followCamera.camera.getWorldPosition(silhouetteCamera);
+      figure.setSilhouetteVisible(shouldShowSilhouette(layout.kiosk, silhouetteCamera, pose, figure.isSilhouetteVisible()));
       needsSnap = false;
 
       renderer.render(scene, followCamera.camera);
@@ -271,6 +277,8 @@ export function createWorld(game: Game, container: HTMLElement): World {
       });
       return { ...state, lowerWalls: lowerWalls && (fixed?.visible ?? false) };
     },
+
+    isSilhouetteVisible: () => figure.isSilhouetteVisible(),
 
     getFigureScreen() {
       const p = figure.root.position;

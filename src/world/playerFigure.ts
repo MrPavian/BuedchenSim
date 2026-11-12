@@ -17,6 +17,9 @@ export interface PlayerFigure {
   root: Group;
   /** Advances the walk cycle; `speed` in m/s. */
   animate(dt: number, speed: number): void;
+  /** Shows or hides the x-ray silhouette copy. */
+  setSilhouetteVisible(visible: boolean): void;
+  isSilhouetteVisible(): boolean;
 }
 
 /** Draw order: environment (0) < x-ray silhouette (1) < solid figure (2). */
@@ -136,6 +139,10 @@ export function createPlayerFigure(m: Materials): PlayerFigure {
   let phase = 0;
   return {
     root,
+    setSilhouetteVisible(visible) {
+      silhouette.body.visible = visible;
+    },
+    isSilhouetteVisible: () => silhouette.body.visible,
     animate(dt, speed) {
       const moving = speed > 0.1;
       if (moving) phase += dt * 9;

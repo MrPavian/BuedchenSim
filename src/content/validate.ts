@@ -262,6 +262,11 @@ export function validateContent(pack: ContentPack): string[] {
     if (!contains(layout.walkBounds, p.position.x, p.position.z)) {
       errors.push(`interaction point "${p.id}" is outside walkBounds`);
     }
+    if (p.marker) {
+      const { radius, radiusZ } = p.marker;
+      if (radius !== undefined && !(radius > 0)) errors.push(`interaction point "${p.id}" marker radius must be positive`);
+      if (radiusZ !== undefined && !(radiusZ > 0)) errors.push(`interaction point "${p.id}" marker radiusZ must be positive`);
+    }
   }
 
   // Walkways: only meaningful when the geometry above is sound.

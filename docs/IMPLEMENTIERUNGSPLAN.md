@@ -65,7 +65,7 @@ Aufgaben:
 
 Offene Restpunkte:
 - Prüfung auf echter Grafikhardware und in Firefox/Safari nach [PRUEFANLEITUNG-MANUELL.md](PRUEFANLEITUNG-MANUELL.md) ist noch nicht durchgeführt.
-- Von außen ist der Bodenring der Klappenmarkierung bei geschlossener Klappe größtenteils verdeckt.
+- Erledigt in der Nacharbeit vom 2026-11-12: Klappenmarkierung liegt auf der äußeren Fensterbank, Türmarker sitzt über der Tafel, Silhouette erscheint nur bei Verdeckung durch das Gebäude.
 - Gehweg und Straße (`E-001`, `E-002`) sind weiterhin Greybox; Umgebung folgt in Phase 6.
 - Regale und Kühlgeräte sind leer; Waren folgen in Phase 3.
 - O-3 (Zeitmodell) und O-4 (Alkohol und Tabak) sind am 2026-11-12 entschieden, siehe [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md); die Umsetzung gehört zu Phase 3.

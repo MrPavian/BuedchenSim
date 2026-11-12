@@ -11,6 +11,13 @@ export const SIGN_HEIGHT = 0.48;
 export const SIGN_TOP_GAP = 0.04; // below the roof slab
 const SIGN_DEPTH = 0.12;
 const PLATE_TEXT = 'Trinkhalle';
+const PLATE_GAP = 0.18; // above the door head
+const PLATE_HEIGHT = 0.22;
+
+/** Top edge of the small plate above a door (world Y); markers stay clear of it. */
+export function doorPlateTop(doorHead: number): number {
+  return doorHead + PLATE_GAP + PLATE_HEIGHT;
+}
 
 /** Returns the lower edge of the sign (used to mount the awning below it). */
 export function buildSignage(ctx: KioskContext): number {
@@ -42,8 +49,8 @@ export function buildSignage(ctx: KioskContext): number {
   if (door) {
     const { rig, frame } = createOpeningRig(ctx, door, 'kiosk.plate');
     const w = Math.min(0.9, 2 * frame.halfWidth - 0.1);
-    const h = 0.22;
-    const y0 = door.head + 0.18;
+    const h = PLATE_HEIGHT;
+    const y0 = door.head + PLATE_GAP;
     const outer = frame.halfWall;
     const builder = new SolidBuilder();
     builder.box(

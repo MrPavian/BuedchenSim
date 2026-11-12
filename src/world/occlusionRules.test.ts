@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { kioskCutHeight } from '../game/kioskGeometry';
 import { testPack } from '../game/testing/fixture-pack';
-import { decideCut, isInsideKiosk, segmentHitsBox } from './occlusionRules';
+import { decideCut, isInsideKiosk, segmentHitsBox, shouldShowSilhouette } from './occlusionRules';
 
 const { kiosk } = testPack.layout;
 const cut = kioskCutHeight(kiosk);
@@ -44,5 +44,30 @@ describe('decideCut', () => {
     // Centred camera: neither side wall is crossed.
     const centred = decideCut(kiosk, cut, { x: 0, z: 0 }, cameraFor(0, 0));
     expect(centred.walls.east || centred.walls.west).toBe(false);
+  });
+});
+
+describe('shouldShowSilhouette', () => {
+  const show = (x: number, z: number, was = false) => shouldShowSilhouette(kiosk, cameraFor(x, z), { x, z }, was);
+  it('shows it behind the kiosk and where the building is between camera and figure', () => {
+    expect(show(0, -3.0)).toBe(true);
+    expect(show(0, -4.2)).toBe(true);
+    expect(show(-2.5, -3.2)).toBe(true);
+  });
+  it('does not show it inside, beside the crates, or in front', () => {
+    expect(show(0.6, -0.3)).toBe(false);
+    expect(show(-1, 0.8)).toBe(false);
+    expect(show(-3.45, -0.1)).toBe(false);
+    expect(show(-3.5, 0.6)).toBe(false);
+    expect(show(2, 2.9)).toBe(false);
+  });
+  it('keeps a shown silhouette slightly longer (hysteresis)', () => {
+    // Camera lagging east: the line to a figure just west of the building grazes the corner region.
+    const cam = { x: 0, y: 10.2, z: 10 };
+    const fig = { x: -3.1, z: -0.5 };
+    const off = shouldShowSilhouette(kiosk, cam, fig, false);
+    const on = shouldShowSilhouette(kiosk, cam, fig, true);
+    expect(on || !off).toBe(true);
+    expect(off && !on).toBe(false);
   });
 });

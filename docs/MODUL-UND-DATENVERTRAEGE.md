@@ -417,11 +417,11 @@ Fabrikpfade relativ zu `src/world/assets/`. Die Gebäudeteile K-001-A bis K-001-
 
 ### 14.5 Weitere Vertragsänderungen
 - `ContentPack.assets`: der Asset-Katalog des Pakets.
-- `InteractionPointDef.marker`: optionale Position, Höhe und Radius der sichtbaren Markierung, getrennt vom logischen Interaktionspunkt. Die Klappen-Markierung liegt damit auf der Fensterbank.
+- `InteractionPointDef.marker`: optionale Position, Höhe und Radius der sichtbaren Markierung, getrennt vom logischen Interaktionspunkt. Mit dem optionalen `radiusZ` (kleiner als `radius`) wird die Markierung als flache Ellipse statt als Ring gezeichnet. Die Klappen-Markierung liegt damit als Streifen auf der äußeren Fensterbank. Die Validierung verlangt positive Werte für `radius` und `radiusZ`.
 - `PLAYER_RADIUS` (0,3 m) ist eine gemeinsame Konstante in `game`, genutzt von Welt und Validierung.
 - `src/integration/`: Tests, die wie `main.ts` alle Schichten importieren dürfen (echtes Inhaltspaket gegen echte Fabriken).
 
 ### 14.6 Sichtfreistellung
 - **Figur im Kiosk:** Das Dach wird ausgeblendet, die Südwand auf Brüstungshöhe (1,0 m) gekappt; Schild, Markise, Klappe und obere Türhälfte verschwinden mit. Ost- und Westwand werden nur gekappt, wenn sie die Sichtlinie zur Figur kreuzen. Die Nordwand bleibt stehen. Die Entscheidung ist eine reine, getestete Funktion (`src/world/occlusionRules.ts`).
-- **Figur außen und verdeckt:** Das Gebäude bleibt vollständig deckend. Die Figur wird zusätzlich als einfarbige Silhouette durch das Hindernis gezeichnet.
+- **Figur außen und verdeckt:** Das Gebäude bleibt vollständig deckend. Die Figur wird zusätzlich als einfarbige Silhouette durch das Hindernis gezeichnet. Die Silhouette ist nur eingeschaltet, wenn die Figur außen steht und das Gebäudevolumen die Sichtlinie zu Brust oder Kopf kreuzt (`shouldShowSilhouette`, mit 0,15 m Hysterese); Möbel, Kisten und die gekappte Südwand lösen sie nicht aus.
 - Kein Bauteil ist mehr durchscheinend; Glas an Kühlschrank und Eistruhe ist die einzige Transparenz.

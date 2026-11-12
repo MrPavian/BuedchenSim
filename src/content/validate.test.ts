@@ -107,6 +107,18 @@ describe('validateContent', () => {
     ).toContain('interaction point "interaction.door" is outside walkBounds');
   });
 
+  it('rejects non-positive marker radii', () => {
+    const errors = broken((p) => {
+      const point = p.layout.interactionPoints[1];
+      if (point?.marker) {
+        point.marker.radius = 0;
+        point.marker.radiusZ = -1;
+      }
+    });
+    expect(errors).toContain('interaction point "interaction.shutter" marker radius must be positive');
+    expect(errors).toContain('interaction point "interaction.shutter" marker radiusZ must be positive');
+  });
+
   it('rejects non-finite numbers', () => {
     const errors = broken((p) => {
       p.layout.spawn.heading = Number.NaN;

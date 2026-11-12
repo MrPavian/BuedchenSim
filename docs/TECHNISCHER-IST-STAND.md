@@ -110,13 +110,15 @@ Tests liegen als `*.test.ts` neben dem Code.
 
 **Sichtfreistellung (Auftrag 02 neu)**
 - Figur im Kiosk: Das Dach wird ausgeblendet und die Südwand auf Brüstungshöhe (1,0 m) geschnitten, zusammen mit Schild, Markise, Klappe und oberem Türblatt. Ost- und Westwand werden nur geschnitten, wenn sie zwischen Kamera und Figur liegen. Die Nordwand bleibt stehen.
-- Figur außen und verdeckt (hinter oder neben dem Kiosk): Das Gebäude bleibt vollständig deckend, die Figur erscheint als flächige, türkisfarbene Silhouette.
+- Figur außen und vom Gebäude verdeckt (hinter oder neben dem Kiosk): Das Gebäude bleibt vollständig deckend, die Figur erscheint als flächige, türkisfarbene Silhouette.
+- Die Silhouette erscheint nur, wenn das Gebäudevolumen zwischen Kamera und Brust oder Kopf der Figur liegt (`shouldShowSilhouette`). Im Kiosk und hinter Möbeln oder Kisten wird sie nicht gezeichnet; verdeckte Füße sind dort einfach verdeckt.
 - Es gibt keine durchscheinenden Gebäudematerialien mehr.
 
 **Interaktion**
 - Zwei Interaktionspunkte: Tür und Verkaufsklappe, jeweils öffnen/schließen.
 - `game` bestimmt den verfügbaren Punkt aus Spielerposition und Layout; die UI zeigt den Prompt, die Welt eine Markierung.
-- Die Markierung der Klappe sitzt am Verkaufsfenster auf der Theke (Position aus den Layoutdaten), nicht mehr im Thekenvolumen.
+- Die Markierung der Klappe liegt als flacher Streifen auf der äußeren Fensterbank (Position und Maße aus den Layoutdaten, `marker.radius`/`radiusZ`). Sie ist von außen und innen bei offener und geschlossener Klappe sichtbar.
+- Der schwebende Marker der Tür sitzt oberhalb der Tafel „Trinkhalle"; seine Höhe wird aus der Lage der Tafel abgeleitet.
 - Auslösen mit E oder Mausklick auf den Prompt. Tür und Klappe sind animiert.
 
 **UI**
@@ -138,9 +140,9 @@ Tests liegen als `*.test.ts` neben dem Code.
 |---|---|
 | `npm run typecheck` | fehlerfrei |
 | `npm run lint` | fehlerfrei |
-| `npm run test` | 14 Dateien, 142 Tests bestanden |
+| `npm run test` | 14 Dateien, 146 Tests bestanden |
 | `npm run build` | erfolgreich, Größen siehe Abschnitt 8 |
-| `npm run check:browser` | 41 von 41 Prüfungen bestanden (vier Läufe in Folge) |
+| `npm run check:browser` | 43 von 43 Prüfungen bestanden (ein Lauf nach den Nacharbeiten; davor vier Läufe mit 41 von 41) |
 | `npm audit` | 0 Hinweise |
 
 Die Browserprüfung lief in Headless-Chromium mit Software-Rendering (ca. 26–29 Bilder/s). Sie deckt ab:
@@ -149,7 +151,7 @@ Die Browserprüfung lief in Headless-Chromium mit Software-Rendering (ca. 26–2
 - Wand und geschlossene Tür blockieren; Tür öffnen und hindurchgehen; Klappe von innen bedienen; Kiosk umrunden; Zustand nach Neuladen wiederhergestellt.
 - Alle elf Platzierungen stehen an der konfigurierten Position, Drehung (1 cm / 0,5°) und Höhe.
 - Kollision folgt den Layoutdaten: Mittelregal, Kühlschrank, Eistruhe und die Kisten außen stoppen die Figur 0,30 m vor der aus den Daten berechneten Grundfläche; der Gang zwischen Mittelregal und Theke ist begehbar.
-- Figur sichtbar vor, im, hinter und neben dem Kiosk; hinter dem Kiosk als Silhouette bei deckendem Gebäude; innen sind Dach und obere Südwand ausgeblendet, die untere Wand sichtbar.
+- Figur sichtbar vor, im, hinter und neben dem Kiosk; hinter dem Kiosk als Silhouette bei deckendem Gebäude; innen sind Dach und obere Südwand ausgeblendet, die untere Wand sichtbar; neben den Kisten und im Kiosk erscheint keine Silhouette.
 - Klappenmarkierung sichtbar von innen und außen, jeweils bei offener und geschlossener Klappe.
 
 Screenshots aus der laufenden Anwendung:
@@ -190,9 +192,9 @@ Der Override setzt eine neuere Hauptversion durch, als die betroffenen Pakete se
 
 ## 9. Bekannte Einschränkungen
 - **Nicht auf echter Grafikhardware und nicht in Firefox oder Safari geprüft.** Die Bildrate dort ist ungemessen; es wird keine Bildrate zugesagt. Die Schritte für diese Prüfung stehen in [PRUEFANLEITUNG-MANUELL.md](PRUEFANLEITUNG-MANUELL.md) und sind noch nicht durchgeführt.
-- Von außen bei geschlossener Klappe ist der Bodenring der Klappenmarkierung größtenteils verdeckt; der schwebende Marker darüber bleibt deutlich sichtbar.
+- Die Klappenmarkierung auf der Fensterbank ist nur etwa 17 cm tief und in der Außenansicht entsprechend schmal; steht die Figur direkt davor, verdeckt ihr Kopf die Mitte.
+- Die Silhouette schaltet an Gebäudeecken hart um (ganz sichtbar oder gar nicht), gedämpft durch eine kleine Hysterese.
 - Die Sichtbarkeitsprüfungen für Figur und Markierung zählen Bildpunkte in bestimmten Farben. Das ist ein Näherungswert, kein Bildvergleich.
-- Steht die Figur dicht neben dem Kistenstapel außen, erscheinen die verdeckten Beine als Silhouette. Das ist das vorgesehene Verhalten, wirkt aber etwas ungewohnt.
 - Ein früherer Lauf der Browserprüfung brach einmal mit geschlossenem Browser ab. Die Ursache ließ sich nicht reproduzieren; das Skript meldet Absturz, Trennung und Kontextverlust jetzt ausdrücklich.
 - Die Browserprüfung dauert mit Software-Rendering etwa 9–10 Minuten.
 - Der Ladepfad für externe GLB-Modelle (ADR-006) ist weiterhin ungetestet; alle Assets entstehen im Code.

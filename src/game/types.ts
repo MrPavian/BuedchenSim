@@ -103,7 +103,14 @@ export interface InteractionPointDef {
   radius: number;
   openingId: string;
   /** Where the visual marker is shown (defaults to `position` at ground level). */
-  marker?: { position: Vec2; height: number; /** Outer ring radius in m (default 0.42); small for the shutter sill. */ radius?: number };
+  marker?: {
+    position: Vec2;
+    height: number;
+    /** Outer ring radius in m (default 0.42), along x. */
+    radius?: number;
+    /** Half depth along z in m; when smaller than `radius` the marker is drawn as a flat filled ellipse (e.g. on a narrow ledge). */
+    radiusZ?: number;
+  };
 }
 
 export interface RegionLayout {
