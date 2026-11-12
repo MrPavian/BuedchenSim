@@ -71,16 +71,25 @@ Offene Restpunkte:
 - O-3 (Zeitmodell) und O-4 (Alkohol und Tabak) sind am 2026-11-12 entschieden, siehe [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md); die Umsetzung gehört zu Phase 3.
 
 ## Phase 3 – Wirtschaftlicher Büdchen-Alltag und erste Produkte
-**Ziel:** ein geschlossener Gameplay-Loop statt einer reinen 3D-Kulisse.
+**Ziel:** ein geschlossener Gameplay-Loop: Waren einkaufen, Lieferung annehmen, einräumen, verkaufen und den Tag abrechnen. Die beschlossenen Entscheidungen O-3 (Spielzeit) und O-4 (Alkohol/Tabak) werden in dieser Phase umgesetzt.
 
-Aufgaben:
-1. Datenmodell für Produkte, Kategorien, Einkaufspreis, Verkaufspreis, Bestand und Lagerbedarf definieren.
-2. Erste 20–30 originäre, fiktive Waren als 3D-Assets erstellen.
-3. Waren platzieren, auffüllen, verkaufen und Bestand verändern.
-4. Kasse und Tagesabschluss bzw. einfache Umsatzübersicht integrieren.
-5. Preise, Nachfrage und Lagerengpässe nachvollziehbar darstellen.
+**Konkreter Auftrag:** [Auftrag 03 – Waren, Wirtschaftskreislauf und Spieltag](auftraege/03-waren-wirtschaftskreislauf-und-spieltag.md).
 
-**Abnahme:** Spieler kann Ware beschaffen, einräumen und verkaufen; Geld und Bestand ändern sich konsistent.
+Umfang:
+1. 20–30 originäre, fiktive Produkte mit stabilen IDs, Preisen in Integer-Cent, Kategorien, Lageranforderungen und Asset-Zuordnung.
+2. Warenmodelle und sichtbare Bestückung von Regalen, Kühlschrank, Eistruhe, Pressebereich und Theke.
+3. Einkauf, Bestellung, Lieferung und Lagerbestand.
+4. Einräumen/Nachfüllen mit passenden Lager- und Präsentationsplätzen sowie Kapazitätsprüfung.
+5. Kassenoberfläche, Warenkorb, Verkauf, Geld-/Bestandsbuchung und Transaktionshistorie.
+6. Altersprüfung für fiktives Bier und fiktive Tabakwaren als verbindliche Verkaufsschranke.
+7. Spieluhr: 1 Spielminute = 1 Sekunde, 06:00–22:00 Uhr, Pause, Vorspulen und Tagesabschluss.
+8. Savegame-Schema erweitern und bestehende Version-1-Spielstände migrieren.
+
+**Abgrenzung:** Noch keine NPC-KI oder Kundenroutinen, Dialoge, Beziehungen, Quests, Wetter, Events oder dynamische Nachfrage. Verkäufe erfolgen zunächst über einen expliziten Kassenablauf; die Verkaufsdomäne wird so gebaut, dass Phase 4 sie mit NPC-Kunden verwenden kann.
+
+**Abnahme:** Der Spieler kann in der laufenden Anwendung Ware bestellen, erhalten, einräumen und verkaufen. Geld und Bestände bleiben konsistent; altersbeschränkte Waren sind ohne bestätigte Altersprüfung gesperrt. Die Spieluhr ist pausierbar/vorspulbar, Tagesabschluss und Savegame-Migration funktionieren.
+
+**Status (2026-11-12): Auftrag erstellt; Umsetzung steht aus.** O-3 und O-4 sind in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md) als entschieden dokumentiert.
 
 ## Phase 4 – Bewohner und soziale Bindung (MVP)
 **Ziel:** das Viertel bekommt wiederkehrende Menschen und der Kiosk eine soziale Identität.
