@@ -7,6 +7,7 @@ import {
   Mesh,
   PlaneGeometry,
   Scene,
+  Vector3,
   type BufferGeometry,
   type Object3D,
   type Material,
@@ -41,6 +42,33 @@ export interface World {
   getRenderStats(): { calls: number; triangles: number; geometries: number; textures: number; lights: number };
   /** Debug accessor: pose of a placement read from the actual scene object (null for unknown ids). */
   getPlacementTransform(id: string): { x: number; y: number; z: number; rotationDeg: number } | null;
+  /** Debug accessor: fixed update steps run and simulated seconds since start (independent of frame stutter). */
+  getSimStats(): { steps: number; seconds: number };
+  /** Debug accessor: which kiosk parts are currently drawn (the dollhouse cutaway state). */
+  getKioskVisibility(): KioskVisibility;
+  /**
+   * Debug accessor: state and projected position of an interaction marker (CSS pixels relative to the canvas),
+   * null for unknown ids.
+   */
+  getMarkerInfo(pointId: string): MarkerScreenInfo | null;
+  /** Debug accessor: projected screen position (CSS pixels, relative to the canvas) of the figure's torso. */
+  getFigureScreen(): { x: number; y: number; visible: boolean };
+}
+
+export interface KioskVisibility {
+  roof: boolean;
+  /** True when every part of that wall side above the cut height is drawn. */
+  southUpper: boolean;
+  eastUpper: boolean;
+  westUpper: boolean;
+  /** The fixed lower part of the walls (below the cut height) is drawn. */
+  lowerWalls: boolean;
+}
+
+export interface MarkerScreenInfo {
+  highlighted: boolean;
+  ring: { x: number; y: number; visible: boolean };
+  gem: { x: number; y: number; visible: boolean };
 }
 
 const PLAYER_SPEED = 3.5; // m/s
@@ -147,9 +175,24 @@ export function createWorld(game: Game, container: HTMLElement): World {
 
   let lastFrameMs: number | null = null;
   let elapsed = 0;
+  let simSteps = 0;
+  let simSeconds = 0;
+  const projected = new Vector3();
+  const toScreen = (world: { x: number; y: number; z: number }): { x: number; y: number; visible: boolean } => {
+    projected.set(world.x, world.y, world.z).project(followCamera.camera);
+    const w = container.clientWidth || window.innerWidth;
+    const h = container.clientHeight || window.innerHeight;
+    return {
+      x: ((projected.x + 1) / 2) * w,
+      y: ((1 - projected.y) / 2) * h,
+      visible: projected.z > -1 && projected.z < 1 && Math.abs(projected.x) <= 1 && Math.abs(projected.y) <= 1,
+    };
+  };
 
   return {
     update(dt) {
+      simSteps += 1;
+      simSeconds += dt;
       const colliders = game.state.kiosk.doorOpen ? openColliders : closedColliders;
       const axis = input.axis();
       prev = cur;
@@ -211,8 +254,33 @@ export function createWorld(game: Game, container: HTMLElement): World {
         x: object.position.x,
         y: object.position.y,
         z: object.position.z,
-        rotationDeg: Math.round(((object.rotation.y * 180) / Math.PI + 360) % 360),
+        rotationDeg: (((object.rotation.y * 180) / Math.PI) % 360 + 360) % 360,
       };
+    },
+
+    getSimStats() {
+      return { steps: simSteps, seconds: simSeconds };
+    },
+
+    getKioskVisibility() {
+      const state = occlusion.getVisibility();
+      const fixed = kioskRoot.getObjectByName('kiosk.fixed');
+      let lowerWalls = false;
+      fixed?.traverse((o) => {
+        if (o.name.startsWith('kiosk.wall.fixed') && (o as Mesh).isMesh) lowerWalls = true;
+      });
+      return { ...state, lowerWalls: lowerWalls && (fixed?.visible ?? false) };
+    },
+
+    getFigureScreen() {
+      const p = figure.root.position;
+      return toScreen({ x: p.x, y: p.y + 1.1, z: p.z });
+    },
+
+    getMarkerInfo(pointId) {
+      const info = markers.getInfo(pointId);
+      if (!info) return null;
+      return { highlighted: info.highlighted, ring: toScreen(info.ring), gem: toScreen(info.gem) };
     },
 
     dispose() {

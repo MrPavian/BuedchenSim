@@ -59,6 +59,17 @@ Aufgaben:
 
 **Abnahme:** ein stimmiger, modularer Kiosk, dessen wichtige Bereiche in der Spielansicht lesbar sind.
 
+**Status (2026-11-12): umgesetzt mit Auftrag 02.** Einzelheiten und Prüfergebnisse stehen in [TECHNISCHER-IST-STAND.md](TECHNISCHER-IST-STAND.md).
+- Umgesetzt und geprüft: Gebäude `K-001` in Teilen, neun Einrichtungs-Assets (`I-001` bis `I-007`, `I-011`, `I-012`), Asset-Katalog und versionierte Platzierungsliste mit Validierung, neue Sichtfreistellung, Klappenmarkierung am Verkaufsfenster, `npm audit` ohne Hinweise, Three.js als eigener Build-Chunk.
+- Die Restpunkte aus Phase 1 zu Sichtfreistellung, Klappenmarkierung und Platzierungsliste sind damit erledigt.
+
+Offene Restpunkte:
+- Prüfung auf echter Grafikhardware und in Firefox/Safari nach [PRUEFANLEITUNG-MANUELL.md](PRUEFANLEITUNG-MANUELL.md) ist noch nicht durchgeführt.
+- Von außen ist der Bodenring der Klappenmarkierung bei geschlossener Klappe größtenteils verdeckt.
+- Gehweg und Straße (`E-001`, `E-002`) sind weiterhin Greybox; Umgebung folgt in Phase 6.
+- Regale und Kühlgeräte sind leer; Waren folgen in Phase 3.
+- Vor Phase 3 müssen O-3 (Zeitmodell) und O-4 (Alkohol und Tabak) entschieden werden.
+
 ## Phase 3 – Wirtschaftlicher Büdchen-Alltag und erste Produkte
 **Ziel:** ein geschlossener Gameplay-Loop statt einer reinen 3D-Kulisse.
 

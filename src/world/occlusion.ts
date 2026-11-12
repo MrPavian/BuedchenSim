@@ -24,6 +24,8 @@ export interface OcclusionOptions {
 
 export interface Occlusion {
   update(dt: number, camera: Camera, player: Vec2, snap?: boolean): void;
+  /** Which cut parts are currently drawn (a side counts as drawn only if all its parts are). */
+  getVisibility(): { roof: boolean; southUpper: boolean; eastUpper: boolean; westUpper: boolean };
   /** Shows everything at once. */
   reset(): void;
 }
@@ -61,6 +63,10 @@ export function createOcclusion({ parts, kiosk }: OcclusionOptions): Occlusion {
         else if (entry.amount > entry.target) entry.amount = Math.max(entry.target, entry.amount - step);
         apply(entry);
       }
+    },
+    getVisibility() {
+      const shown = (side: WallSide): boolean => walls[side].every((e) => e.object.visible);
+      return { roof: roof.object.visible, southUpper: shown('south'), eastUpper: shown('east'), westUpper: shown('west') };
     },
     reset() {
       for (const entry of all) {

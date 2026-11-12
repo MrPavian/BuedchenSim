@@ -22,11 +22,15 @@ function inFormControl(target: EventTarget | null): boolean {
 /** Keyboard state; `onInteract` fires on E keydown (no auto-repeat). */
 export function createInput(onInteract: () => void): Input {
   const down = new Set<string>();
+  // Keys pressed since the last axis() read: a tap that starts and ends between two simulation steps
+  // (e.g. during one slow frame) still moves the player for one step instead of being lost.
+  const tapped = new Set<string>();
 
   const onKeyDown = (event: KeyboardEvent): void => {
     if (inFormControl(event.target) || event.ctrlKey || event.metaKey || event.altKey) return;
     if (HANDLED.has(event.code)) {
       down.add(event.code);
+      tapped.add(event.code);
       event.preventDefault();
     } else if (event.code === 'KeyE' && !event.repeat) {
       onInteract();
@@ -35,19 +39,23 @@ export function createInput(onInteract: () => void): Input {
   const onKeyUp = (event: KeyboardEvent): void => {
     down.delete(event.code);
   };
-  const clear = (): void => down.clear();
+  const clear = (): void => {
+    down.clear();
+    tapped.clear();
+  };
 
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
   window.addEventListener('blur', clear);
   document.addEventListener('visibilitychange', clear);
 
-  const any = (codes: readonly string[]): boolean => codes.some((c) => down.has(c));
+  const any = (codes: readonly string[]): boolean => codes.some((c) => down.has(c) || tapped.has(c));
 
   return {
     axis() {
       const x = (any(KEY_GROUPS.east) ? 1 : 0) - (any(KEY_GROUPS.west) ? 1 : 0);
       const z = (any(KEY_GROUPS.south) ? 1 : 0) - (any(KEY_GROUPS.north) ? 1 : 0);
+      tapped.clear();
       const length = Math.hypot(x, z);
       return length === 0 ? { x: 0, z: 0 } : { x: x / length, z: z / length };
     },

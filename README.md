@@ -26,12 +26,16 @@ Danach die angezeigte Adresse im Desktop-Browser öffnen. Steuerung: **WASD** od
 | `npm run typecheck` | TypeScript-Prüfung |
 | `npm run lint` | ESLint inklusive Schichtenregel |
 | `npm run test` | Unit-Tests (Vitest) |
-| `npm run check:browser` | Prüfung der laufenden Szene in Chromium mit Screenshots; benötigt einmalig `npx playwright install chromium` |
+| `npm run check:browser` | Prüfung der laufenden Szene in Chromium mit Screenshots (mehrere Minuten); benötigt einmalig `npx playwright install chromium` |
 
 ## Projektstand
-Phase 1 ist abgeschlossen ([Auftrag 01](docs/auftraege/01-threejs-projektgeruest-und-greybox.md)): eine begehbare Kiosk-Greybox mit Third-Person-Kamera, Kollision, zwei Interaktionen (Tür, Verkaufsklappe) und automatischem Speichern. Wirtschaft, Produkte, Bewohner und Ereignisse folgen in den nächsten Phasen.
+Phase 2 ist umgesetzt ([Auftrag 02](docs/auftraege/02-modularer-kiosk-und-einrichtung.md)): ein ausgearbeitetes Kioskgebäude mit Klinkerfassade, Markise, Verkaufsfenster und fiktivem Schild sowie neun Einrichtungs-Assets (Theke, Kasse, Regale, Kühlschrank, Eistruhe, Zeitschriftenständer, Lager, Leergut), die aus einer Platzierungsliste in den Layoutdaten aufgestellt werden. Dazu kommen Third-Person-Kamera, Kollision, zwei Interaktionen (Tür, Verkaufsklappe) und automatisches Speichern. Regale und Kühlgeräte sind noch leer; Wirtschaft, Produkte, Bewohner und Ereignisse folgen in den nächsten Phasen.
 
-![Greybox von außen](docs/screenshots/auftrag-01-aussen.png)
+Geprüft wurde in Headless-Chromium mit Software-Rendering. Die Prüfung auf echter Grafikhardware und in Firefox oder Safari steht aus; die Schritte dafür stehen in der [manuellen Prüfanleitung](docs/PRUEFANLEITUNG-MANUELL.md).
+
+![Kiosk von außen](docs/screenshots/auftrag-02-aussen.png)
+
+![Innenraum mit Einrichtung](docs/screenshots/auftrag-02-innen.png)
 
 - [Technischer Ist-Stand](docs/TECHNISCHER-IST-STAND.md) – was tatsächlich implementiert und geprüft ist
 - [Architektur-Entscheidungen (ADRs)](docs/ARCHITEKTUR-ENTSCHEIDUNGEN.md)
@@ -43,7 +47,7 @@ Phase 1 ist abgeschlossen ([Auftrag 01](docs/auftraege/01-threejs-projektgeruest
 - **Offen:** O-3 Zeitmodell, O-4 Alkohol und Tabak, O-5 Hosting und Lizenz.
 
 ## Nächster Schritt
-[Auftrag 02 – Modularer Kiosk und Einrichtung](docs/auftraege/02-modularer-kiosk-und-einrichtung.md): Fassade und Einrichtung als wiederverwendbare Assets mit verschiebbarer Platzierungsliste ausarbeiten. Der Auftrag enthält außerdem die gezielte Prüfung der zehn npm-Audit-Hinweise und die Nacharbeit an Sichtfreistellung und Klappenmarkierung.
+Phase 3 – Wirtschaftlicher Büdchen-Alltag und erste Produkte (siehe [Implementierungsplan](docs/IMPLEMENTIERUNGSPLAN.md)). Ein Auftrag dafür liegt noch nicht vor. Vorher sind zwei Entscheidungen nötig: **O-3** (Zeitmodell) und **O-4** (Umgang mit Alkohol und Tabak im Sortiment).
 
 ## Projekt-Dokumentation
 Die Art-Direction, Produktionsplanung, Regionen, fiktive Produktwelt, Claude-Code-Prompts und Three.js-Asset-Standards liegen unter [docs/artwork-prompts](docs/artwork-prompts/README.md).

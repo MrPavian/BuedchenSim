@@ -4,7 +4,15 @@ import type { InteractionPointDef } from '../../game/types';
 import type { Materials } from '../materials';
 import { SIDEWALK_HEIGHT } from '../assets/ground';
 
+export interface MarkerInfo {
+  highlighted: boolean;
+  ring: { x: number; y: number; z: number };
+  gem: { x: number; y: number; z: number };
+}
+
 export interface MarkerView {
+  /** Debug accessor: world positions and highlight state of one marker. */
+  getInfo(id: string): MarkerInfo | null;
   update(timeSeconds: number): void;
   dispose(): void;
   root: Group;
@@ -71,6 +79,15 @@ export function createMarkerView(game: Game, points: readonly InteractionPointDe
 
   return {
     root,
+    getInfo(id) {
+      const marker = markers.find((mk) => mk.id === id);
+      if (!marker) return null;
+      return {
+        highlighted: marker.id === activeId,
+        ring: marker.ring.position.clone(),
+        gem: marker.gem.position.clone(),
+      };
+    },
     update(t) {
       for (const marker of markers) {
         const active = marker.id === activeId;

@@ -84,12 +84,22 @@ export function buildWalls(ctx: KioskContext): WallBuild {
     // --- plaster band under the roof edge
     if (Math.abs(b.maxY - kiosk.height) < 1e-9) {
       const y0 = Math.max(b.minY, kiosk.height - BAND_HEIGHT);
-      const ext = (atEnd: boolean): number => (atEnd ? (horizontal ? BAND_OUT : t + BAND_OUT) : 0);
-      builder.box(
-        decorBox(local, side, BAND_OUT, ext(atLo), ext(atHi), y0, kiosk.height),
-        { [OUTER[side]]: 'band', ...(horizontal ? { nx: 'band', px: 'band' } : { nz: 'band', pz: 'band' }) },
-        { uv: concreteUv, shade: concreteShade },
-      );
+      if (horizontal) {
+        builder.box(
+          decorBox(local, side, BAND_OUT, atLo ? BAND_OUT : 0, atHi ? BAND_OUT : 0, y0, kiosk.height),
+          { [OUTER[side]]: 'band', nx: 'band', px: 'band' },
+          { uv: concreteUv, shade: concreteShade },
+        );
+      } else {
+        // East/west band: the core belongs to this wall; the part wrapping around the corner belongs to the
+        // wall it overlaps (south: cut away together with it, north: fixed), so no stub is left when the side is cut.
+        const core = decorBox(local, side, BAND_OUT, 0, 0, y0, kiosk.height);
+        const wrap = t + BAND_OUT;
+        const opt = { uv: concreteUv, shade: concreteShade };
+        builder.box(core, { [OUTER[side]]: 'band', ...(atLo ? {} : { nz: 'band' }), ...(atHi ? {} : { pz: 'band' }) }, opt);
+        if (atHi) upperBuilders.south.box({ ...core, minZ: core.maxZ, maxZ: core.maxZ + wrap }, { [OUTER[side]]: 'band', pz: 'band' }, opt);
+        if (atLo) fixedBuilder.box({ ...core, minZ: core.minZ - wrap, maxZ: core.minZ }, { [OUTER[side]]: 'band', nz: 'band' }, opt);
+      }
     }
   }
 
