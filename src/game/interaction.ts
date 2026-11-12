@@ -1,6 +1,12 @@
 import type { InteractionKind, InteractionPointDef, Vec2 } from './types';
 
-export type InteractionAction = 'door.open' | 'door.close' | 'shutter.open' | 'shutter.close';
+export type InteractionAction =
+  | 'door.open'
+  | 'door.close'
+  | 'shutter.open'
+  | 'shutter.close'
+  | 'register.use'
+  | 'storage.use';
 
 export interface AvailableInteraction {
   pointId: string;
@@ -32,7 +38,8 @@ export function findNearestInteractionPoint(
 
 export function actionFor(kind: InteractionKind, kiosk: KioskOpenState): InteractionAction {
   if (kind === 'door') return kiosk.doorOpen ? 'door.close' : 'door.open';
-  return kiosk.shutterOpen ? 'shutter.close' : 'shutter.open';
+  if (kind === 'shutter') return kiosk.shutterOpen ? 'shutter.close' : 'shutter.open';
+  return kind === 'register' ? 'register.use' : 'storage.use';
 }
 
 export function findAvailableInteraction(

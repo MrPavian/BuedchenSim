@@ -99,6 +99,20 @@ describe('validateContent', () => {
     ).toBe(true);
   });
 
+  it('requires an openingId for doors and shutters but not for register and storage points', () => {
+    expect(
+      broken((p) => {
+        delete first(p.layout.interactionPoints).openingId;
+      }),
+    ).toContain('interaction point "interaction.door" of kind "door" needs an openingId');
+    expect(
+      broken((p) => {
+        p.layout.interactionPoints.push({ id: 'interaction.register', kind: 'register', position: { x: -0.2, z: 1.0 }, radius: 0.6 });
+        p.layout.interactionPoints.push({ id: 'interaction.storage', kind: 'storage', position: { x: 2.1, z: -1.0 }, radius: 0.8 });
+      }),
+    ).toEqual([]);
+  });
+
   it('rejects interaction points outside walkBounds', () => {
     expect(
       broken((p) => {

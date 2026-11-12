@@ -11,6 +11,8 @@ export const texts = {
     'door.close': 'Tür schließen',
     'shutter.open': 'Verkaufsklappe öffnen',
     'shutter.close': 'Verkaufsklappe schließen',
+    'register.use': 'Kasse bedienen',
+    'storage.use': 'Lager öffnen',
   } satisfies Record<InteractionAction, string>,
   interactionKey: 'E',
   newGame: {

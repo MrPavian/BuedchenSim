@@ -14,6 +14,17 @@ describe('game facade', () => {
       regionId: 'region.test',
       player: { position: { x: 0.9, z: 3.6 }, heading: Math.PI },
       kiosk: { doorOpen: false, shutterOpen: false },
+      calendar: { day: 1, minute: 360, paused: false, speed: 1, phase: 'open' },
+      economy: {
+        cashCents: 30000,
+        storage: {},
+        shelves: {},
+        pendingDelivery: null,
+        today: { revenueCents: 0, purchaseCents: 0, costOfGoodsSoldCents: 0, salesCount: 0 },
+        lastReport: null,
+        transactions: [],
+        nextTransactionId: 1,
+      },
     });
     expect(game.getAvailableInteraction()).toBeNull();
   });
@@ -91,7 +102,7 @@ describe('game facade', () => {
   it('save() returns a deep copy', () => {
     const game = createGame(content);
     const snapshot = game.save();
-    expect(snapshot.schemaVersion).toBe(1);
+    expect(snapshot.schemaVersion).toBe(2);
     expect(typeof snapshot.savedAt).toBe('string');
     snapshot.state.player.position.x = 5;
     snapshot.state.kiosk.doorOpen = true;
@@ -139,5 +150,56 @@ describe('game facade', () => {
     expect(replaced).toHaveBeenCalledTimes(1);
     expect(game.load({ ...next, regionId: 'region.other' })).toEqual({ ok: false, reason: 'region_mismatch' });
     expect(replaced).toHaveBeenCalledTimes(1);
+  });
+
+  it('register and storage points only emit interaction.triggered and change no state', () => {
+    const game = createGame(content);
+    const triggered = vi.fn();
+    const door = vi.fn();
+    const shutter = vi.fn();
+    game.signals.on('interaction.triggered', triggered);
+    game.signals.on('kiosk.door.changed', door);
+    game.signals.on('kiosk.shutter.changed', shutter);
+
+    game.player.setPose({ x: -0.2, z: 1.0 }, 0);
+    expect(game.getAvailableInteraction()).toEqual({
+      pointId: 'interaction.register',
+      kind: 'register',
+      action: 'register.use',
+    });
+    const before = structuredClone(game.state);
+    expect(game.interact()).toEqual({ ok: true });
+    expect(game.state).toEqual(before);
+    expect(triggered).toHaveBeenLastCalledWith({ pointId: 'interaction.register', kind: 'register' });
+
+    game.player.setPose({ x: 2.1, z: -1.0 }, 0);
+    expect(game.interact()).toEqual({ ok: true });
+    expect(triggered).toHaveBeenLastCalledWith({ pointId: 'interaction.storage', kind: 'storage' });
+    expect(triggered).toHaveBeenCalledTimes(2);
+    expect(door).not.toHaveBeenCalled();
+    expect(shutter).not.toHaveBeenCalled();
+  });
+
+  it('door and shutter do not emit interaction.triggered', () => {
+    const game = createGame(content);
+    const triggered = vi.fn();
+    game.signals.on('interaction.triggered', triggered);
+    game.player.setPose(nearDoor, 0);
+    game.interact();
+    expect(triggered).not.toHaveBeenCalled();
+  });
+
+  it('load keeps the economy and clock and emits game.state.replaced', () => {
+    const game = createGame(content);
+    const next = createInitialState(content);
+    next.economy.cashCents = 777;
+    next.calendar.day = 4;
+    expect(game.load(next)).toEqual({ ok: true });
+    expect(game.state.economy.cashCents).toBe(777);
+    expect(game.state.calendar.day).toBe(4);
+    game.economy.placeOrder([{ productId: 'product.test-water', quantity: 1 }]);
+    expect(next.economy.cashCents).toBe(777); // no aliasing
+    game.reset();
+    expect(game.state.economy.cashCents).toBe(30000);
   });
 });

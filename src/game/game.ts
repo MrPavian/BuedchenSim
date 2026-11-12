@@ -1,4 +1,8 @@
 import { createSignals, type Signals } from '../core/signals';
+import { createCalendarApi, tickClock, type CalendarApi } from './clock';
+import type { DomainContext } from './domain';
+import { createEconomyApi, type CloseDayResult, type EconomyApi, type SaleRequest, type SaleResult } from './economy';
+import type { GameEvents } from './events';
 import {
   findAvailableInteraction,
   type AvailableInteraction,
@@ -9,24 +13,28 @@ import { CURRENT_SCHEMA_VERSION, type SaveFile } from './save/save';
 import { createInitialState, type DeepReadonly, type GameState } from './state';
 import type { ContentPack, Vec2 } from './types';
 
-export type { ActionResult, AvailableInteraction, InteractionAction };
-
-export type GameEvents = {
-  'kiosk.door.changed': { open: boolean };
-  'kiosk.shutter.changed': { open: boolean };
-  'interaction.available.changed': { interaction: AvailableInteraction | null };
-  /** After load/reset; views must resync (state, kiosk, interaction prompt). */
-  'game.state.replaced': Record<string, never>;
-};
+export type { ActionResult, AvailableInteraction, CalendarApi, CloseDayResult, EconomyApi, GameEvents, InteractionAction, SaleRequest, SaleResult };
 
 export interface Game {
   readonly state: DeepReadonly<GameState>;
   readonly content: ContentPack;
   readonly signals: Pick<Signals<GameEvents>, 'on'>;
   readonly player: { setPose(position: Vec2, heading: number): ActionResult };
+  /** Pause, speed and day start. */
+  readonly calendar: CalendarApi;
+  /** Orders, storage, shelves, sales and the day close. */
+  readonly economy: EconomyApi;
+  /**
+   * Advances the day clock by real seconds (called from the fixed-step update of the loop). Ignores
+   * invalid dt, does nothing while paused or outside phase 'open'.
+   */
+  tick(dtSeconds: number): void;
   /** Nearest point within its radius of the player; transient, NOT part of GameState. */
   getAvailableInteraction(): AvailableInteraction | null;
-  /** Performs the available interaction; `{ ok: false, reason: 'nothing_in_range' }` otherwise. */
+  /**
+   * Door/shutter: toggles the opening. Register/storage: changes nothing and emits `interaction.triggered`.
+   * `{ ok: false, reason: 'nothing_in_range' }` when no point is in range.
+   */
   interact(): ActionResult;
   /** Deep-copy snapshot. */
   save(): SaveFile;
@@ -62,6 +70,10 @@ export function createGame(content: ContentPack, initialState?: GameState): Game
     signals.emit('interaction.available.changed', { interaction: next ? { ...next } : null });
   };
 
+  const ctx: DomainContext = { state: () => state, content, emit: signals.emit };
+  const calendar = createCalendarApi(ctx);
+  const economy = createEconomyApi(ctx);
+
   const clamp = (v: number, min: number, max: number): number => Math.min(Math.max(v, min), max);
 
   return {
@@ -84,12 +96,21 @@ export function createGame(content: ContentPack, initialState?: GameState): Game
         return { ok: true };
       },
     },
+    calendar,
+    economy,
+    tick(dtSeconds) {
+      tickClock(ctx, dtSeconds);
+    },
     getAvailableInteraction() {
       return current ? { ...current } : null;
     },
     interact() {
       const available = computeInteraction();
       if (!available) return { ok: false, reason: 'nothing_in_range' };
+      if (available.kind === 'register' || available.kind === 'storage') {
+        signals.emit('interaction.triggered', { pointId: available.pointId, kind: available.kind });
+        return { ok: true };
+      }
       if (available.kind === 'door') {
         state.kiosk.doorOpen = !state.kiosk.doorOpen;
         signals.emit('kiosk.door.changed', { open: state.kiosk.doorOpen });

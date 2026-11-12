@@ -249,13 +249,17 @@ export function validateContent(pack: ContentPack): string[] {
 
   // Interaction points
   for (const p of layout.interactionPoints) {
-    const opening = kiosk.openings.find((o) => o.id === p.openingId);
-    if (!opening) {
-      errors.push(`interaction point "${p.id}" references unknown opening "${p.openingId}"`);
-    } else {
-      const expected = p.kind === 'door' ? 'door' : 'window';
-      if (opening.kind !== expected) {
-        errors.push(`interaction point "${p.id}" of kind "${p.kind}" needs a ${expected} opening, but "${opening.id}" is a ${opening.kind}`);
+    if (p.kind === 'door' || p.kind === 'shutter') {
+      const opening = p.openingId === undefined ? undefined : kiosk.openings.find((o) => o.id === p.openingId);
+      if (p.openingId === undefined) {
+        errors.push(`interaction point "${p.id}" of kind "${p.kind}" needs an openingId`);
+      } else if (!opening) {
+        errors.push(`interaction point "${p.id}" references unknown opening "${p.openingId}"`);
+      } else {
+        const expected = p.kind === 'door' ? 'door' : 'window';
+        if (opening.kind !== expected) {
+          errors.push(`interaction point "${p.id}" of kind "${p.kind}" needs a ${expected} opening, but "${opening.id}" is a ${opening.kind}`);
+        }
       }
     }
     if (!(p.radius > 0)) errors.push(`interaction point "${p.id}" radius must be positive`);

@@ -7,4 +7,6 @@ export const ruhrgebietPack: ContentPack = {
   name: 'Ruhrgebiet',
   assets: assetCatalog,
   layout: ruhrgebietLayout,
+  products: {},
+  stockSlots: [],
 };

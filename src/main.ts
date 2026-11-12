@@ -96,7 +96,10 @@ function start(): void {
   }
 
   const loop = createLoop({
-    update: (dt) => world.update(dt),
+    update: (dt) => {
+      game.tick(dt);
+      world.update(dt);
+    },
     render: (alpha) => world.render(alpha),
     schedule: (callback) => {
       if (!loopStopped) requestAnimationFrame(callback);

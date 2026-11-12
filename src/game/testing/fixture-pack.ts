@@ -1,4 +1,4 @@
-import type { AssetDef, ContentPack, RegionLayout } from '../types';
+import type { AssetDef, ContentPack, ProductDef, RegionLayout, StockSlotDef } from '../types';
 
 /**
  * Self-contained test fixture so game tests do not depend on the content layer
@@ -40,6 +40,42 @@ const assets: Record<string, AssetDef> = {
     size: { width: 2.4, depth: 0.4, height: 2.0 },
     collides: true,
     allowedRotations: [0, 90, 180, 270],
+    scalable: false,
+  },
+  'P-901': {
+    assetId: 'P-901',
+    name: 'Test water bottle',
+    category: 'product',
+    size: { width: 0.07, depth: 0.07, height: 0.22 },
+    collides: false,
+    allowedRotations: [0],
+    scalable: false,
+  },
+  'P-902': {
+    assetId: 'P-902',
+    name: 'Test can',
+    category: 'product',
+    size: { width: 0.066, depth: 0.066, height: 0.123 },
+    collides: false,
+    allowedRotations: [0],
+    scalable: false,
+  },
+  'P-903': {
+    assetId: 'P-903',
+    name: 'Test beer bottle',
+    category: 'product',
+    size: { width: 0.065, depth: 0.065, height: 0.24 },
+    collides: false,
+    allowedRotations: [0],
+    scalable: false,
+  },
+  'P-904': {
+    assetId: 'P-904',
+    name: 'Test tobacco box',
+    category: 'product',
+    size: { width: 0.09, depth: 0.025, height: 0.12 },
+    collides: false,
+    allowedRotations: [0],
     scalable: false,
   },
   'E-001': {
@@ -96,6 +132,8 @@ const layout: RegionLayout = {
   walkBounds: { minX: -11, maxX: 11, minZ: -7, maxZ: 4.8 },
   spawn: { position: { x: 0.9, z: 3.6 }, heading: Math.PI },
   interactionPoints: [
+    { id: 'interaction.register', kind: 'register', position: { x: -0.2, z: 1.0 }, radius: 0.6 },
+    { id: 'interaction.storage', kind: 'storage', position: { x: 2.1, z: -1.0 }, radius: 0.8 },
     { id: 'interaction.door', kind: 'door', position: { x: 2.0, z: 2.0 }, radius: 1.4, openingId: 'opening.door' },
     {
       id: 'interaction.shutter',
@@ -108,4 +146,94 @@ const layout: RegionLayout = {
   ],
 };
 
-export const testPack: ContentPack = { regionId: 'region.test', name: 'Test', assets, layout };
+const products: Record<string, ProductDef> = {
+  'product.test-water': {
+    id: 'product.test-water',
+    name: 'Test water',
+    brand: 'Testquell',
+    category: 'drink',
+    purchasePriceCents: 40,
+    suggestedPriceCents: 100,
+    storage: 'shelf',
+    demandTags: ['thirst'],
+    assetId: 'P-901',
+    package: 'pet-bottle',
+    label: { primaryColor: '#3a7bd5', accentColor: '#ffffff', text: 'WASSER' },
+  },
+  'product.test-cola': {
+    id: 'product.test-cola',
+    name: 'Test cola',
+    brand: 'Testbrause',
+    category: 'drink',
+    purchasePriceCents: 55,
+    suggestedPriceCents: 130,
+    storage: 'cooled',
+    demandTags: ['thirst', 'sweet'],
+    assetId: 'P-902',
+    package: 'can',
+    label: { primaryColor: '#b22222', accentColor: '#f5f5f5', text: 'BRAUSE' },
+  },
+  'product.test-beer': {
+    id: 'product.test-beer',
+    name: 'Test beer',
+    brand: 'Testbräu',
+    category: 'drink',
+    subcategory: 'beer',
+    purchasePriceCents: 70,
+    suggestedPriceCents: 150,
+    storage: 'shelf',
+    minimumAge: 16,
+    demandTags: ['evening'],
+    assetId: 'P-903',
+    package: 'glass-bottle',
+    label: { primaryColor: '#8b5a2b', accentColor: '#e8c872', text: 'PILS' },
+  },
+  'product.test-tobacco': {
+    id: 'product.test-tobacco',
+    name: 'Test tobacco',
+    brand: 'Testrauch',
+    category: 'everyday',
+    subcategory: 'tobacco',
+    purchasePriceCents: 520,
+    suggestedPriceCents: 650,
+    storage: 'counter',
+    minimumAge: 18,
+    demandTags: ['evening'],
+    assetId: 'P-904',
+    package: 'box',
+    label: { primaryColor: '#2f4f4f', accentColor: '#c0c0c0', text: 'RAUCH' },
+  },
+};
+
+const stockSlots: StockSlotDef[] = [
+  {
+    id: 'slot.shelf-north-1',
+    placementId: 'placement.wall-shelf-north',
+    accepts: 'shelf',
+    origin: { x: -0.6, y: 1.0, z: 0 },
+    size: { width: 1.0, depth: 0.3, height: 0.3 },
+  },
+  {
+    id: 'slot.shelf-north-2',
+    placementId: 'placement.wall-shelf-north',
+    accepts: 'shelf',
+    origin: { x: 0.6, y: 1.0, z: 0 },
+    size: { width: 1.0, depth: 0.3, height: 0.3 },
+  },
+  {
+    id: 'slot.cooled-west',
+    placementId: 'placement.wall-shelf-west',
+    accepts: 'cooled',
+    origin: { x: 0, y: 0.2, z: 0 },
+    size: { width: 1.0, depth: 0.3, height: 0.5 },
+  },
+  {
+    id: 'slot.counter-top',
+    placementId: 'placement.counter',
+    accepts: 'counter',
+    origin: { x: 0, y: 1.0, z: 0 },
+    size: { width: 0.8, depth: 0.5, height: 0.2 },
+  },
+];
+
+export const testPack: ContentPack = { regionId: 'region.test', name: 'Test', assets, layout, products, stockSlots };
