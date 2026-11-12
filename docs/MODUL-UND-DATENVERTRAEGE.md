@@ -2,7 +2,7 @@
 
 **Stand:** 2026-11-11 · Ergebnis von [Auftrag 00](auftraege/00-bestandsaufnahme-und-architektur.md)
 
-**Plan und Bestand:** Die Abschnitte 1–12 sind der Plan aus Auftrag 00. Was davon umgesetzt ist und wo die Umsetzung abweicht, steht in Abschnitt 13 und im [Ist-Stand](TECHNISCHER-IST-STAND.md). Begründungen stehen in den [ADRs](ARCHITEKTUR-ENTSCHEIDUNGEN.md). Typen sind Vertragsskizzen; Feldnamen können sich bei der Umsetzung der jeweiligen Phase noch präzisieren, die Grundform nicht.
+**Plan und Bestand:** Die Abschnitte 1–12 sind der Plan aus Auftrag 00. Was davon umgesetzt ist und wo die Umsetzung abweicht, steht in den Abschnitten 13 und 14 und im [Ist-Stand](TECHNISCHER-IST-STAND.md). Begründungen stehen in den [ADRs](ARCHITEKTUR-ENTSCHEIDUNGEN.md). Typen sind Vertragsskizzen; Feldnamen können sich bei der Umsetzung der jeweiligen Phase noch präzisieren, die Grundform nicht.
 
 ## 1. Modulübersicht
 
@@ -334,7 +334,7 @@ Maßgeblich sind die Typen im Code (`src/game/types.ts`, `src/game/state.ts`, `s
 **Abweichungen**
 - **`GameState` ist kleiner als in Abschnitt 9.** Version 1 enthält nur `regionId`, `player` und `kiosk: { doorOpen, shutterOpen }`. Die Abschnitte für Kalender, Wirtschaft, Menschen, Geschichten und Spezialitäten kommen mit ihrer Phase per Migration hinzu, statt von Beginn an leer im Schema zu stehen. Grund: Auftrag 01 schließt vorgezogene Systeme aus.
 - **`Game.tick` und `rngState` gibt es noch nicht.** Ohne Spielzeit (O-3 offen) und ohne Zufall hat `game` nichts zu simulieren. Der Loop treibt derzeit nur die Welt an.
-- **Kiosk-Layout als Baukörper statt Platzierungsliste.** `RegionLayout` beschreibt den Kiosk über Grundfläche, Höhe, Wandstärke und Öffnungen; Möbel sind Rechtecke mit Höhe und Asset-ID. Eine verschiebbare Platzierungsliste mit Lagerplätzen folgt in Phase 2/3.
+- **Kiosk-Layout:** Das Gebäude ist über Grundfläche, Höhe, Wandstärke und Öffnungen beschrieben. Die Einrichtung war in Auftrag 01 eine Liste fester Rechtecke; seit Auftrag 02 ist sie eine Platzierungsliste (Abschnitt 14).
 - **Aktionen sind noch nicht nach Domänen gruppiert.** Die Fassade hat `player.setPose`, `interact`, `getAvailableInteraction`, `save`, `load`, `reset`.
 
 **Konkretisierte Verträge**
@@ -348,3 +348,80 @@ Maßgeblich sind die Typen im Code (`src/game/types.ts`, `src/game/state.ts`, `s
 - **Asset-Fabriken:** Registrierung in `src/world/assets/registry.ts`. Die Kiosk-Fabrik liefert ein `Object3D` mit benannten Kindern (Tür, Klappe, Dach, Wände, Schild), die `kioskView` ansteuert. Namen sind Darstellungsdetails, keine Spieldaten.
 - **Kollision und Wandgeometrie** sind reine Funktionen ohne Three.js-Import (`collision.ts`, `kioskGeometry.ts`) und einzeln getestet.
 - **Entwicklungshilfe:** Im Entwicklungsmodus oder mit `?debug` in der Adresse stellt `main.ts` `window.__buedchen.game` bereit; die Browserprüfung liest darüber den Zustand.
+
+## 14. Stand nach Auftrag 02: Asset-Katalog und Platzierungsliste
+
+Maßgeblich sind `src/game/types.ts`, `src/game/placement.ts`, `src/content/assets/catalog.ts` und `src/content/regions/ruhrgebiet/layout.ts`.
+
+### 14.1 Zwei Arten von IDs
+- **Asset-ID** (`I-005`): bezeichnet ein Modell aus dem [Artwork-Register](artwork-prompts/07-artwork-register.md). Zu jeder Asset-ID gibt es einen Katalogeintrag (Daten) und eine Fabrik (Three.js).
+- **Platzierungs-ID** (`placement.fridge`): bezeichnet ein aufgestelltes Exemplar. Ein Asset kann beliebig oft platziert werden; die Platzierungs-ID ist stabil und wird nie wiederverwendet.
+
+### 14.2 Asset-Vertrag (`AssetDef`)
+| Feld | Bedeutung |
+|---|---|
+| `assetId`, `name`, `category` | Register-ID, Anzeigename, `building` / `furniture` / `ground` |
+| `size` | Hüllmaß in Metern bei Rotation 0: Breite (X), Tiefe (Z), Höhe (Y) |
+| `collides` | blockiert mit der ganzen Grundfläche |
+| `allowedRotations` | erlaubte Vierteldrehungen |
+| `scalable` | ob eine Platzierung skalieren darf (in Phase 2 bei keinem Asset) |
+| `requiresSupport` | darf nur auf einer anderen Platzierung stehen (Kasse) |
+| `defaultRole` | übliche Nutzungsrolle |
+
+**Für alle Assets gilt:** Pivot ist die Bodenmitte des Hüllmaßes. Bei Rotation 0 zeigt die Vorderseite (Kunden- bzw. Bedienseite) nach +Z (Süden). Eine Fabrik baut das Modell aus `asset.size`; ein Test prüft, dass das gebaute Modell das Hüllmaß auf 2 cm einhält, auch mit geänderten Maßen.
+
+| Asset | Name | Maße B × T × H (m) | Rotationen | Kollision | Rolle | Fabrik |
+|---|---|---|---|---|---|---|
+| K-001 | Musterkiosk | 6 × 4 × 3,2 (aus `KioskDef`) | 0 | Wände aus `kioskGeometry` | – | `src/world/assets/kiosk/` |
+| I-001 | Verkaufstheke | 2,8 × 0,65 × 1,0 | 0, 180 | ja | Verkauf | `furniture/counter.ts` |
+| I-002 | Kasse | 0,45 × 0,40 × 0,35 | alle | nein, braucht Unterlage | Kasse | `furniture/register.ts` |
+| I-003 | Wandregal | 2,4 × 0,40 × 2,0 | alle | ja | Präsentation | `furniture/wallShelf.ts` |
+| I-004 | Mittelregal | 1,2 × 0,5 × 1,35 | alle | ja | Präsentation | `furniture/middleShelf.ts` |
+| I-005 | Getränkekühlschrank | 0,7 × 0,7 × 2,0 | alle | ja | Kühlung | `furniture/fridge.ts` |
+| I-006 | Eistruhe | 1,2 × 0,65 × 0,9 | alle | ja | Tiefkühlung | `furniture/freezer.ts` |
+| I-007 | Zeitschriftenständer | 0,8 × 0,4 × 1,5 | alle | ja | Präsentation | `furniture/magazineRack.ts` |
+| I-011 | Lagerregal | 1,2 × 0,5 × 1,9 | alle | ja | Lager | `furniture/storageRack.ts` |
+| I-012 | Leergut-/Kistenbereich | 0,9 × 0,7 × 0,75 | alle | ja | Leergut | `furniture/crates.ts` |
+
+Fabrikpfade relativ zu `src/world/assets/`. Die Gebäudeteile K-001-A bis K-001-H sind Teilbauer derselben Fabrik (`walls.ts`, `roof.ts`, `awning.ts`, `salesWindow.ts`, `door.ts`, `signage.ts`, `lighting.ts`, `interior.ts`).
+
+### 14.3 Platzierungs-Vertrag (`PlacementDef`)
+| Feld | Bedeutung |
+|---|---|
+| `id` | stabile Platzierungs-ID mit Präfix `placement.` |
+| `assetId` | Verweis auf den Katalog |
+| `position` | Pivot auf der Bodenebene (x, z) in Metern |
+| `rotation` | 0, 90, 180 oder 270 Grad, gegen den Uhrzeigersinn von oben. 0 = Front nach +Z, 90 = +X, 180 = −Z, 270 = −X |
+| `scale` | nur zulässig, wenn das Asset `scalable` ist |
+| `on` | Platzierungs-ID der Unterlage; die Platzierung steht dann auf deren Oberkante und kollidiert selbst nicht |
+| `role` | Nutzungsrolle: `sales`, `checkout`, `display`, `cooling`, `freezing`, `storage`, `returns` |
+| `collides` | überschreibt den Katalogwert |
+
+`RegionLayout` trägt dazu `layoutVersion` (derzeit 1) und `placements`. Nur Vierteldrehungen sind erlaubt, damit Kollisionsrechtecke achsparallel bleiben.
+
+**Eine Quelle für alles:** Die Funktionen in `src/game/placement.ts` (`placementFootprint`, `placementBaseHeight`, `placementColliders`, `placementFront`) liefern Grundfläche, Höhe, Kollisionsrechtecke und Blickrichtung. Die Welt stellt damit dar und kollidiert damit, die Validierung prüft damit. Die Wandsegmente kommen aus `src/game/kioskGeometry.ts`.
+
+**Umstellen ohne Codeänderung:** Eine Platzierung wird verschoben oder gedreht, indem ihr Eintrag in `layout.ts` geändert wird. Fabriken kennen keine Positionen. So wurden die Außenkisten in Auftrag 02 von der Rückseite an die Westwand verlegt.
+
+**Platzierungen sind Inhalt, kein Spielstand.** `GameState` und `schemaVersion` (1) sind unverändert. Sobald der Spieler Einrichtung selbst umstellen kann, wandern Platzierungen in den Spielstand; dann sind Versionserhöhung und Migration fällig. Ein späterer Editor kann dieses Format direkt verwenden.
+
+### 14.4 Validierung des Layouts
+`validateContent` meldet zusätzlich zu den Prüfungen aus Auftrag 01:
+- doppelte oder falsch benannte Platzierungs-IDs, ungültige `layoutVersion`, fehlerhafte Katalogeinträge
+- unbekannte Asset-ID, nicht erlaubte Rotation, Skalierung bei nicht skalierbarem Asset
+- fehlerhafte Unterlage (`on`): unbekannt, auf sich selbst, verkettet, fehlend trotz `requiresSupport`, oder die Platzierung ragt über die Unterlage hinaus
+- Position außerhalb des begehbaren Bereichs oder Grundfläche quer durch eine Wand
+- Überschneidung zweier kollidierender Grundflächen (Berührung ist erlaubt)
+- Möbel im Schwenkbereich einer Tür
+- **Laufwege:** Von der Startposition aus wird auf einem 10-cm-Raster geprüft, was die Figur (Radius 0,3 m) bei offenen Türen erreicht. Erreichbar sein müssen der Innenraum, jeder Interaktionspunkt und ein Platz direkt vor der Vorderseite jedes kollidierenden Möbels.
+
+### 14.5 Weitere Vertragsänderungen
+- `ContentPack.assets`: der Asset-Katalog des Pakets.
+- `InteractionPointDef.marker`: optionale Position, Höhe und Radius der sichtbaren Markierung, getrennt vom logischen Interaktionspunkt. Die Klappen-Markierung liegt damit auf der Fensterbank.
+- `PLAYER_RADIUS` (0,3 m) ist eine gemeinsame Konstante in `game`, genutzt von Welt und Validierung.
+- `src/integration/`: Tests, die wie `main.ts` alle Schichten importieren dürfen (echtes Inhaltspaket gegen echte Fabriken).
+
+### 14.6 Sichtfreistellung
+- **Figur im Kiosk:** Das Dach wird ausgeblendet, die Südwand auf Brüstungshöhe (1,0 m) gekappt; Schild, Markise, Klappe und obere Türhälfte verschwinden mit. Ost- und Westwand werden nur gekappt, wenn sie die Sichtlinie zur Figur kreuzen. Die Nordwand bleibt stehen. Die Entscheidung ist eine reine, getestete Funktion (`src/world/occlusionRules.ts`).
+- **Figur außen und verdeckt:** Das Gebäude bleibt vollständig deckend. Die Figur wird zusätzlich als einfarbige Silhouette durch das Hindernis gezeichnet.
+- Kein Bauteil ist mehr durchscheinend; Glas an Kühlschrank und Eistruhe ist die einzige Transparenz.
