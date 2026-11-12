@@ -129,14 +129,24 @@ Diese Punkte kann die Analyse nicht entscheiden. Bis zur Antwort gilt jeweils di
 **Auswirkung:** Eingabesystem, UI-Größen, Leistungsbudget.
 
 ### O-3 – Zeitmodell
-**Empfehlung:** Durchlaufende Spielzeit, 1 Spielminute = 1 Sekunde (Öffnungstag 06–22 Uhr ≈ 16 Minuten), pausierbar, mit Vorspulen; der Tag endet mit einem Tagesabschluss.
+**Status: Entschieden (2026-11-12).** Durchlaufende Spielzeit: 1 Spielminute = 1 Sekunde (Öffnungstag 06–22 Uhr ≈ 16 Minuten), pausierbar, mit Vorspulen; der Tag endet mit einem Tagesabschluss.
 
-**Auswirkung:** NPC-Routinen, Nachfrage, Events, Savegame. Die Geschwindigkeit bleibt ein Balancing-Wert und ist nachträglich änderbar; die Grundform (durchlaufend oder in Phasen) nicht.
+**Noch nicht umgesetzt.** Die Geschwindigkeit bleibt ein Balancing-Wert und ist nachträglich änderbar; die Grundform (durchlaufend) steht fest.
+
+**Auswirkung:** NPC-Routinen, Nachfrage, Events, Savegame (`Game.tick`, Spielzeit im `GameState`, voraussichtlich neue `schemaVersion` mit Migration).
 
 ### O-4 – Alkohol und Tabak
-**Empfehlung:** Fiktives Bier als normale Ware mit Alterskennzeichen im Datenmodell; Tabak nur als nicht verkaufbare Dekoration, wie in `02` formuliert.
+**Status: Entschieden (2026-11-12).** Fiktives Bier und fiktive Tabakwaren sind verkaufbare Waren, jeweils mit Alterskennzeichen (`ageRestricted`) im Produktdatenmodell.
 
-**Auswirkung:** Produktdatenmodell, Zielgruppe, eventuelle Altersfreigabe.
+**Abweichung von der ursprünglichen Empfehlung:** Empfohlen war, Tabak nur als nicht verkaufbare Dekoration zu führen. Die Nutzerentscheidung hat Vorrang.
+
+**Leitplanken, die weiter gelten:**
+- Ausschließlich fiktive Marken und Verpackungen (CLAUDE.md, Abschnitt 4). Keine realen Tabak- oder Biermarken, keine nachgebildeten Packungsdesigns.
+- Der Katalog (`02-roadmap-und-artwork-katalog.md`) verlangt Tabakwaren als „generische, nicht werbliche Requisiten". Das gilt für die Darstellung weiter: neutrale Packungen, keine Werbeflächen, keine verherrlichende Inszenierung.
+
+**Noch nicht umgesetzt.** Offen für den Auftrag zu Phase 3: ob das Alterskennzeichen eine Spielmechanik bekommt (z. B. Alterskontrolle an der Theke) oder zunächst nur ein Datenfeld ist.
+
+**Auswirkung:** Produktdatenmodell, Zielgruppe, eventuelle Altersfreigabe bei einer Veröffentlichung.
 
 ### O-5 – Hosting und Lizenz
 **Empfehlung:** Später statisches Hosting (z. B. GitHub Pages); Lizenz vor einer Veröffentlichung klären. Blockiert Phase 1 nicht.

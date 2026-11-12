@@ -68,7 +68,7 @@ Offene Restpunkte:
 - Von außen ist der Bodenring der Klappenmarkierung bei geschlossener Klappe größtenteils verdeckt.
 - Gehweg und Straße (`E-001`, `E-002`) sind weiterhin Greybox; Umgebung folgt in Phase 6.
 - Regale und Kühlgeräte sind leer; Waren folgen in Phase 3.
-- Vor Phase 3 müssen O-3 (Zeitmodell) und O-4 (Alkohol und Tabak) entschieden werden.
+- O-3 (Zeitmodell) und O-4 (Alkohol und Tabak) sind am 2026-11-12 entschieden, siehe [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md); die Umsetzung gehört zu Phase 3.
 
 ## Phase 3 – Wirtschaftlicher Büdchen-Alltag und erste Produkte
 **Ziel:** ein geschlossener Gameplay-Loop statt einer reinen 3D-Kulisse.

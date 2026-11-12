@@ -44,10 +44,12 @@ Geprüft wurde in Headless-Chromium mit Software-Rendering. Die Prüfung auf ech
 ## Produktentscheidungen
 - **O-1 – Perspektive (entschieden):** Third Person mit schräger, leicht erhöhter Kamera; WASD und E, Maus ergänzend.
 - **O-2 – Plattform (entschieden):** Desktop-Browser mit Maus und Tastatur zuerst; Touch später.
-- **Offen:** O-3 Zeitmodell, O-4 Alkohol und Tabak, O-5 Hosting und Lizenz.
+- **O-3 – Zeitmodell (entschieden, noch nicht umgesetzt):** durchlaufende Spielzeit, 1 Spielminute = 1 Sekunde, pausierbar, mit Vorspulen und Tagesabschluss.
+- **O-4 – Alkohol und Tabak (entschieden, noch nicht umgesetzt):** fiktives Bier und fiktive Tabakwaren sind verkaufbar, mit Alterskennzeichen; Darstellung neutral und nicht werblich.
+- **Offen:** O-5 Hosting und Lizenz.
 
 ## Nächster Schritt
-Phase 3 – Wirtschaftlicher Büdchen-Alltag und erste Produkte (siehe [Implementierungsplan](docs/IMPLEMENTIERUNGSPLAN.md)). Ein Auftrag dafür liegt noch nicht vor. Vorher sind zwei Entscheidungen nötig: **O-3** (Zeitmodell) und **O-4** (Umgang mit Alkohol und Tabak im Sortiment).
+Phase 3 – Wirtschaftlicher Büdchen-Alltag und erste Produkte (siehe [Implementierungsplan](docs/IMPLEMENTIERUNGSPLAN.md)). Ein Auftrag dafür liegt noch nicht vor. Die dafür nötigen Entscheidungen O-3 und O-4 sind getroffen.
 
 ## Projekt-Dokumentation
 Die Art-Direction, Produktionsplanung, Regionen, fiktive Produktwelt, Claude-Code-Prompts und Three.js-Asset-Standards liegen unter [docs/artwork-prompts](docs/artwork-prompts/README.md).

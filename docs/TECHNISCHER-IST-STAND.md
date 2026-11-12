@@ -205,14 +205,14 @@ Der Override setzt eine neuere Hauptversion durch, als die betroffenen Pakete se
 ## 10. Ist-/Soll-Abgleich
 | Zielsystem | Status | Bemerkung |
 |---|---|---|
-| Core / Game Runtime | teilweise vorhanden | Loop, Signale, Log, Fassade; keine Spielzeit (O-3 offen) |
+| Core / Game Runtime | teilweise vorhanden | Loop, Signale, Log, Fassade; keine Spielzeit (O-3 entschieden, noch nicht umgesetzt) |
 | Three.js World | teilweise vorhanden | Kiosk, Figur, Kamera, Kollision, Interaktion, Sichtfreistellung; keine Umgebung, kein Wetter |
 | Kiosk und Einrichtung | vorhanden | Gebäude und neun Möbel modular; Regale und Kühlgeräte leer |
-| Produkte, Inventar, Warenwirtschaft | nicht vorhanden | Phase 3; O-4 offen |
+| Produkte, Inventar, Warenwirtschaft | nicht vorhanden | Phase 3; O-4 entschieden |
 | Finanzen, Kasse, Tagesabschluss | nicht vorhanden | Phase 3; die Kasse ist nur ein Möbelstück |
 | NPCs, Routinen, Beziehungen | nicht vorhanden | Phase 4 |
 | Dialoge, Quests, Geschichten | nicht vorhanden | Phase 4 |
-| Kalender, Wetter, Events | nicht vorhanden | Phase 5; O-3 offen |
+| Kalender, Wetter, Events | nicht vorhanden | Phase 5; Zeitmodell nach O-3 |
 | Rezepte und Kiosk-Traditionen | nicht vorhanden | Phase 5 |
 | UI | teilweise vorhanden | Hinweise, Prompt, Meldungen |
 | Savegames und Datenmigration | teilweise vorhanden | Version 1, Migrationskette leer |

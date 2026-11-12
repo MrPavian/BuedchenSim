@@ -148,7 +148,7 @@ interface ProductDef {            // Phase 3
   storage: 'shelf' | 'fridge' | 'freezer' | 'counter' | 'rack';
   unitsPerSlot: number;           // Platzbedarf in der Einrichtung
   demandTags: string[];           // z. B. 'cold', 'matchday', 'kids'
-  ageRestricted?: boolean;        // siehe offene Entscheidung O-4
+  ageRestricted?: boolean;        // siehe Entscheidung O-4: Bier und Tabakwaren
   assetId: string;                // P-xxx
   label: { primaryColor: string; accentColor: string }; // Etikettvariante
 }
@@ -310,7 +310,7 @@ Audio, weitere Regionen, GLB-Modelle und Animationen, Bau-/Umstellmodus für Ein
 | Risiko | Maßnahme |
 |---|---|
 | Perspektive unentschieden (O-1) | vor der Greybox entscheiden; sonst Kamera, Steuerung und Assetdetail doppelt |
-| Zeitmodell unentschieden (O-3) | Grundform vor Phase 3 festlegen; Geschwindigkeit bleibt Balancing |
+| Zeitmodell (O-3, entschieden: durchlaufend) | in Phase 3 umsetzen; Geschwindigkeit bleibt Balancing |
 | Schichten weichen auf | ESLint-Importregel ab dem ersten Commit |
 | Savegame bricht bei Änderungen | Version und Migrationstest ab dem ersten Speichern |
 | Prozedurale Assets wirken zu schlicht | Stil früh an Kiosk und zwei Produkten prüfen, bevor 30 Waren entstehen |
@@ -333,7 +333,7 @@ Maßgeblich sind die Typen im Code (`src/game/types.ts`, `src/game/state.ts`, `s
 
 **Abweichungen**
 - **`GameState` ist kleiner als in Abschnitt 9.** Version 1 enthält nur `regionId`, `player` und `kiosk: { doorOpen, shutterOpen }`. Die Abschnitte für Kalender, Wirtschaft, Menschen, Geschichten und Spezialitäten kommen mit ihrer Phase per Migration hinzu, statt von Beginn an leer im Schema zu stehen. Grund: Auftrag 01 schließt vorgezogene Systeme aus.
-- **`Game.tick` und `rngState` gibt es noch nicht.** Ohne Spielzeit (O-3 offen) und ohne Zufall hat `game` nichts zu simulieren. Der Loop treibt derzeit nur die Welt an.
+- **`Game.tick` und `rngState` gibt es noch nicht.** Ohne Spielzeit (O-3 entschieden, noch nicht umgesetzt) und ohne Zufall hat `game` nichts zu simulieren. Der Loop treibt derzeit nur die Welt an.
 - **Kiosk-Layout:** Das Gebäude ist über Grundfläche, Höhe, Wandstärke und Öffnungen beschrieben. Die Einrichtung war in Auftrag 01 eine Liste fester Rechtecke; seit Auftrag 02 ist sie eine Platzierungsliste (Abschnitt 14).
 - **Aktionen sind noch nicht nach Domänen gruppiert.** Die Fassade hat `player.setPose`, `interact`, `getAvailableInteraction`, `save`, `load`, `reset`.
 
