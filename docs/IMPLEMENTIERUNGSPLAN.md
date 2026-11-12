@@ -49,6 +49,8 @@ Offene Restpunkte, die in Phase 2 mitgenommen werden:
 ## Phase 2 – Kiosk als modularer 3D-Ort
 **Ziel:** das erste Ruhrgebiets-Büdchen bekommt seine erkennbare Identität.
 
+**Nächster konkreter Auftrag:** [Auftrag 02 – Modularer Kiosk und Einrichtung](auftraege/02-modularer-kiosk-und-einrichtung.md). Er umfasst auch die technische Nachpflege aus Auftrag 01 (npm audit, Build-Größe und Darstellungs-Restpunkte).
+
 Aufgaben:
 1. Gebäude, Fassade, Markise, Verkaufsfenster, Tür, Dach und fiktive Beschilderung ausarbeiten.
 2. Theke, Kasse, Wandregal, Mittelregal, Kühlschrank, Eistruhe, Zeitschriftenständer, Lager und Leergutbereich modular umsetzen.
