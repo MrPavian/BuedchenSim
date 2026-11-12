@@ -87,6 +87,43 @@ export function buildWallPieces(kiosk: KioskDef): WallPiece[] {
   return pieces;
 }
 
+/** Fallback height of the dollhouse cut when the kiosk has no south sales window. */
+export const DEFAULT_CUT_HEIGHT = 1.0;
+
+/** Height to which the camera-facing wall is cut down while the player is inside: the sales window sill. */
+export function kioskCutHeight(kiosk: KioskDef): number {
+  const window = kiosk.openings.find((o) => o.kind === 'window' && o.side === 'south');
+  const sill = window?.sill ?? DEFAULT_CUT_HEIGHT;
+  return Math.min(Math.max(sill, 0.1), kiosk.height - 0.1);
+}
+
+export type WallPart = 'lower' | 'upper';
+
+/** A wall piece restricted to one side of the cut plane. */
+export interface WallSlice extends WallPiece {
+  part: WallPart;
+}
+
+/**
+ * Splits wall pieces at `cutHeight` into a lower part (below the cut) and an upper part (above it).
+ * Pieces entirely on one side are passed through unchanged; the slices cover exactly the same volume.
+ */
+export function splitWallPiecesAtHeight(pieces: readonly WallPiece[], cutHeight: number): WallSlice[] {
+  const out: WallSlice[] = [];
+  for (const piece of pieces) {
+    const { minY, maxY } = piece.box;
+    if (maxY <= cutHeight) {
+      out.push({ ...piece, part: 'lower' });
+    } else if (minY >= cutHeight) {
+      out.push({ ...piece, part: 'upper' });
+    } else {
+      out.push({ ...piece, part: 'lower', box: { ...piece.box, maxY: cutHeight } });
+      out.push({ ...piece, part: 'upper', box: { ...piece.box, minY: cutHeight } });
+    }
+  }
+  return out;
+}
+
 export function boxToRect(box: Box): Rect {
   return { minX: box.minX, maxX: box.maxX, minZ: box.minZ, maxZ: box.maxZ };
 }

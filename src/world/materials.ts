@@ -106,33 +106,6 @@ export function createNoiseTexture(baseHex: number, amount: number, seed: number
   return finishTexture(canvas, true);
 }
 
-/** Sign board face with the layout's text; text is fitted to the board and never mirrored. */
-export function createSignTexture(text: string, widthM: number, heightM: number): CanvasTexture {
-  const pxPerM = 300;
-  const w = Math.round(widthM * pxPerM);
-  const h = Math.round(heightM * pxPerM);
-  const { canvas, ctx } = makeCanvas(w, h);
-  ctx.fillStyle = `#${new Color(palette.signBoard).getHexString()}`;
-  ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = '#e9dcb8';
-  ctx.lineWidth = Math.max(4, h * 0.035);
-  ctx.strokeRect(h * 0.09, h * 0.09, w - h * 0.18, h - h * 0.18);
-  const family = '"Trebuchet MS", "Segoe UI", Arial, sans-serif';
-  let size = h * 0.5;
-  ctx.font = `bold ${size}px ${family}`;
-  const maxWidth = w - h * 0.5;
-  const measured = ctx.measureText(text).width;
-  if (measured > maxWidth) {
-    size *= maxWidth / measured;
-    ctx.font = `bold ${size}px ${family}`;
-  }
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#f4ead0';
-  ctx.fillText(text, w / 2, h / 2 + size * 0.04);
-  return finishTexture(canvas, false);
-}
-
 export interface Materials {
   brick: MeshLambertMaterial;
   brickCap: MeshLambertMaterial;

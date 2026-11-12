@@ -1,9 +1,7 @@
-import type { Mesh, Object3D } from 'three';
+import type { Object3D } from 'three';
 import type { Game } from '../../game/game';
-import { KIOSK_NAMES } from '../assets/kioskK001';
+import { getKioskParts, type KioskParts } from '../assets/kiosk';
 
-const DOOR_OPEN_ANGLE = -Math.PI / 2; // swings inward (see rig frame in kioskK001)
-const SHUTTER_OPEN_ANGLE = -Math.PI * 0.47; // flap folds up and outward like an awning
 const ANIMATION_RATE = 7; // 1/s exponential approach
 
 export interface KioskView {
@@ -12,21 +10,13 @@ export interface KioskView {
   /** Jumps to the current state without animation. */
   snap(): void;
   dispose(): void;
-  parts: { shell: Mesh[]; front: Mesh[]; roof: Mesh | null };
-}
-
-function meshes(root: Object3D, predicate: (name: string) => boolean): Mesh[] {
-  const out: Mesh[] = [];
-  root.traverse((o) => {
-    if ((o as Mesh).isMesh && predicate(o.name)) out.push(o as Mesh);
-  });
-  return out;
+  /** Named parts of the kiosk (cut groups, roof, ...) for the occlusion. */
+  parts: KioskParts;
 }
 
 /** Door and sales-window flap visuals driven by `game.state.kiosk`; resyncs on `game.state.replaced`. */
 export function createKioskView(game: Game, kioskRoot: Object3D): KioskView {
-  const door = kioskRoot.getObjectByName(KIOSK_NAMES.door);
-  const flap = kioskRoot.getObjectByName(KIOSK_NAMES.shutter);
+  const parts = getKioskParts(kioskRoot);
   let doorTarget = 0;
   let shutterTarget = 0;
   let doorAmount = 0;
@@ -37,8 +27,8 @@ export function createKioskView(game: Game, kioskRoot: Object3D): KioskView {
     shutterTarget = game.state.kiosk.shutterOpen ? 1 : 0;
   };
   const apply = (): void => {
-    if (door) door.rotation.y = DOOR_OPEN_ANGLE * doorAmount;
-    if (flap) flap.rotation.x = SHUTTER_OPEN_ANGLE * shutterAmount;
+    parts.animated['door']?.setOpen(doorAmount);
+    parts.animated['flap']?.setOpen(shutterAmount);
   };
   const snap = (): void => {
     readState();
@@ -57,27 +47,6 @@ export function createKioskView(game: Game, kioskRoot: Object3D): KioskView {
     }),
     game.signals.on('game.state.replaced', snap),
   ];
-
-  const isWall = (n: string): boolean => n.startsWith(KIOSK_NAMES.wallPrefix);
-  const roof = meshes(kioskRoot, (n) => n === KIOSK_NAMES.roof)[0] ?? null;
-  const parts = {
-    shell: meshes(kioskRoot, (n) => isWall(n) || n === KIOSK_NAMES.sign),
-    front: [
-      ...meshes(kioskRoot, (n) => n.startsWith(`${KIOSK_NAMES.wallPrefix}south.`) || n === KIOSK_NAMES.sign),
-    ],
-    roof,
-  };
-  if (roof) parts.shell.push(roof);
-  // Door leaf and flap are children of animated groups; collect their meshes explicitly.
-  for (const group of [door, flap]) {
-    if (!group) continue;
-    group.traverse((o) => {
-      if ((o as Mesh).isMesh) {
-        parts.shell.push(o as Mesh);
-        parts.front.push(o as Mesh);
-      }
-    });
-  }
 
   return {
     parts,

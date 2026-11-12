@@ -61,7 +61,9 @@ export const ruhrgebietLayout: RegionLayout = {
       position: { x: -1.0, z: 1.6 },
       radius: 1.7,
       openingId: 'opening.sales-window',
-      marker: { position: { x: -1.0, z: 1.95 }, height: 1.03 },
+      // Ring on the continuous work surface (counter top = wall top = outer ledge, all at 1.0 m); centred on the wall so it
+      // stays visible on the outer ledge even when the flap is closed.
+      marker: { position: { x: -1.0, z: 1.98 }, height: 1.0, radius: 0.27 },
     },
   ],
 };

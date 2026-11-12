@@ -10,7 +10,7 @@ import {
   createStreetE002,
   createYard,
 } from './ground';
-import { createKioskK001 } from './kioskK001';
+import { createKioskK001 } from './kiosk';
 
 /**
  * Asset factories by asset id. Every factory returns an Object3D whose pivot is the

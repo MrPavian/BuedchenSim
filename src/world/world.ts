@@ -6,7 +6,6 @@ import {
   HemisphereLight,
   Mesh,
   PlaneGeometry,
-  PointLight,
   Scene,
   type BufferGeometry,
   type Object3D,
@@ -38,6 +37,8 @@ export interface World {
   render(alpha: number): void;
   resize(): void;
   dispose(): void;
+  /** Debug accessor: renderer statistics of the last frame (draw calls, triangles) and the scene's light count. */
+  getRenderStats(): { calls: number; triangles: number; geometries: number; textures: number; lights: number };
   /** Debug accessor: pose of a placement read from the actual scene object (null for unknown ids). */
   getPlacementTransform(id: string): { x: number; y: number; z: number; rotationDeg: number } | null;
 }
@@ -62,7 +63,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
   scene.background = new Color(palette.sky);
   scene.fog = new Fog(palette.sky, 20, 62);
 
-  // --- Lighting: soft sky/ground fill, one warm sun with shadows, warm lamp inside the kiosk.
+  // --- Lighting: soft sky/ground fill, one warm sun with shadows; the kiosk brings its own lamps (K-001-H).
   scene.add(new HemisphereLight(0xdcebf5, 0x8c7f68, 1.15));
   scene.add(new AmbientLight(0xffffff, 0.15));
   const sun = new DirectionalLight(0xffe7bf, 2.5);
@@ -75,11 +76,6 @@ export function createWorld(game: Game, container: HTMLElement): World {
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.03;
   scene.add(sun, sun.target);
-
-  const fp = layout.kiosk.footprint;
-  const lamp = new PointLight(0xffc27a, 14, 8, 2);
-  lamp.position.set((fp.minX + fp.maxX) / 2, layout.kiosk.height - 0.5, (fp.minZ + fp.maxZ) / 2);
-  scene.add(lamp);
 
   // --- Ground (far plane hides the void beyond the layout areas), kiosk, furniture.
   const base = new Mesh(new PlaneGeometry(400, 400), materials.base);
@@ -108,7 +104,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
   }
 
   const kioskView = createKioskView(game, kioskRoot);
-  const occlusion = createOcclusion({ ...kioskView.parts, footprint: fp });
+  const occlusion = createOcclusion({ parts: kioskView.parts, kiosk: layout.kiosk });
   const markers = createMarkerView(game, layout.interactionPoints, materials);
   scene.add(markers.root);
 
@@ -197,6 +193,15 @@ export function createWorld(game: Game, container: HTMLElement): World {
     },
 
     resize,
+
+    getRenderStats() {
+      let lights = 0;
+      scene.traverse((o) => {
+        if ((o as { isLight?: boolean }).isLight) lights += 1;
+      });
+      const { render, memory } = renderer.info;
+      return { calls: render.calls, triangles: render.triangles, geometries: memory.geometries, textures: memory.textures, lights };
+    },
 
     getPlacementTransform(id) {
       const object = placementObjects.get(id);

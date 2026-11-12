@@ -1,122 +1,71 @@
-import { Raycaster, Vector3, type Camera, type Material, type Mesh } from 'three';
-import type { Rect, Vec2 } from '../game/types';
+import { Vector3, type Camera, type Object3D } from 'three';
+import type { KioskDef, Vec2, WallSide } from '../game/types';
+import type { KioskParts } from './assets/kiosk';
+import { decideCut } from './occlusionRules';
 
-/** Fade-able mesh with its own material instances (shared materials must not fade globally). */
-interface FadeEntry {
-  mesh: Mesh;
-  materials: Material[];
-  baseCastShadow: boolean;
-  current: number;
+/**
+ * Dollhouse cutaway (see occlusionRules.ts for the rule). Each cut group lowers onto its cut plane with a
+ * short scale transition and is then hidden (`visible = false`); nothing is ever left translucent.
+ */
+
+const TRANSITION_SECONDS = 0.2;
+
+interface Entry {
+  object: Object3D;
+  /** 0 = fully shown, 1 = fully cut. */
+  amount: number;
   target: number;
-  /** Hide the mesh completely (also removes its shadow) once nearly invisible. */
-  hideWhenInvisible: boolean;
 }
 
-const RAY_HEIGHTS = [0.15, 0.9, 1.65];
-
 export interface OcclusionOptions {
-  /** Parts that may hide the player when the camera ray crosses them (walls, roof, sign, ...). */
-  shell: Mesh[];
-  /** Parts on the camera side (south wall, sign, door, shutter): faded while the player is inside. */
-  front: Mesh[];
-  roof: Mesh | null;
-  footprint: Rect;
+  parts: KioskParts;
+  kiosk: KioskDef;
 }
 
 export interface Occlusion {
   update(dt: number, camera: Camera, player: Vec2, snap?: boolean): void;
-  /** Sets all parts to fully visible at once. */
+  /** Shows everything at once. */
   reset(): void;
 }
 
-const OCCLUDED_OPACITY = 0.22;
-const INSIDE_FRONT_OPACITY = 0.08;
+const smooth = (t: number): number => t * t * (3 - 2 * t);
 
-export function createOcclusion(options: OcclusionOptions): Occlusion {
-  const entries = new Map<Mesh, FadeEntry>();
-  const register = (mesh: Mesh, hideWhenInvisible: boolean): void => {
-    if (entries.has(mesh)) return;
-    const source = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    const own = source.map((m) => {
-      const clone = m.clone();
-      clone.transparent = true;
-      return clone;
-    });
-    mesh.material = Array.isArray(mesh.material) ? own : (own[0] as Material);
-    entries.set(mesh, {
-      mesh,
-      materials: own,
-      baseCastShadow: mesh.castShadow,
-      current: 1,
-      target: 1,
-      hideWhenInvisible,
-    });
+export function createOcclusion({ parts, kiosk }: OcclusionOptions): Occlusion {
+  const roof: Entry = { object: parts.roof, amount: 0, target: 0 };
+  const walls: Record<WallSide, Entry[]> = { south: [], north: [], east: [], west: [] };
+  for (const side of ['south', 'east', 'west'] as const) {
+    walls[side] = parts.cut[side].map((object) => ({ object, amount: 0, target: 0 }));
+  }
+  const all = [roof, ...walls.south, ...walls.east, ...walls.west];
+  const cameraPosition = new Vector3();
+
+  const apply = (entry: Entry): void => {
+    const shown = 1 - smooth(entry.amount);
+    entry.object.scale.y = Math.max(shown, 0.001);
+    entry.object.visible = entry.amount < 0.999;
   };
-  for (const mesh of options.shell) register(mesh, false);
-  for (const mesh of options.front) register(mesh, false);
-  if (options.roof) register(options.roof, true);
-
-  const raycaster = new Raycaster();
-  const origin = new Vector3();
-  const goal = new Vector3();
-  const direction = new Vector3();
-
-  const apply = (entry: FadeEntry): void => {
-    const solid = entry.current >= 0.999;
-    for (const material of entry.materials) {
-      material.opacity = entry.current;
-      material.depthWrite = solid;
-    }
-    entry.mesh.castShadow = entry.baseCastShadow && entry.current > 0.5;
-    entry.mesh.visible = !(entry.hideWhenInvisible && entry.current < 0.02);
-  };
-
-  const { footprint } = options;
-  const occluders = [...options.shell, ...options.front];
+  for (const entry of all) apply(entry);
 
   return {
     update(dt, camera, player, snap = false) {
-      for (const entry of entries.values()) entry.target = 1;
-
-      const inside =
-        player.x > footprint.minX && player.x < footprint.maxX && player.z > footprint.minZ && player.z < footprint.maxZ;
-      if (inside) {
-        for (const mesh of options.front) {
-          const e = entries.get(mesh);
-          if (e) e.target = Math.min(e.target, INSIDE_FRONT_OPACITY);
-        }
-        if (options.roof) {
-          const e = entries.get(options.roof);
-          if (e) e.target = 0;
-        }
+      camera.getWorldPosition(cameraPosition);
+      const decision = decideCut(kiosk, parts.cutHeight, player, cameraPosition);
+      roof.target = decision.roof ? 1 : 0;
+      for (const side of ['south', 'east', 'west'] as const) {
+        for (const entry of walls[side]) entry.target = decision.walls[side] ? 1 : 0;
       }
-
-      // Anything the camera ray to the player crosses fades, so the figure never vanishes.
-      camera.getWorldPosition(origin);
-      for (const y of RAY_HEIGHTS) {
-        goal.set(player.x, y, player.z);
-        direction.subVectors(goal, origin);
-        const distance = direction.length();
-        direction.divideScalar(distance);
-        raycaster.set(origin, direction);
-        raycaster.far = Math.max(distance - 0.1, 0);
-        for (const hit of raycaster.intersectObjects(occluders, false)) {
-          const e = entries.get(hit.object as Mesh);
-          if (e) e.target = Math.min(e.target, OCCLUDED_OPACITY);
-        }
-      }
-
-      const k = snap ? 1 : 1 - Math.exp(-dt * 10);
-      for (const entry of entries.values()) {
-        entry.current += (entry.target - entry.current) * k;
-        if (Math.abs(entry.target - entry.current) < 0.003) entry.current = entry.target;
+      const step = dt / TRANSITION_SECONDS;
+      for (const entry of all) {
+        if (snap) entry.amount = entry.target;
+        else if (entry.amount < entry.target) entry.amount = Math.min(entry.target, entry.amount + step);
+        else if (entry.amount > entry.target) entry.amount = Math.max(entry.target, entry.amount - step);
         apply(entry);
       }
     },
     reset() {
-      for (const entry of entries.values()) {
-        entry.current = 1;
-        entry.target = 1;
+      for (const entry of all) {
+        entry.amount = 0;
+        entry.target = 0;
         apply(entry);
       }
     },

@@ -29,7 +29,15 @@ export function createMarkerView(game: Game, points: readonly InteractionPointDe
   root.name = 'interaction-markers';
   const openings = game.content.layout.kiosk.openings;
   const markers: Marker[] = [];
-  const ringGeometry = new RingGeometry(0.32, 0.42, 40);
+  const ringGeometries = new Map<number, RingGeometry>();
+  const ringFor = (radius: number): RingGeometry => {
+    let g = ringGeometries.get(radius);
+    if (!g) {
+      g = new RingGeometry(radius - Math.max(0.1, radius * 0.3), radius, 40);
+      ringGeometries.set(radius, g);
+    }
+    return g;
+  };
   const gemGeometry = new OctahedronGeometry(0.13);
 
   for (const point of points) {
@@ -37,7 +45,7 @@ export function createMarkerView(game: Game, points: readonly InteractionPointDe
     const ringMaterial = m.marker.clone();
     const gemMaterial = m.marker.clone();
     gemMaterial.depthTest = false; // stays readable through the wall it hangs in
-    const ring = new Mesh(ringGeometry, ringMaterial);
+    const ring = new Mesh(ringFor(point.marker?.radius ?? 0.42), ringMaterial);
     ring.rotation.x = -Math.PI / 2;
     // Visual marker position: the point's own marker override (e.g. on the sill), else the ground at the point.
     const at = point.marker?.position ?? point.position;
@@ -78,7 +86,7 @@ export function createMarkerView(game: Game, points: readonly InteractionPointDe
     },
     dispose() {
       for (const off of offs) off();
-      ringGeometry.dispose();
+      for (const g of ringGeometries.values()) g.dispose();
       gemGeometry.dispose();
       for (const marker of markers) {
         marker.ringMaterial.dispose();

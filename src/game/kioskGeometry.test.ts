@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { testPack } from '../game/testing/fixture-pack';
-import { PLAYER_HEIGHT, buildWallPieces, kioskColliders, wallExtent, wallRect, WALL_SIDES } from './kioskGeometry';
+import {
+  PLAYER_HEIGHT,
+  buildWallPieces,
+  kioskColliders,
+  kioskCutHeight,
+  splitWallPiecesAtHeight,
+  wallExtent,
+  wallRect,
+  WALL_SIDES,
+  type Box,
+} from './kioskGeometry';
 
 const ruhrgebietLayout = testPack.layout;
 
@@ -67,5 +77,48 @@ describe('kioskGeometry', () => {
     // The sales window wall always blocks.
     expect(covers(open, -1)).toBe(true);
     expect(covers(closed, -1)).toBe(true);
+  });
+});
+
+describe('dollhouse cut (wall upper/lower split)', () => {
+  const volume = (b: Box): number => (b.maxX - b.minX) * (b.maxY - b.minY) * (b.maxZ - b.minZ);
+  const pieces = buildWallPieces(kiosk);
+  const cut = kioskCutHeight(kiosk);
+
+  it('the cut height is the sales window sill', () => {
+    expect(cut).toBe(1.0);
+  });
+
+  it('lower slices stay below and upper slices above the cut', () => {
+    for (const s of splitWallPiecesAtHeight(pieces, cut)) {
+      if (s.part === 'lower') expect(s.box.maxY).toBeLessThanOrEqual(cut + 1e-9);
+      else expect(s.box.minY).toBeGreaterThanOrEqual(cut - 1e-9);
+      expect(s.box.maxY).toBeGreaterThan(s.box.minY);
+    }
+  });
+
+  it('slices cover exactly the same volume as the wall pieces, per side', () => {
+    const slices = splitWallPiecesAtHeight(pieces, cut);
+    for (const side of WALL_SIDES) {
+      const before = pieces.filter((p) => p.side === side).reduce((a, p) => a + volume(p.box), 0);
+      const after = slices.filter((p) => p.side === side).reduce((a, p) => a + volume(p.box), 0);
+      expect(after).toBeCloseTo(before, 9);
+    }
+  });
+
+  it('the lower slices of one side together cover the wall footprint up to the cut (openings excepted)', () => {
+    const slices = splitWallPiecesAtHeight(pieces, cut);
+    // South wall: window below-piece (0..sill) plus lower halves of the beside pieces; the door gap stays open.
+    const south = slices.filter((s) => s.side === 'south' && s.part === 'lower');
+    const area = south.reduce((a, s) => a + (s.box.maxX - s.box.minX) * (s.box.maxY - s.box.minY), 0);
+    const [lo, hi] = wallExtent(kiosk, 'south');
+    const door = kiosk.openings.find((o) => o.kind === 'door')!;
+    expect(area).toBeCloseTo((hi - lo - (door.to - door.from)) * cut, 9);
+  });
+
+  it('a cut at or below a piece start leaves the pieces untouched', () => {
+    const slices = splitWallPiecesAtHeight(pieces, 0);
+    expect(slices.every((s) => s.part === 'upper')).toBe(true);
+    expect(slices).toHaveLength(pieces.length);
   });
 });
