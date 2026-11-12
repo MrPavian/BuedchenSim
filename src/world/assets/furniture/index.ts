@@ -1,0 +1,10 @@
+export { createCounterI001 } from './counter';
+export { createRegisterI002 } from './register';
+export { createWallShelfI003 } from './wallShelf';
+export { createMiddleShelfI004 } from './middleShelf';
+export { createFridgeI005 } from './fridge';
+export { createFreezerI006 } from './freezer';
+export { createMagazineRackI007 } from './magazineRack';
+export { createStorageRackI011 } from './storageRack';
+export { createCratesI012 } from './crates';
+export { createFurniturePlaceholder } from './placeholder';

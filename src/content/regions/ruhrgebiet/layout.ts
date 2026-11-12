@@ -41,9 +41,9 @@ export const ruhrgebietLayout: RegionLayout = {
     { id: 'placement.freezer', assetId: 'I-006', position: { x: 2.525, z: -0.6 }, rotation: 270, role: 'freezing' },
     // Free-standing middle shelf between the shelves and the counter.
     { id: 'placement.middle-shelf', assetId: 'I-004', position: { x: -1.0, z: -0.2 }, rotation: 0, role: 'display' },
-    // Returns: one crate area at the east end of the counter inside, one in the yard behind the kiosk.
+    // Returns: one crate area at the east end of the counter inside, one outside against the west wall (visible from the camera).
     { id: 'placement.returns-inside', assetId: 'I-012', position: { x: 0.95, z: 1.5 }, rotation: 180, role: 'returns' },
-    { id: 'placement.returns-yard', assetId: 'I-012', position: { x: -1.5, z: -2.4 }, rotation: 180, role: 'returns' },
+    { id: 'placement.returns-yard', assetId: 'I-012', position: { x: -3.45, z: 0.6 }, rotation: 270, role: 'returns' },
   ],
   ground: [
     { id: 'ground.sidewalk', assetId: 'E-001', kind: 'sidewalk', rect: { minX: -12, maxX: 12, minZ: 2, maxZ: 5 } },

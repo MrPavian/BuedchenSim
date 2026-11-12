@@ -15,12 +15,32 @@ describe('content <-> world', () => {
     expect(validateContent(ruhrgebietPack)).toEqual([]);
   });
 
-  it('dedicated factories exist for I-001 and I-003; the rest use the generic placeholder', () => {
-    expect(hasFurnitureFactory('I-001')).toBe(true);
-    expect(hasFurnitureFactory('I-003')).toBe(true);
-    const placeholders = [...new Set(layout.placements.map((p) => p.assetId))].filter((id) => !hasFurnitureFactory(id)).sort();
-    // Documented state after step A; later agents replace these with real models.
-    expect(placeholders).toEqual(['I-002', 'I-004', 'I-005', 'I-006', 'I-007', 'I-011', 'I-012']);
+  it('every placed asset has a dedicated factory (no placeholder fallback)', () => {
+    const ids = [...new Set(layout.placements.map((p) => p.assetId))].sort();
+    expect(ids).toEqual(['I-001', 'I-002', 'I-003', 'I-004', 'I-005', 'I-006', 'I-007', 'I-011', 'I-012']);
+    for (const id of ids) expect(hasFurnitureFactory(id), id).toBe(true);
+  });
+
+  it('factories derive their dimensions from the data (modified sizes still match)', () => {
+    const materials = createMaterials();
+    for (const id of Object.keys(assets).filter((key) => key.startsWith('I-'))) {
+      const base = assets[id];
+      if (!base) throw new Error(`unknown asset ${id}`);
+      for (const [fx, fy, fz] of [
+        [1.25, 0.9, 1],
+        [0.9, 1.1, 1.2],
+      ] as const) {
+        const asset = { ...base, size: { width: base.size.width * fx, height: base.size.height * fy, depth: base.size.depth * fz } };
+        const box = new Box3().setFromObject(createFurniture(asset, materials));
+        const size = box.getSize(new Vector3());
+        expect(Math.abs(size.x - asset.size.width), `${id} width x${fx}`).toBeLessThanOrEqual(0.02);
+        expect(Math.abs(size.y - asset.size.height), `${id} height x${fy}`).toBeLessThanOrEqual(0.02);
+        expect(Math.abs(size.z - asset.size.depth), `${id} depth x${fz}`).toBeLessThanOrEqual(0.02);
+        expect(Math.abs(box.min.y), id).toBeLessThanOrEqual(0.02);
+        expect(Math.abs((box.min.x + box.max.x) / 2), id).toBeLessThanOrEqual(0.02);
+        expect(Math.abs((box.min.z + box.max.z) / 2), id).toBeLessThanOrEqual(0.02);
+      }
+    }
   });
 
   it('every placement builds an object whose bounding box matches the asset size (+-2 cm)', () => {

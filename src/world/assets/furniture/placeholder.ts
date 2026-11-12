@@ -1,9 +1,9 @@
 import { BoxGeometry, Group, Mesh, MeshLambertMaterial, Color, type Material, type Object3D } from 'three';
-import type { AssetDef } from '../../game/types';
-import type { Materials } from '../materials';
+import type { AssetDef } from '../../../game/types';
+import type { Materials } from '../../materials';
 
 /**
- * Furniture factories: `(asset, materials) => Object3D`. The object is built at rotation 0 with its
+ * Generic placeholder (unknown asset ids only). Furniture factories: `(asset, materials) => Object3D`. The object is built at rotation 0 with its
  * pivot at the ground centre and a bounding box equal to `asset.size`; the front faces +Z.
  * World positions and rotates it from the placement (see world.ts).
  */
@@ -14,34 +14,6 @@ function part(w: number, h: number, d: number, material: Material, x: number, y:
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   return mesh;
-}
-
-/** I-001 sales counter: body, overhanging top slab, darker plinth. */
-export function createCounterI001(asset: AssetDef, m: Materials): Object3D {
-  const { width: w, depth: d, height: h } = asset.size;
-  const root = new Group();
-  const topH = 0.06;
-  const plinthH = 0.1;
-  root.add(part(w - 0.04, h - topH - plinthH, d - 0.04, m.counterBody, 0, plinthH + (h - topH - plinthH) / 2, 0));
-  root.add(part(w - 0.1, plinthH, d - 0.1, m.wood, 0, plinthH / 2, 0));
-  root.add(part(w, topH, d, m.counterTop, 0, h - topH / 2, 0));
-  return root;
-}
-
-/** I-003 wall shelf: two uprights, a back panel (at -Z) and evenly spaced boards (empty, greybox). */
-export function createWallShelfI003(asset: AssetDef, m: Materials): Object3D {
-  const { width: w, depth: d, height: h } = asset.size;
-  const root = new Group();
-  const board = 0.04;
-  root.add(part(0.05, h, d, m.wood, -w / 2 + 0.025, h / 2, 0));
-  root.add(part(0.05, h, d, m.wood, w / 2 - 0.025, h / 2, 0));
-  root.add(part(w, h, 0.03, m.woodLight, 0, h / 2, -d / 2 + 0.015));
-  const levels = 5;
-  for (let i = 0; i < levels; i += 1) {
-    const y = 0.1 + (i * (h - 0.14)) / (levels - 1);
-    root.add(part(w - 0.08, board, d, m.woodLight, 0, y, 0));
-  }
-  return root;
 }
 
 /** Stable tint per asset id so different placeholders are distinguishable. */

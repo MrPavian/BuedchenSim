@@ -127,7 +127,8 @@ describe('validateContent', () => {
       expect(count('I-003').length).toBe(2);
       expect(new Set(count('I-003').map((p) => p.rotation)).size).toBe(2);
       expect(count('I-012').length).toBe(2);
-      expect(new Set(count('I-012').map((p) => p.position.z < -2)).size).toBe(2); // one inside, one in the yard
+      expect(new Set(count('I-012').map((p) => p.position.x < -3)).size).toBe(2); // one inside, one outside at the west wall
+      expect(new Set(count('I-012').map((p) => p.rotation)).size).toBe(2);
     });
 
     it('rejects a non-positive layoutVersion', () => {

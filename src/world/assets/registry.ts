@@ -2,7 +2,18 @@ import type { Object3D } from 'three';
 import { log } from '../../core/log';
 import type { AssetDef, GroundAreaDef, KioskDef } from '../../game/types';
 import type { Materials } from '../materials';
-import { createCounterI001, createFurniturePlaceholder, createWallShelfI003 } from './furniture';
+import {
+  createCounterI001,
+  createCratesI012,
+  createFreezerI006,
+  createFridgeI005,
+  createFurniturePlaceholder,
+  createMagazineRackI007,
+  createMiddleShelfI004,
+  createRegisterI002,
+  createStorageRackI011,
+  createWallShelfI003,
+} from './furniture';
 import {
   createCurb,
   createGroundPlaceholder,
@@ -26,7 +37,14 @@ export type FurnitureFactory = (asset: AssetDef, m: Materials) => Object3D;
 
 const furnitureFactories: Record<string, FurnitureFactory> = {
   'I-001': createCounterI001,
+  'I-002': createRegisterI002,
   'I-003': createWallShelfI003,
+  'I-004': createMiddleShelfI004,
+  'I-005': createFridgeI005,
+  'I-006': createFreezerI006,
+  'I-007': createMagazineRackI007,
+  'I-011': createStorageRackI011,
+  'I-012': createCratesI012,
 };
 
 const groundFactories: Record<string, (def: GroundAreaDef, m: Materials) => Object3D> = {
