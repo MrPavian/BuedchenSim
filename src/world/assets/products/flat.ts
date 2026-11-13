@@ -2,16 +2,42 @@ import { BoxGeometry, type Object3D, PlaneGeometry } from 'three';
 import type { AssetDef, ProductDef } from '../../../game/types';
 import type { Materials } from '../../materials';
 import { ProductBuilder, mix, pillowGeometry } from './kit';
+import { PATCH_PX, labelPixelSize } from './labelTexture';
 import { getProductMaterials } from './materials';
 
-/** Text on a label only where the front is wide enough to be read at game camera distance. */
-const readable = (widthM: number): boolean => widthM >= 0.06;
+/**
+ * Points the faces of a box geometry at the solid colour patches in the top corners of its label texture (primary
+ * top-left, accent top-right) so side faces do not show a squashed copy of the front. Faces: 0 +x, 1 -x, 2 +y, 3 -y,
+ * 4 +z (the front, keeps its UVs), 5 -z. `top` = 'texture' keeps the top face's UVs with v flipped, so a flat label
+ * reads upright for a viewer looking from +Z (BoxGeometry puts the top of the image at +Z).
+ */
+function patchFaces(geometry: BoxGeometry, art: { widthM: number; heightM: number }, top: 'accent' | 'texture'): BoxGeometry {
+  const { w, h } = labelPixelSize(art);
+  const uv = geometry.getAttribute('uv');
+  const centre = PATCH_PX / 2;
+  const primary: [number, number] = [centre / w, 1 - centre / h];
+  const accent: [number, number] = [1 - centre / w, 1 - centre / h];
+  for (let face = 0; face < 6; face += 1) {
+    if (face === 4) continue;
+    for (let v = 0; v < 4; v += 1) {
+      const i = face * 4 + v;
+      if (face === 2) {
+        if (top === 'texture') uv.setY(i, 1 - uv.getY(i));
+        else uv.setXY(i, accent[0], accent[1]);
+      } else {
+        uv.setXY(i, primary[0], primary[1]);
+      }
+    }
+  }
+  uv.needsUpdate = true;
+  return geometry;
+}
 
 /** Pillow bag (chips, nuts, gummies, pouch): crimped seams top and bottom, label on the pillow. */
 export function createBag(asset: AssetDef, product: ProductDef, m: Materials): Object3D {
   const { width: w, depth: d, height: h } = asset.size;
   const mat = getProductMaterials(m);
-  const label = mat.label(product, 'front', { layout: 'front', widthM: w, heightM: h, drawText: readable(w), crimp: 0.1 });
+  const label = mat.label(product, 'front', { layout: 'front', widthM: w, heightM: h, drawText: true, crimp: 0.1 });
   return new ProductBuilder().add(label, pillowGeometry(w, h, d)).build(asset.assetId);
 }
 
@@ -21,10 +47,11 @@ export function createBar(asset: AssetDef, product: ProductDef, m: Materials): O
   const mat = getProductMaterials(m);
   const foil = mat.plain(mix(product.label.accentColor, '#9c9a94', 0.55));
   const sleeveW = w * 0.66;
-  const sleeve = mat.label(product, 'sleeve', { layout: 'front', widthM: sleeveW, heightM: d, drawText: true });
+  const sleeveArt = { widthM: sleeveW, heightM: d };
+  const sleeve = mat.label(product, 'sleeve', { layout: 'front', ...sleeveArt, drawText: true, patches: true });
   return new ProductBuilder()
     .add(foil, new BoxGeometry(w, h * 0.86, d * 0.96).translate(0, (h * 0.86) / 2, 0))
-    .add(sleeve, new BoxGeometry(sleeveW, h, d).translate(0, h / 2, 0))
+    .add(sleeve, patchFaces(new BoxGeometry(sleeveW, h, d), sleeveArt, 'texture').translate(0, h / 2, 0))
     .build(asset.assetId);
 }
 
@@ -37,10 +64,11 @@ export function createBox(asset: AssetDef, product: ProductDef, m: Materials): O
     layout: 'front',
     widthM: w,
     heightM: h,
-    drawText: readable(w),
+    drawText: true,
+    patches: true,
     ...(lid !== undefined ? { lidLine: lid } : {}),
   });
-  return new ProductBuilder().add(label, new BoxGeometry(w, h, d).translate(0, h / 2, 0)).build(asset.assetId);
+  return new ProductBuilder().add(label, patchFaces(new BoxGeometry(w, h, d), { widthM: w, heightM: h }, 'accent').translate(0, h / 2, 0)).build(asset.assetId);
 }
 
 /** Wrapped ice lolly: pillow wrapper on the bottom part, a flat wooden stick sticking out at the top. */
@@ -48,7 +76,7 @@ export function createIceStick(asset: AssetDef, product: ProductDef, m: Material
   const { width: w, depth: d, height: h } = asset.size;
   const mat = getProductMaterials(m);
   const wrapperH = h * 0.84;
-  const label = mat.label(product, 'front', { layout: 'front', widthM: w, heightM: wrapperH, drawText: readable(w), crimp: 0.09 });
+  const label = mat.label(product, 'front', { layout: 'front', widthM: w, heightM: wrapperH, drawText: true, crimp: 0.09 });
   const wood = mat.plain('#d9bb8a');
   const stickW = Math.max(0.012, w * 0.28);
   return new ProductBuilder()

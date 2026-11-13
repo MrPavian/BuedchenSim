@@ -12,7 +12,7 @@ export interface ProductMaterials {
   /** Flat lambert material by CSS colour (shared). */
   plain(color: string): MeshLambertMaterial;
   /** Textured label material of one product and variant (texture only in the browser; flat primary colour otherwise). */
-  label(product: ProductDef, variant: string, art: Omit<LabelArt, 'primary' | 'accent' | 'text' | 'sober' | 'style'>): MeshLambertMaterial;
+  label(product: ProductDef, variant: string, art: Omit<LabelArt, 'primary' | 'accent' | 'text' | 'brand' | 'sober' | 'style'>): MeshLambertMaterial;
   /** Lambert material that reads vertex colours (pastry). */
   vertexColored(): MeshLambertMaterial;
   /** Waffle-grid material for ice cups (flat colour without a DOM). */
@@ -51,6 +51,7 @@ export function getProductMaterials(base: Materials): ProductMaterials {
           primary: product.label.primaryColor,
           accent: product.label.accentColor,
           text: product.label.text,
+          brand: product.brand,
           sober,
           style: Math.floor(hash01(product.id) * 4),
         };

@@ -33,8 +33,8 @@ export function createGlassBottle(asset: AssetDef, product: ProductDef, m: Mater
   const rb = r - 0.0006;
   const nr = r * 0.42;
   const beer = product.subcategory === 'beer';
-  const glass = mat.plain(beer ? '#7a4a1f' : '#9bc2b2');
-  const capMat = mat.plain(beer ? '#8d897f' : mix(product.label.primaryColor, '#000000', 0.3));
+  const glass = mat.plain(beer ? '#7a4a1f' : mix('#9bc2b2', product.label.primaryColor, 0.3));
+  const capMat = mat.plain(beer ? '#8d897f' : product.label.accentColor);
   const body = lathe(
     [
       [0, 0],
@@ -54,10 +54,10 @@ export function createGlassBottle(asset: AssetDef, product: ProductDef, m: Mater
     ],
     SEGMENTS,
   );
-  const labelMat = mat.label(product, 'wrap', { layout: 'wrap', widthM: 2 * Math.PI * r, heightM: 0.44 * H, drawText: true });
+  const labelMat = mat.label(product, 'wrap', { layout: 'wrap', widthM: 2 * Math.PI * r, heightM: 0.49 * H, drawText: true });
   return new ProductBuilder()
     .add(glass, fit(body, asset))
-    .add(labelMat, fit(band(r, 0.08 * H, 0.52 * H), asset))
+    .add(labelMat, fit(band(r, 0.06 * H, 0.55 * H), asset))
     .add(capMat, fit(cap(nr * 1.38, 0.925 * H, H), asset))
     .build(asset.assetId);
 }
@@ -69,8 +69,8 @@ export function createPetBottle(asset: AssetDef, product: ProductDef, m: Materia
   const r = w / 2;
   const rb = r - 0.0006;
   const nr = r * 0.4;
-  const liquid = mat.plain(mix(product.label.primaryColor, '#ffffff', 0.55));
-  const capMat = mat.plain(mix(product.label.primaryColor, '#000000', 0.25));
+  const liquid = mat.plain(mix(product.label.primaryColor, '#ffffff', 0.3));
+  const capMat = mat.plain(product.label.accentColor);
   const body = lathe(
     [
       [0, 0.012 * H],
@@ -91,10 +91,10 @@ export function createPetBottle(asset: AssetDef, product: ProductDef, m: Materia
     ],
     SEGMENTS,
   );
-  const labelMat = mat.label(product, 'wrap', { layout: 'wrap', widthM: 2 * Math.PI * r, heightM: 0.4 * H, drawText: true });
+  const labelMat = mat.label(product, 'wrap', { layout: 'wrap', widthM: 2 * Math.PI * r, heightM: 0.51 * H, drawText: true });
   return new ProductBuilder()
     .add(liquid, fit(body, asset))
-    .add(labelMat, fit(band(r, 0.2 * H, 0.6 * H), asset))
+    .add(labelMat, fit(band(r, 0.1 * H, 0.61 * H), asset))
     .add(capMat, fit(cap(nr * 1.28, 0.89 * H, H), asset))
     .build(asset.assetId);
 }
