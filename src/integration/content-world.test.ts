@@ -1,18 +1,61 @@
-import { Box3, Euler, Vector3 } from 'three';
+import { Box3, Euler, Vector3, type Material, type Mesh } from 'three';
 import { describe, expect, it } from 'vitest';
 import { ruhrgebietPack } from '../content/regions/ruhrgebiet';
 import { validateContent } from '../content/validate';
 import { kioskColliders } from '../game/kioskGeometry';
 import { placementColliders, placementFootprint, placementFront, quarterTurnToRadians } from '../game/placement';
-import { createFurniture, hasFurnitureFactory } from '../world/assets/registry';
+import { createFurniture, createProductModel, hasFurnitureFactory, hasProductFactory } from '../world/assets/registry';
 import { buildWorldColliders } from '../world/colliders';
 import { createMaterials } from '../world/materials';
 
 const { layout, assets } = ruhrgebietPack;
 
 describe('content <-> world', () => {
-  // TODO(world): product factories do not exist yet (the world layer adds them with the stock rendering).
-  it.todo('every product asset has a factory');
+  it('every product of the real pack builds a model matching its asset size (+-2 cm) with the pivot at the bottom centre', () => {
+    const materials = createMaterials();
+    const products = Object.values(ruhrgebietPack.products);
+    expect(products).toHaveLength(28);
+    for (const product of products) {
+      const asset = assets[product.assetId];
+      if (!asset) throw new Error(`unknown asset ${product.assetId}`);
+      expect(hasProductFactory(product.package), `${product.id} package ${product.package}`).toBe(true);
+      const object = createProductModel(asset, product, materials);
+      object.updateMatrixWorld(true);
+      const box = new Box3().setFromObject(object);
+      const size = box.getSize(new Vector3());
+      const where = `${product.assetId} ${product.id}`;
+      expect(Math.abs(size.x - asset.size.width), `${where} width`).toBeLessThanOrEqual(0.02);
+      expect(Math.abs(size.y - asset.size.height), `${where} height`).toBeLessThanOrEqual(0.02);
+      expect(Math.abs(size.z - asset.size.depth), `${where} depth`).toBeLessThanOrEqual(0.02);
+      expect(Math.abs(box.min.y), `${where} base`).toBeLessThanOrEqual(0.02);
+      expect(Math.abs((box.min.x + box.max.x) / 2), `${where} centre x`).toBeLessThanOrEqual(0.02);
+      expect(Math.abs((box.min.z + box.max.z) / 2), `${where} centre z`).toBeLessThanOrEqual(0.02);
+      // Meshes only; shared parts are merged per material (a handful per product).
+      let meshes = 0;
+      object.traverse((o) => {
+        if ((o as Mesh).isMesh) meshes += 1;
+      });
+      expect(meshes, where).toBeGreaterThan(0);
+      expect(meshes, where).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it('products of one package kind never share their whole material set (distinct labels)', () => {
+    const materials = createMaterials();
+    const seen = new Map<string, string>();
+    for (const product of Object.values(ruhrgebietPack.products)) {
+      const asset = assets[product.assetId];
+      if (!asset) throw new Error(product.assetId);
+      if (product.package === 'pastry') continue; // one shared vertex-colour material; the colours live in the geometry
+      const uuids: string[] = [];
+      createProductModel(asset, product, materials).traverse((o) => {
+        if ((o as Mesh).isMesh) uuids.push(((o as Mesh).material as Material).uuid);
+      });
+      const key = `${product.package}|${uuids.sort().join(',')}`;
+      expect(seen.get(key), `${product.id} looks like ${seen.get(key)}`).toBeUndefined();
+      seen.set(key, product.id);
+    }
+  });
 
   it('the real pack is valid', () => {
     expect(validateContent(ruhrgebietPack)).toEqual([]);

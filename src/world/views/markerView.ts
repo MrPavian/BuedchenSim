@@ -21,6 +21,8 @@ export interface MarkerView {
 
 const GEM_RADIUS = 0.13;
 /** Gem centre above the door plate: largest pulse scale, bob amplitude and a small gap. */
+/** Gem height above the ring for points that belong to no wall opening. */
+const FREE_GEM_HEIGHT = 0.75;
 const GEM_CLEARANCE = GEM_RADIUS * 1.25 + 0.05 + 0.03;
 
 interface Marker {
@@ -73,7 +75,13 @@ export function createMarkerView(game: Game, points: readonly InteractionPointDe
     ring.position.set(at.x, point.marker ? point.marker.height + 0.02 : SIDEWALK_HEIGHT + 0.02, at.z);
     ring.renderOrder = 2;
     // Doors: above the plate that sits over the door head; windows: middle of the opening.
-    const baseY = opening ? (point.kind === 'door' ? doorPlateTop(opening.head) + GEM_CLEARANCE : (opening.sill + opening.head) / 2) : 2;
+    // Points without an opening (register, storage): hover above the marker ring.
+    const ringY = point.marker ? point.marker.height : SIDEWALK_HEIGHT;
+    const baseY = opening
+      ? point.kind === 'door'
+        ? doorPlateTop(opening.head) + GEM_CLEARANCE
+        : (opening.sill + opening.head) / 2
+      : ringY + FREE_GEM_HEIGHT;
     const gem = new Mesh(gemGeometry, gemMaterial);
     gem.position.set(at.x, baseY, at.z);
     gem.renderOrder = 10;

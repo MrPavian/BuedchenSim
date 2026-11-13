@@ -1,15 +1,13 @@
-import { Box3, Mesh, Raycaster, Vector3, type BufferGeometry, type Material, type Object3D } from 'three';
+import { Box3, Mesh, Raycaster, Vector3, type BufferGeometry, type Object3D } from 'three';
 import { describe, expect, it } from 'vitest';
 import { ruhrgebietPack } from '../content/regions/ruhrgebiet';
 import type { StockSlotDef } from '../game/types';
-import { getFurnitureMaterials } from '../world/assets/furniture/materials';
 import { createFurniture } from '../world/assets/registry';
 import { createMaterials } from '../world/materials';
 
 /**
  * The slot boxes are derived from the furniture factories by hand; this test builds the real factories and checks
- * that every slot bottom rests on a surface (+-2 cm) and has free headroom. The blank placeholder magazine covers
- * of the magazine rack are ignored: the world layer replaces them with real stock.
+ * that every slot bottom rests on a surface (+-2 cm) and has free headroom.
  */
 const { layout, assets, stockSlots } = ruhrgebietPack;
 const TOL = 0.02;
@@ -25,13 +23,12 @@ interface Face {
 
 function inspect(assetId: string) {
   const materials = createMaterials();
-  const placeholders = new Set<Material>(getFurnitureMaterials(materials).covers);
   const root = createFurniture(assets[assetId] as never, materials);
   root.updateMatrixWorld(true);
   const meshes: Mesh[] = [];
   root.traverse((o: Object3D) => {
     const mesh = o as Mesh;
-    if (mesh.isMesh && !placeholders.has(mesh.material as Material)) meshes.push(mesh);
+    if (mesh.isMesh) meshes.push(mesh);
   });
 
   const faces: Face[] = [];

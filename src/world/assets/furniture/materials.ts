@@ -43,12 +43,6 @@ export const furniturePalette = {
   walnut: 0x5b4030,
   walnutDark: 0x3e2d22,
   birch: 0xd6bd90,
-  coverRose: 0xb98a8a,
-  coverMustard: 0xc9a248,
-  coverTeal: 0x5f9a96,
-  coverBlue: 0x7089a8,
-  coverOlive: 0x8c9660,
-  coverGrey: 0xa9a49a,
   rackBlue: 0x3e6188,
   rackSlot: 0x1f2f40,
   rackOrange: 0xd9822b,
@@ -104,7 +98,6 @@ export interface FurnitureMaterials {
   walnut: MeshLambertMaterial;
   walnutDark: MeshLambertMaterial;
   birch: MeshLambertMaterial;
-  covers: MeshLambertMaterial[];
   rackBlue: MeshLambertMaterial;
   rackSlot: MeshLambertMaterial;
   rackOrange: MeshLambertMaterial;
@@ -167,7 +160,6 @@ export function getFurnitureMaterials(base: Materials): FurnitureMaterials {
     walnut: lambert(p.walnut),
     walnutDark: lambert(p.walnutDark),
     birch: lambert(p.birch),
-    covers: [p.coverRose, p.coverMustard, p.coverTeal, p.coverBlue, p.coverOlive, p.coverGrey].map((c) => lambert(c)),
     rackBlue: lambert(p.rackBlue),
     rackSlot: lambert(p.rackSlot),
     rackOrange: lambert(p.rackOrange),

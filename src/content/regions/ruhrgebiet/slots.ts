@@ -113,8 +113,7 @@ function freezer(): StockSlotDef[] {
  * tray top at the centre of the slot (0.162 + 0.2862 k; the tilt makes it +-1.6 cm over the depth). The distance to
  * the underside / lip of the next tier is >= 0.243 m -> slot height 0.235. The fifth tier has only 0.16 m under the
  * top board and carries no slot. Inner width x -0.37..0.37: three columns of 0.23 m per tier.
- * NOTE: the factory currently draws blank placeholder covers in the same area; the world layer replaces them
- * with real stock.
+ * The trays are empty in the factory; the stock view draws the magazines.
  */
 function magazineRack(): StockSlotDef[] {
   const boxes: Box[] = [];

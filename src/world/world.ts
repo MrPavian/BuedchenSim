@@ -29,6 +29,7 @@ import { createPlayerFigure } from './playerFigure';
 import { createRenderer } from './renderer';
 import { createKioskView } from './views/kioskView';
 import { createMarkerView } from './views/markerView';
+import { createStockView, type StockInfo } from './views/stockView';
 
 export { WebGLUnavailableError } from './renderer';
 
@@ -58,6 +59,11 @@ export interface World {
   getFigureScreen(): { x: number; y: number; visible: boolean };
   /** Whether the x-ray silhouette of the player is currently drawn. */
   isSilhouetteVisible(): boolean;
+  /**
+   * Debug accessor: what the 3D stock shows per slot (product, state quantity, instances drawn, world position of
+   * the first unit read from the instanced mesh) plus totals. Lets a test verify that the 3D stock follows the data.
+   */
+  getStockInfo(): StockInfo;
 }
 
 export interface KioskVisibility {
@@ -140,6 +146,8 @@ export function createWorld(game: Game, container: HTMLElement): World {
   const occlusion = createOcclusion({ parts: kioskView.parts, kiosk: layout.kiosk });
   const markers = createMarkerView(game, layout.interactionPoints, materials);
   scene.add(markers.root);
+  const stock = createStockView(game, materials);
+  scene.add(stock.root);
 
   const figure = createPlayerFigure(materials);
   const silhouetteCamera = new Vector3();
@@ -286,6 +294,8 @@ export function createWorld(game: Game, container: HTMLElement): World {
 
     isSilhouetteVisible: () => figure.isSilhouetteVisible(),
 
+    getStockInfo: () => stock.getInfo(),
+
     getFigureScreen() {
       const p = figure.root.position;
       return toScreen({ x: p.x, y: p.y + 1.1, z: p.z });
@@ -303,6 +313,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
       input.dispose();
       kioskView.dispose();
       markers.dispose();
+      stock.dispose();
       const geometries = new Set<BufferGeometry>();
       const mats = new Set<Material>();
       scene.traverse((o) => {

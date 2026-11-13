@@ -8,3 +8,4 @@ export { createMagazineRackI007 } from './magazineRack';
 export { createStorageRackI011 } from './storageRack';
 export { createCratesI012 } from './crates';
 export { createFurniturePlaceholder } from './placeholder';
+export { furnitureSurfaceTilt } from './surfaces';

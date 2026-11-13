@@ -23,6 +23,8 @@ import {
 } from './ground';
 import { createKioskK001 } from './kiosk';
 
+export { createProductModel, hasProductFactory, productFactories, type ProductFactory } from './products';
+
 /**
  * Asset factories by asset id. Every factory returns an Object3D whose pivot is the
  * ground centre of the asset's footprint; units are metres. Content refers to assets

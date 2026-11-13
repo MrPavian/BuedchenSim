@@ -4,10 +4,13 @@ import type { Materials } from '../../materials';
 import { PartBuilder } from './kit';
 import { getFurnitureMaterials } from './materials';
 
+/** Tilt of the rack trays in radians (front end lower than the back end); the stock view lays magazines on this slope. */
+export const MAGAZINE_TRAY_TILT = 0.3;
+
 /**
  * I-007 Zeitschriftenstaender. Dark walnut frame with a stepped side silhouette (each tier recedes
- * towards the back), five tilted birch trays with front lips (+Z) and blank muted cover placeholders
- * in six colours (no titles, no layouts).
+ * towards the back), five tilted birch trays with front lips (+Z). Empty: the magazines are stock
+ * (src/world/views/stockView.ts).
  */
 export function createMagazineRackI007(asset: AssetDef, m: Materials): Object3D {
   const { width: w, depth: d, height: h } = asset.size;
@@ -21,15 +24,12 @@ export function createMagazineRackI007(asset: AssetDef, m: Materials): Object3D 
   const tiers = 5;
   const stepH = (h - baseH) / tiers;
   const stepZ = d * 0.1;
-  const tilt = 0.3;
+  const tilt = MAGAZINE_TRAY_TILT;
   const trayT = 0.02;
 
   b.box(f.walnutDark, -hw, hw, 0, baseH, -hd, hd);
   b.box(f.walnutDark, -hw + sideT, hw - sideT, baseH, h, -hd, -hd + backT);
   const innerW = w - 2 * sideT;
-  const perRow = Math.max(2, Math.floor(innerW / 0.17));
-  const coverW = innerW / perRow - 0.022;
-  const coverH = Math.min(0.2, stepH * 0.7);
 
   for (let k = 0; k < tiers; k += 1) {
     const y0 = baseH + k * stepH;
@@ -49,23 +49,6 @@ export function createMagazineRackI007(asset: AssetDef, m: Materials): Object3D 
     const frontZ = cz + (len / 2) * Math.cos(tilt) - (trayT / 2) * Math.sin(tilt);
     const frontY = cy - (len / 2) * Math.sin(tilt) + (trayT / 2) * Math.cos(tilt);
     b.box(f.walnut, -hw + sideT, hw - sideT, frontY - 0.02, frontY + 0.04, frontZ - 0.014, Math.min(frontZ, zf));
-
-    // Blank covers leaning back on the tray, near the lip.
-    const u = len / 2 - 0.05;
-    const sx = [0, -Math.sin(tilt), Math.cos(tilt)] as const;
-    const nx = [0, Math.cos(tilt), Math.sin(tilt)] as const;
-    const px = cy + sx[1] * u + nx[1] * (trayT / 2);
-    const pz = cz + sx[2] * u + nx[2] * (trayT / 2);
-    const lean = -0.32;
-    const dirY = Math.cos(lean);
-    const dirZ = Math.sin(lean);
-    for (let j = 0; j < perRow; j += 1) {
-      const x = -innerW / 2 + (j + 0.5) * (innerW / perRow);
-      const mat = f.covers[(k * 2 + j * 3) % f.covers.length];
-      if (!mat) continue;
-      const hVar = coverH * (0.88 + 0.12 * (((k + j) * 7) % 3) / 2);
-      b.tilted(mat, coverW, hVar, 0.006, x, px + (hVar / 2) * dirY + 0.004, pz + (hVar / 2) * dirZ, lean);
-    }
   }
   const zTop = hd - (tiers - 1) * stepZ;
   b.box(f.walnut, -hw, hw, h - 0.03, h, -hd, zTop);
