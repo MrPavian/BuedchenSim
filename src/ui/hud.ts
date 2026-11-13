@@ -8,6 +8,8 @@ import { texts } from './texts';
 export interface HudActions {
   /** "Tag abschließen" (confirmation) or, when the day is already closed, the report. */
   closeDay(): void;
+  /** "Notizen" (journal); allowed anywhere. */
+  openJournal(): void;
 }
 
 export interface Hud {
@@ -49,7 +51,12 @@ export function createHud(game: Game, parent: HTMLElement, actions: HudActions):
     return { speed, b };
   });
   const closeDay = button(texts.hud.closeDay, 'hud-close-day', actions.closeDay, 'ui-btn ui-btn-primary');
-  controls.append(pause, speedGroup, closeDay);
+  const journal = button(texts.journal.open, 'hud-open-journal', () => {
+    journal.blur();
+    actions.openJournal();
+  }, 'ui-btn');
+  journal.title = texts.journal.openTitle;
+  controls.append(pause, speedGroup, journal, closeDay);
 
   const hint = el('div', 'ui-hud-hint');
   hint.setAttribute('role', 'status');

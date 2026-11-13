@@ -792,3 +792,98 @@ body {
 .ui-panel-body > [data-testid="slots-toggle-all"] {
   margin: 8px 0 4px;
 }
+
+/* Dialogue and journal */
+.ui-dialogue-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.ui-dialogue-name {
+  margin: 0;
+  font-size: 18px;
+}
+
+.ui-dialogue-tier {
+  padding: 1px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--ui-muted);
+  cursor: help;
+}
+
+.ui-dialogue-text {
+  margin: 10px 0 12px;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.ui-dialogue-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0 14px;
+}
+
+.ui-dialogue-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  text-align: left;
+}
+
+.ui-dialogue-option kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: rgba(255, 201, 77, 0.85);
+  color: #2b2118;
+  font: bold 13px var(--ui-font);
+}
+
+.ui-customer {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.ui-customer-line {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0;
+  font-size: 15px;
+}
+
+.ui-customer-total {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-weight: bold;
+}
+
+.ui-customer-age {
+  margin: 6px 0 0;
+}
+
+.ui-journal-entry {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.ui-journal-entry p {
+  margin: 4px 0 0;
+}
+
+.ui-panel-body > .ui-journal-entry:last-child {
+  margin-bottom: 14px;
+}

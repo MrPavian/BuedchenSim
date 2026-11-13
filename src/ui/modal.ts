@@ -2,7 +2,7 @@ import type { Game } from '../game/game';
 import { button, el, testId } from './dom';
 import { texts } from './texts';
 
-export type PanelId = 'goods' | 'till' | 'report' | 'confirmClose';
+export type PanelId = 'goods' | 'till' | 'report' | 'confirmClose' | 'dialogue' | 'journal';
 
 /** What panels get from the UI shell. */
 export interface PanelContext {
@@ -21,6 +21,8 @@ export interface Panel {
   render(body: HTMLElement): void;
   /** Called on every close; resets transient state (cart, age confirmation, messages). */
   reset(): void;
+  /** Optional: removes listeners the panel registered itself. */
+  dispose?(): void;
 }
 
 export interface ModalHost {
@@ -137,6 +139,7 @@ export function createModalHost(
       });
     },
     dispose() {
+      for (const panel of Object.values(panels)) panel.dispose?.();
       window.removeEventListener('keydown', onKeyDown, true);
       backdrop.remove();
     },

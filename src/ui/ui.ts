@@ -1,10 +1,15 @@
 import type { Game } from '../game/game';
+import { testId } from './dom';
 import './styles.css';
 import { createHud } from './hud';
 import { createModalHost, type PanelContext, type PanelId } from './modal';
 import { createConfirmClosePanel, createReportPanel } from './panels/dayClose';
+import { createDialoguePanel } from './panels/dialogue';
 import { createGoodsPanel } from './panels/goods';
+import { createJournalPanel } from './panels/journal';
 import { createTillPanel } from './panels/till';
+import { formatEuro } from './format';
+import { isMemorableMemory, tierChangeNotice } from './socialViewModel';
 import { texts } from './texts';
 
 export interface UiCallbacks {
@@ -92,6 +97,7 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
   // Interaction prompt (button: click = interact)
   const prompt = element('button', 'ui-prompt');
   prompt.type = 'button';
+  testId(prompt, 'prompt');
   prompt.hidden = true;
   const key = element('kbd', undefined, texts.interactionKey);
   const promptLabel = element('span');
@@ -103,13 +109,18 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
   overlay.append(prompt);
 
   let modalOpen = false;
+  const npcName = (npcId: string): string =>
+    Object.hasOwn(game.content.npcs, npcId) ? (game.content.npcs[npcId]?.name ?? npcId) : npcId;
   const renderPrompt = (): void => {
-    const available = game.getAvailableInteraction();
-    if (!available || modalOpen) {
+    const target = game.getInteractionTarget();
+    if (!target || modalOpen) {
       prompt.hidden = true;
       return;
     }
-    promptLabel.textContent = texts.interaction[available.action];
+    promptLabel.textContent =
+      target.kind === 'npc'
+        ? texts.interactionNpc[target.action](npcName(target.npcId))
+        : texts.interaction[target.action];
     prompt.hidden = false;
   };
   renderPrompt();
@@ -170,6 +181,8 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
       till: createTillPanel(context),
       report: createReportPanel(context),
       confirmClose: createConfirmClosePanel(context),
+      dialogue: createDialoguePanel(context),
+      journal: createJournalPanel(context),
     },
     (open) => {
       modalOpen = open;
@@ -179,16 +192,53 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
   );
   const openPanel = (id: PanelId): void => {
     if (id === 'report' && game.state.economy.lastReport === null) return;
+    if (id === 'dialogue' && game.dialogue.current() === null) return;
+    // Dialogue and journal never replace an open panel.
+    if ((id === 'dialogue' || id === 'journal') && modal.current() !== null && modal.current() !== id) return;
     modal.open(id);
   };
   const hud = createHud(game, overlay, {
     closeDay: () => openPanel(game.state.calendar.phase === 'closed' ? 'report' : 'confirmClose'),
+    openJournal: () => openPanel('journal'),
   });
   /** After a reload in phase 'closed' the report must be shown again. */
   const syncReport = (): void => {
     if (game.state.calendar.phase === 'closed') openPanel('report');
   };
   syncReport();
+
+  // Relationship feedback: the tiers last seen per resident (the signal only carries the new tier).
+  const knownTiers = new Map<string, string>();
+  const syncTiers = (): void => {
+    knownTiers.clear();
+    for (const npc of game.npcs.list()) knownTiers.set(npc.id, npc.tier);
+  };
+  syncTiers();
+  let memoryNoticeFor: string | null = null;
+
+  /** J toggles the journal anywhere (not while another panel is open, not while typing). */
+  const onKeyDown = (event: KeyboardEvent): void => {
+    if (event.key.toLowerCase() !== 'j' || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target;
+    if (target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+    const open = modal.current();
+    if (open === 'journal') modal.close();
+    else if (open === null) openPanel('journal');
+    else return;
+    event.preventDefault();
+  };
+  window.addEventListener('keydown', onKeyDown);
+
+  const syncDialogue = (): void => {
+    const open = modal.current();
+    if (game.dialogue.current() === null) {
+      if (open === 'dialogue') modal.close();
+      return;
+    }
+    if (open === 'dialogue') modal.refresh();
+    else if (open === null) openPanel('dialogue');
+    else game.dialogue.close(); // a dialogue never opens over another panel
+  };
 
   const refreshOn = [
     'product.stock.changed',
@@ -199,6 +249,31 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
     'kiosk.shutter.changed',
   ] as const;
   const offs = [
+    game.signals.on('interaction.target.changed', renderPrompt),
+    game.signals.on('dialogue.opened', () => {
+      memoryNoticeFor = null;
+      syncDialogue();
+    }),
+    game.signals.on('dialogue.closed', () => {
+      memoryNoticeFor = null;
+      syncDialogue();
+    }),
+    game.signals.on('relationship.changed', ({ npcId, tier }) => {
+      const before = knownTiers.get(npcId);
+      knownTiers.set(npcId, tier);
+      if (before === undefined || before === tier) return;
+      const text = tierChangeNotice(npcName(npcId), before as typeof tier, tier);
+      if (text) notify(text);
+    }),
+    game.signals.on('memory.added', ({ npcId, memoryId }) => {
+      // Only decisions made in a conversation, once per conversation.
+      if (!isMemorableMemory(memoryId) || memoryNoticeFor === npcId || game.dialogue.current()?.npcId !== npcId) return;
+      memoryNoticeFor = npcId;
+      notify(texts.notices.willRemember(npcName(npcId)));
+    }),
+    game.signals.on('sale.completed', ({ npcId, totalCents }) => {
+      if (npcId !== undefined) notify(texts.notices.saleDone(formatEuro(totalCents)));
+    }),
     game.signals.on('interaction.available.changed', ({ interaction }) => {
       renderPrompt();
       // A place-bound panel never outlives its place (input is locked while open; this guards teleports/replacements).
@@ -229,6 +304,8 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
       notify(texts.notices.dayStarted(day));
     }),
     game.signals.on('game.state.replaced', () => {
+      syncTiers();
+      memoryNoticeFor = null;
       renderPrompt();
       modal.close();
       hud.update();
@@ -253,6 +330,7 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
     },
     dispose() {
       for (const off of offs) off();
+      window.removeEventListener('keydown', onKeyDown);
       modal.dispose();
       hud.dispose();
       timers.forEach((t) => window.clearTimeout(t));

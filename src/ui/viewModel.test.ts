@@ -31,6 +31,8 @@ describe('reasonText', () => {
       'slot_capacity_exceeded', 'insufficient_storage', 'slot_empty', 'insufficient_slot_stock', 'empty_cart',
       'day_not_open', 'kiosk_closed', 'age_check_required', 'insufficient_stock', 'day_already_closed',
       'invalid_speed', 'day_not_closed', 'nothing_in_range',
+      'unknown_npc', 'npc_away', 'dialogue_already_open', 'nothing_to_say', 'no_dialogue', 'unknown_option',
+      'option_unavailable', 'wish_already_resolved', 'no_wish', 'unknown_customer', 'customer_underage',
     ];
     for (const reason of reasons) expect(Object.hasOwn(texts.reasons, reason), reason).toBe(true);
   });

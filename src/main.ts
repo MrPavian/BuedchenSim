@@ -118,6 +118,11 @@ function start(): void {
     'calendar.changed',
     'product.stock.changed',
     'money.changed',
+    'dialogue.closed',
+    'story.changed',
+    'relationship.changed',
+    'memory.added',
+    'npc.wish',
   ] as const) {
     game.signals.on(name, persistSoon);
   }
