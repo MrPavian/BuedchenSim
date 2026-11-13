@@ -1,6 +1,6 @@
 # Architektur-Entscheidungen (ADRs)
 
-**Stand:** 2026-11-11 · Ergebnis von [Auftrag 00](auftraege/00-bestandsaufnahme-und-architektur.md)
+**Stand:** 2026-11-13 · Ergebnis von [Auftrag 00](auftraege/00-bestandsaufnahme-und-architektur.md)
 
 Grundlage: Das Repository enthält keinen Code ([Ist-Stand](TECHNISCHER-IST-STAND.md)). Es gibt daher keine bestehende Architektur, die zu respektieren wäre; die folgenden Entscheidungen legen die erste fest.
 
@@ -55,7 +55,7 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 **Konsequenzen:** Tippfehler in Feldern fallen beim Kompilieren auf, kaputte Referenzen beim Test. Bedingungen und Effekte in Dialogen/Quests werden als kleine, feste Menge von Datentypen modelliert, nicht als freier Code in den Daten. Ein späterer Wechsel auf JSON bleibt möglich, weil die Definitionen reine Daten sind.
 
 ### ADR-005 – Versioniertes Savegame im Browser-Speicher
-**Status:** Entschieden (umgesetzt in Auftrag 01). Noch nicht umgesetzt, weil es noch keinen Zufall gibt: geseedeter Zufallsgenerator. Geldbeträge in Cent folgen mit Phase 3.
+**Status:** Entschieden (umgesetzt in Auftrag 01). Noch nicht umgesetzt, weil es noch keinen Zufall gibt: geseedeter Zufallsgenerator. Geldbeträge in ganzen Cent sind seit Auftrag 03 umgesetzt (Savegame Version 2).
 
 **Kontext:** Geschichten und Beziehungen müssen über Spielstände hinweg bestehen; das Format muss sich weiterentwickeln können.
 
@@ -104,6 +104,51 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 
 **Konsequenzen:** Einheitlicher Code; eine spätere Übersetzung bleibt möglich, wird aber jetzt nicht gebaut.
 
+### ADR-011 – Geometrische Slot-Kapazität mit einer Quelle der Wahrheit
+**Status:** Entschieden (umgesetzt in Auftrag 03).
+
+**Kontext:** Waren müssen im Regal sichtbar sein, ohne dass sich Modelle überlappen, und das Spiel muss Überbelegung ausschließen. Eine frei gewählte Kapazitätszahl je Platz würde von der Darstellung abweichen.
+
+**Entscheidung:** Ein Warenplatz (`StockSlotDef`) ist eine Box im lokalen Rahmen seiner Platzierung. Die Funktion `slotUnitPositions` in `src/game/stockLayout.ts` ordnet Einheiten (Maß aus dem Produkt-Asset, Stapellimit der Verpackung oder des Produkts, 1 cm Abstand) in Spalten, Reihen und Lagen an; die Kapazität ist die Länge dieser Liste. Spiel (Einräumen, Laden, Validierung) und Welt (Darstellung) rufen dieselbe Funktion auf.
+
+**Konsequenzen:** Was das Spiel zulässt, ist genau das, was die Welt zeichnet, und Modelle überlappen nicht. Die Plätze stehen als Daten in `slots.ts` und werden gegen die echten Möbelfabriken geprüft (Integrationstest). Ändert sich ein Möbel, müssen die Platzmaße mitgezogen werden. Die Maße gelten für Maßstab 1 (kein Asset ist skalierbar). Produkte, die nicht in einen Platz passen, haben dort Kapazität 0.
+
+### ADR-012 – Ein P-Asset je Produkt, gemeinsame Modellfabriken je Verpackungsart
+**Status:** Entschieden (umgesetzt in Auftrag 03).
+
+**Kontext:** Das Register führte P-001 bis P-030 als Sammeleintrag. Der Auftrag erlaubt gemeinsame Fabriken bei gleicher Form, verlangt aber unterscheidbare Produkte.
+
+**Entscheidung:** Jedes der 28 Produkte hat genau eine Asset-ID (`P-001` bis `P-028`, in Katalogreihenfolge) mit dem Maß einer Einheit; die Validierung verlangt, dass eine Asset-ID nur einem Produkt gehört. Zehn Fabriken je Verpackungsart (`PackageKind`) bauen die Form; Farben, Beschriftung und Etikett kommen aus dem `ProductDef`, Maße aus dem Asset. P-029 und P-030 bleiben frei.
+
+**Konsequenzen:** Ein neues Produkt braucht nur Daten, solange die Verpackungsart existiert. Die Form ist je Verpackungsart gleich. Die Etiketten sind Canvas-Texturen; Text auf Flaschen und Dosen ist aus Kameraabstand nicht lesbar. Die Produktdarstellung nutzt `InstancedMesh` je Modellteil und Produkt.
+
+### ADR-013 – Lieferung trifft sofort ein, wird aber ausdrücklich angenommen
+**Status:** Entschieden (umgesetzt in Auftrag 03).
+
+**Kontext:** Der Auftrag lässt eine sofortige oder eine kurz verzögerte Lieferung zu und verlangt die einfachere, robuste Variante.
+
+**Entscheidung:** `placeOrder` bucht die Summe sofort ab, verbucht eine Transaktion und setzt eine offene Lieferung (höchstens eine); `receiveDelivery` schreibt sie dem Hinterlager gut. Es gibt keine Wartezeit. Das Hinterlager ist ein Zähler (400 Stück), die offene Lieferung reserviert Platz.
+
+**Konsequenzen:** Keine zeitabhängigen Zustände im Savegame, einfach zu testen. Der Spieler sieht die Lieferung nachvollziehbar und nimmt sie an. Das Geld ist bei der Bestellung weg, nicht bei der Annahme. Eine Wartezeit ließe sich später als Feld an `PendingDelivery` ergänzen (mit Migration).
+
+### ADR-014 – Die Uhr hält bei 22:00 und schließt den Tag nie selbst
+**Status:** Entschieden (umgesetzt in Auftrag 03).
+
+**Kontext:** Der Auftrag nennt Tagesabschluss „um 22:00 Uhr oder über eine explizite Aktion“ und verbietet stillschweigende Gutschriften und unbemerkte Zeitsprünge.
+
+**Entscheidung:** Bei 22:00 wird die Zeit begrenzt, die Phase wechselt einmalig auf `awaiting_close` und `day.ending` wird gesendet; der Tagesabschluss geschieht nur durch `economy.closeDay()` auf Bestätigung des Spielers, auch vorzeitig. Der nächste Tag beginnt nur durch `calendar.startNextDay()`.
+
+**Konsequenzen:** Keine doppelten Abschlüsse durch große Zeitschritte, kein verlorener Abend. Zwischen 22:00 und Abschluss steht die Zeit, Bestellen, Einräumen und Zurücknehmen bleiben möglich, Verkauf nicht. Ein Spieler kann den Abschluss beliebig hinauszögern.
+
+### ADR-015 – Keine Preisänderung durch den Spieler in dieser Phase
+**Status:** Entschieden (umgesetzt in Auftrag 03).
+
+**Kontext:** Der Auftrag stellt `economy.setPrice` frei („nur falls sinnvoll und vollständig“). Ohne Kunden und Nachfrage hätte ein Preis keine Gegenwirkung.
+
+**Entscheidung:** Verkauft wird zum vorgeschlagenen Verkaufspreis des Produkts (`suggestedPriceCents`). Es gibt keinen Preis im Spielstand und keine Aktion `setPrice`.
+
+**Konsequenzen:** Weniger Zustand und kein Balancing ohne Nachfrage. Eine spätere Preisfunktion braucht Zustand je Produkt, eine Migration und die Nachfragewirkung (Phase 5).
+
 ---
 
 ## Teil B – Offene Produktentscheidungen
@@ -129,14 +174,19 @@ Diese Punkte kann die Analyse nicht entscheiden. Bis zur Antwort gilt jeweils di
 **Auswirkung:** Eingabesystem, UI-Größen, Leistungsbudget.
 
 ### O-3 – Zeitmodell
-**Status: Entschieden (2026-11-12).** Durchlaufende Spielzeit: 1 Spielminute = 1 Sekunde (Öffnungstag 06–22 Uhr ≈ 16 Minuten), pausierbar, mit Vorspulen; der Tag endet mit einem Tagesabschluss.
+**Status: Entschieden (2026-11-12), umgesetzt in Auftrag 03 (2026-11-13).** Durchlaufende Spielzeit: 1 Spielminute = 1 Sekunde (Öffnungstag 06–22 Uhr = 16 Minuten bei Tempo 1×), pausierbar, mit Vorspulen; der Tag endet mit einem Tagesabschluss.
 
-**Noch nicht umgesetzt.** Die Geschwindigkeit bleibt ein Balancing-Wert und ist nachträglich änderbar; die Grundform (durchlaufend) steht fest.
+**Umsetzung (so im Code):**
+- Tempo 1×, 2× und 4× sowie Pause; alle Werte in `src/game/balance.ts` (`GAME_MINUTES_PER_SECOND`, `SPEEDS`, `DAY_START_MINUTE`, `DAY_END_MINUTE`).
+- Die Uhr wird über `game.tick(dtSeconds)` aus dem festen Simulationsschritt des Loops getrieben und rechnet mit der übergebenen Zeit, ohne eigene Timer; ungültige Zeitschritte werden ignoriert, ein sehr großer Zeitschritt überspringt 22:00 nicht.
+- Bei 22:00 Uhr bleibt die Uhr stehen (Phase `awaiting_close`) und wartet auf den ausdrücklichen Tagesabschluss; der Abschluss ist auch vorher möglich (mit Bestätigung, Restzeit entfällt), genau einmal je Tag. Danach beginnt der nächste Tag um 06:00 Uhr erst auf Bestätigung des Spielers.
+- Regel für den geschlossenen Kiosk: Die Uhr läuft unabhängig von Tür und Verkaufsklappe und auch bei offenem Panel; sie steht nur bei Pause, bei 22:00 und nach dem Tagesabschluss. Es gibt keine unbemerkte Beschleunigung.
+- Spielzeit und Tag stehen im Spielstand (Version 2).
 
-**Auswirkung:** NPC-Routinen, Nachfrage, Events, Savegame (`Game.tick`, Spielzeit im `GameState`, voraussichtlich neue `schemaVersion` mit Migration).
+**Auswirkung:** NPC-Routinen, Nachfrage und Events können auf `calendar` und die Signale `day.started`/`day.ended` aufsetzen. Die Geschwindigkeit bleibt ein Balancing-Wert.
 
 ### O-4 – Alkohol und Tabak
-**Status: Entschieden (2026-11-12).** Fiktives Bier und fiktive Tabakwaren sind verkaufbare Waren, jeweils mit Alterskennzeichen (`ageRestricted`) im Produktdatenmodell.
+**Status: Entschieden (2026-11-12), umgesetzt in Auftrag 03 (2026-11-13).** Fiktives Bier und fiktive Tabakwaren sind verkaufbare Waren, jeweils mit Alterskennzeichen im Produktdatenmodell.
 
 **Abweichung von der ursprünglichen Empfehlung:** Empfohlen war, Tabak nur als nicht verkaufbare Dekoration zu führen. Die Nutzerentscheidung hat Vorrang.
 
@@ -144,7 +194,12 @@ Diese Punkte kann die Analyse nicht entscheiden. Bis zur Antwort gilt jeweils di
 - Ausschließlich fiktive Marken und Verpackungen (CLAUDE.md, Abschnitt 4). Keine realen Tabak- oder Biermarken, keine nachgebildeten Packungsdesigns.
 - Der Katalog (`02-roadmap-und-artwork-katalog.md`) verlangt Tabakwaren als „generische, nicht werbliche Requisiten". Das gilt für die Darstellung weiter: neutrale Packungen, keine Werbeflächen, keine verherrlichende Inszenierung.
 
-**Noch nicht umgesetzt.** Offen für den Auftrag zu Phase 3: ob das Alterskennzeichen eine Spielmechanik bekommt (z. B. Alterskontrolle an der Theke) oder zunächst nur ein Datenfeld ist.
+**Die offene Frage ist beantwortet: Die Alterskontrolle ist eine echte Verkaufsschranke.** Umsetzung:
+- Das Alterskennzeichen ist das Feld `minimumAge` (16 für die zwei fiktiven Biere, 18 für die zwei fiktiven Tabakwaren; andere Werte lehnt die Validierung ab). Es ist die einzige Quelle der Schranke; es gibt keine Sonderfälle für Produktnamen. (Der frühe Entwurf `ageRestricted` entfällt.)
+- `economy.completeSale` lehnt einen Verkauf mit mindestens einer altersbeschränkten Zeile ohne `ageCheckConfirmed: true` mit `age_check_required` ab; ein gemischter Warenkorb wird als Ganzes abgelehnt. Die Prüfung gilt je Verkauf, die Bestätigung wird nirgends gespeichert und steht nicht im Spielstand.
+- Die Kasse fragt mit einem standardmäßig nicht gesetzten Kontrollkästchen „Ausweis geprüft – Mindestalter (n) erreicht“, nennt bei Bedarf das höchste Mindestalter im Warenkorb und setzt die Bestätigung nach dem Verkauf und beim Schließen zurück.
+- Darstellung: fiktive Marken, schlichte Etiketten (ein Band und der Name, ohne Zierformen), Tabak hinter der Theke, keine verherrlichende Inszenierung. Die Namen sind Arbeitstitel und rechtlich nicht geprüft.
+- Offen für Phase 4: Wer die Prüfung für NPC-Kunden bestätigt.
 
 **Auswirkung:** Produktdatenmodell, Zielgruppe, eventuelle Altersfreigabe bei einer Veröffentlichung.
 

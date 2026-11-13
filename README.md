@@ -16,7 +16,7 @@ npm install
 npm run dev
 ```
 
-Danach die angezeigte Adresse im Desktop-Browser öffnen. Steuerung: **WASD** oder Pfeiltasten zum Laufen, **E** zum Interagieren (oder Klick auf den Hinweis).
+Danach die angezeigte Adresse im Desktop-Browser öffnen. Steuerung: **WASD** oder Pfeiltasten zum Laufen, **E** zum Interagieren (oder Klick auf den Hinweis). Mit **E** an der Kasse (hinter der Theke neben der Kasse) öffnet sich die Kasse, mit **E** am Lagerregal im Kiosk die Warenverwaltung. Die Schaltflächen **Waren** und **Kasse** in der Leiste oben öffnen die beiden Oberflächen auch von jeder anderen Stelle; **Escape** schließt sie. Solange ein Fenster offen ist, steht die Figur still, die Uhr läuft weiter.
 
 | Befehl | Zweck |
 |---|---|
@@ -29,29 +29,38 @@ Danach die angezeigte Adresse im Desktop-Browser öffnen. Steuerung: **WASD** od
 | `npm run check:browser` | Prüfung der laufenden Szene in Chromium mit Screenshots (mehrere Minuten); benötigt einmalig `npx playwright install chromium` |
 
 ## Projektstand
-Phase 2 ist umgesetzt ([Auftrag 02](docs/auftraege/02-modularer-kiosk-und-einrichtung.md)): ein ausgearbeitetes Kioskgebäude mit Klinkerfassade, Markise, Verkaufsfenster und fiktivem Schild sowie neun Einrichtungs-Assets, die aus einer versionierten Platzierungsliste aufgestellt werden. Dazu kommen Third-Person-Kamera, Kollision, Tür-/Klappeninteraktionen und automatisches Speichern.
+Phase 3 ist umgesetzt ([Auftrag 03](docs/auftraege/03-waren-wirtschaftskreislauf-und-spieltag.md)). Aufbauend auf dem ausgearbeiteten Kiosk aus Phase 2 ([Auftrag 02](docs/auftraege/02-modularer-kiosk-und-einrichtung.md)) kann der Spieler jetzt einen vollständigen Tag führen:
 
-Die Regale und Kühlgeräte sind derzeit noch leer. Produkte, Warenwirtschaft und Spielzeit sind noch nicht implementiert. Die nächste Entwicklungsstufe ist in [Auftrag 03 – Waren, Wirtschaftskreislauf und Spieltag](docs/auftraege/03-waren-wirtschaftskreislauf-und-spieltag.md) konkret beschrieben.
+- **Bestellen** bei einem fiktiven Großhandel (28 erfundene Produkte, Startkapital 300,00 €) und die **Lieferung annehmen**; die Ware liegt zunächst im Lager.
+- **Einräumen** in Regale, Kühlschrank, Eistruhe, Theke und Zeitschriftenständer; die Ware erscheint sichtbar im 3D-Regal, leere Plätze bleiben leer.
+- **Verkaufen** über die Kasse mit Warenkorb. Die Verkaufsklappe muss geöffnet sein. Bei Bier (ab 16) und Tabakwaren (ab 18) ist eine bestätigte Ausweisprüfung eine echte Verkaufsschranke; ohne sie lehnt das Spiel den Verkauf ab.
+- **Spielzeit**: 1 Spielminute = 1 Sekunde, Tag von 06:00 bis 22:00 Uhr, Pause und 1×/2×/4×. Um 22:00 Uhr wartet die Uhr auf den ausdrücklichen **Tagesabschluss** (auch vorher möglich) mit Abrechnung; danach beginnt der nächste Tag.
+- Der Spielstand (Version 2) enthält Zeit, Kasse, Bestände und Tagesabrechnung; Spielstände aus Phase 2 werden migriert.
 
-Geprüft wurde Phase 2 in Headless-Chromium mit Software-Rendering. Die Prüfung auf echter Grafikhardware und in Firefox oder Safari steht aus; die Schritte dafür stehen in der [manuellen Prüfanleitung](docs/PRUEFANLEITUNG-MANUELL.md).
+Noch nicht vorhanden: Preisänderungen, Kunden und Nachfrage (Verkäufe sind ein Kassenvorgang des Spielers), Bewohner, Wetter, Events, Audio. Alle Marken sind frei erfunden; die Namen sind Arbeitstitel und rechtlich nicht geprüft. Das Sortiment steht im [Produktkatalog](docs/PRODUKTKATALOG.md).
+
+**Prüfstand:** Geprüft wurde ausschließlich automatisch: Typecheck, Lint, 367 Unit- und Integrationstests, Build sowie die Browserprüfung ([[BROWSERCHECK]]) in Headless-Chromium mit Software-Rendering. Die Prüfung auf echter Grafikhardware und in Firefox oder Safari steht aus; die Schritte dafür stehen in der [manuellen Prüfanleitung](docs/PRUEFANLEITUNG-MANUELL.md).
+
+[[SCREENSHOTS]]
 
 ![Kiosk von außen](docs/screenshots/auftrag-02-aussen.png)
 
-![Innenraum mit Einrichtung](docs/screenshots/auftrag-02-innen.png)
+![Innenraum mit Einrichtung (Stand Auftrag 02, noch ohne Ware)](docs/screenshots/auftrag-02-innen.png)
 
 - [Technischer Ist-Stand](docs/TECHNISCHER-IST-STAND.md) – was tatsächlich implementiert und geprüft ist
 - [Architektur-Entscheidungen (ADRs)](docs/ARCHITEKTUR-ENTSCHEIDUNGEN.md)
 - [Modul- und Datenverträge](docs/MODUL-UND-DATENVERTRAEGE.md)
+- [Produktkatalog](docs/PRODUKTKATALOG.md) – alle 28 Produkte mit Preisen, Alterskennzeichen, Asset-IDs und Warenplätzen
 
 ## Produktentscheidungen
 - **O-1 – Perspektive (entschieden):** Third Person mit schräger, leicht erhöhter Kamera; WASD und E, Maus ergänzend.
 - **O-2 – Plattform (entschieden):** Desktop-Browser mit Maus und Tastatur zuerst; Touch später.
-- **O-3 – Zeitmodell (entschieden):** 1 Spielminute = 1 Sekunde, Öffnungstag 06:00–22:00 Uhr, pausierbar und vorspulbar, mit Tagesabschluss. Umsetzung ist Auftrag 03.
-- **O-4 – Alkohol und Tabak (entschieden):** fiktives Bier und fiktive Tabakwaren sind verkaufbar, mit Alterskennzeichen und neutraler, nicht werblicher Darstellung. Umsetzung ist Auftrag 03.
+- **O-3 – Zeitmodell (entschieden, umgesetzt in Auftrag 03):** 1 Spielminute = 1 Sekunde, Öffnungstag 06:00–22:00 Uhr, pausierbar und vorspulbar, mit Tagesabschluss.
+- **O-4 – Alkohol und Tabak (entschieden, umgesetzt in Auftrag 03):** fiktives Bier und fiktive Tabakwaren sind verkaufbar, mit Alterskennzeichen, neutraler, nicht werblicher Darstellung und einer echten Altersprüfung an der Kasse.
 - **Offen:** O-5 Hosting und Lizenz.
 
 ## Nächster Schritt
-Phase 3 wird mit [Auftrag 03 – Waren, Wirtschaftskreislauf und Spieltag](docs/auftraege/03-waren-wirtschaftskreislauf-und-spieltag.md) umgesetzt. Der Auftrag umfasst Produktkatalog, 3D-Waren, Einkauf, Lager, Einräumen, Verkauf, Kasse, Alterskontrolle, Spieluhr, Tagesabschluss und Savegame-Migration. NPCs und soziale Systeme bleiben Phase 4.
+Phase 4 – **Bewohner und soziale Bindung** (wiederkehrende NPCs, Dialoge, Beziehungen, kleine Geschichten), siehe [Implementierungsplan](docs/IMPLEMENTIERUNGSPLAN.md). Ein Auftrag dafür existiert noch nicht und wird vor dem Start formuliert. Aufbauen kann Phase 4 auf der Verkaufsdomäne `economy.completeSale`, den Signalen und dem versionierten Spielstand.
 
 ## Projekt-Dokumentation
 Die Art-Direction, Produktionsplanung, Regionen, fiktive Produktwelt, Claude-Code-Prompts und Three.js-Asset-Standards liegen unter [docs/artwork-prompts](docs/artwork-prompts/README.md).

@@ -273,7 +273,11 @@ export function createGoodsPanel(ctx: PanelContext): Panel {
         const stock = Object.hasOwn(game.state.economy.shelves, slot.id) ? game.state.economy.shelves[slot.id] : undefined;
         const ui = slotState(slot.id);
         const offered = products.filter(
-          (p) => p.storage === slot.accepts && storageQuantity(game.state, p.id) > 0 && (!stock || stock.productId === p.id),
+          (p) =>
+            p.storage === slot.accepts &&
+            storageQuantity(game.state, p.id) > 0 &&
+            (!stock || stock.productId === p.id) &&
+            slotCapacityFor(content, slot.id, p.id) > 0, // a unit that does not fit the slot box is never offered
         );
         if (!showAllSlots && !stock && offered.length === 0) continue;
         inGroup += 1;

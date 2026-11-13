@@ -67,7 +67,7 @@ Offene Restpunkte:
 - Prüfung auf echter Grafikhardware und in Firefox/Safari nach [PRUEFANLEITUNG-MANUELL.md](PRUEFANLEITUNG-MANUELL.md) ist noch nicht durchgeführt.
 - Erledigt in der Nacharbeit vom 2026-11-12: Klappenmarkierung liegt auf der äußeren Fensterbank, Türmarker sitzt über der Tafel, Silhouette erscheint nur bei Verdeckung durch das Gebäude.
 - Gehweg und Straße (`E-001`, `E-002`) sind weiterhin Greybox; Umgebung folgt in Phase 6.
-- Regale und Kühlgeräte sind leer; Waren folgen in Phase 3.
+- Regale und Kühlgeräte sind leer; Waren folgen in Phase 3. (Erledigt mit Auftrag 03, siehe unten.)
 - O-3 (Zeitmodell) und O-4 (Alkohol und Tabak) sind am 2026-11-12 entschieden, siehe [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md); die Umsetzung gehört zu Phase 3.
 
 ## Phase 3 – Wirtschaftlicher Büdchen-Alltag und erste Produkte
@@ -89,7 +89,18 @@ Umfang:
 
 **Abnahme:** Der Spieler kann in der laufenden Anwendung Ware bestellen, erhalten, einräumen und verkaufen. Geld und Bestände bleiben konsistent; altersbeschränkte Waren sind ohne bestätigte Altersprüfung gesperrt. Die Spieluhr ist pausierbar/vorspulbar, Tagesabschluss und Savegame-Migration funktionieren.
 
-**Status (2026-11-12): Auftrag erstellt; Umsetzung steht aus.** O-3 und O-4 sind in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md) als entschieden dokumentiert.
+**Status (2026-11-13): umgesetzt mit Auftrag 03.** O-3 und O-4 sind in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md) entschieden und umgesetzt. Einzelheiten, Prüfergebnisse und Einschränkungen: [TECHNISCHER-IST-STAND.md](TECHNISCHER-IST-STAND.md); Verträge: [MODUL-UND-DATENVERTRAEGE.md, Abschnitt 15](MODUL-UND-DATENVERTRAEGE.md); Katalog: [PRODUKTKATALOG.md](PRODUKTKATALOG.md).
+- Umgesetzt: 28 fiktive Produkte (`P-001` bis `P-028`) mit 3D-Modellen und Etiketten, 67 Warenplätze mit geometrischer Kapazität, Hinterlager, Bestellung mit sofort eintreffender, ausdrücklich anzunehmender Lieferung, Einräumen und Zurücknehmen, Kasse mit Warenkorb, Transaktionen und Alterskontrolle als Verkaufsschranke, Spieluhr (1 Minute = 1 Sekunde, 06:00–22:00, Pause, 1×/2×/4×, Halt bei 22:00 bis zum ausdrücklichen Abschluss), Tagesabrechnung, HUD und Panels, sichtbarer Bestand im Regal, Savegame Version 2 mit Migration 1→2.
+- Automatisiert getestet: 367 Tests in 22 Dateien (eigener Lauf 2026-11-13); Browserprüfung in Headless-Chromium: [[BROWSERCHECK]]. Manuell auf echter Grafikhardware: nicht geprüft.
+
+Offene Restpunkte aus Phase 3:
+- Keine Preisänderung durch den Spieler (Verkauf zum vorgeschlagenen Preis); keine Kosten außer Einkäufen; Lieferung ohne Wartezeit; Lager nur als Zähler (400 Stück).
+- Etiketten auf Flaschen und Dosen aus Kameraabstand nicht lesbar; volle Regale sind dreiecksreich (Messwert 452.000 Dreiecke bei 1.513 Einheiten), Leistung auf echter Hardware ungemessen.
+- Verworfene Lieferzeilen nach Inhaltsänderungen werden nicht erstattet; Platzmaße ignorieren Platzierungsskalierung; Rolle→Lagerart je Rolle statt je Asset.
+- Markennamen sind Arbeitstitel und rechtlich nicht geprüft.
+- Prüfung auf echter Grafikhardware und in Firefox/Safari nach [PRUEFANLEITUNG-MANUELL.md](PRUEFANLEITUNG-MANUELL.md), nun auch für den Wirtschaftskreislauf, steht aus.
+
+**Grundlage für Phase 4:** `economy.completeSale` ist die Verkaufsdomäne, die NPC-Kunden später wie der Kassenablauf aufrufen können (Bestand, Altersschranke, Phase und Klappe werden dort geprüft); `day.started`, `day.ended`, `sale.completed` und `product.stock.changed` sind vorhanden; die Uhr läuft deterministisch über `game.tick`, der Spielstand ist versioniert und migrierbar; die Nachfrage-Tags der Produkte stehen als Daten bereit. Für Phase 4 fehlen noch Wochentag/Kalender (kommt eher mit Phase 5), geseedeter Zufall und eine Kunden- bzw. Besuchslogik.
 
 ## Phase 4 – Bewohner und soziale Bindung (MVP)
 **Ziel:** das Viertel bekommt wiederkehrende Menschen und der Kiosk eine soziale Identität.
