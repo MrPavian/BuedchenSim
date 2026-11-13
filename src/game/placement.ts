@@ -47,9 +47,11 @@ export function placementCollides(placement: PlacementDef, asset: AssetDef): boo
 export function placementColliders(
   layout: Pick<RegionLayout, 'placements'>,
   assets: Readonly<Record<string, AssetDef>>,
+  flags?: Readonly<Record<string, boolean>>,
 ): Array<{ placementId: string; rect: Rect }> {
   const out: Array<{ placementId: string; rect: Rect }> = [];
   for (const placement of layout.placements) {
+    if (!placementPresent(placement, flags)) continue;
     const asset = assets[placement.assetId];
     if (asset && placementCollides(placement, asset)) {
       out.push({ placementId: placement.id, rect: placementFootprint(placement, asset) });
@@ -81,4 +83,13 @@ export function frontStrip(footprint: Rect, front: Vec2, depth: number): Rect {
   if (front.z < 0) return { minX: footprint.minX, maxX: footprint.maxX, minZ: footprint.minZ - depth, maxZ: footprint.minZ };
   if (front.x > 0) return { minX: footprint.maxX, maxX: footprint.maxX + depth, minZ: footprint.minZ, maxZ: footprint.maxZ };
   return { minX: footprint.minX - depth, maxX: footprint.minX, minZ: footprint.minZ, maxZ: footprint.maxZ };
+}
+
+/**
+ * Whether a placement exists given the story flags. Without flags (content validation) every placement counts as
+ * present, so a gated object can never be placed where it would block a route once it appears.
+ */
+export function placementPresent(placement: Pick<PlacementDef, 'requiresFlag'>, flags?: Readonly<Record<string, boolean>>): boolean {
+  if (!placement.requiresFlag || !flags) return true;
+  return flags[placement.requiresFlag] === true;
 }

@@ -89,6 +89,11 @@ export interface PlacementDef {
   role?: PlacementRole;
   /** Overrides AssetDef.collides (e.g. decorative items). */
   collides?: boolean;
+  /**
+   * Story flag (state.story.flags) that makes this placement exist (e.g. a bench built after a story decision).
+   * Absent: always present. Validation treats gated placements as present (conservative).
+   */
+  requiresFlag?: string;
 }
 
 export interface GroundAreaDef {

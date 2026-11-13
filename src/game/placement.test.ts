@@ -7,6 +7,7 @@ import {
   placementColliders,
   placementFootprint,
   placementFront,
+  placementPresent,
   quarterTurnToRadians,
 } from './placement';
 import type { AssetDef, PlacementDef } from './types';
@@ -103,5 +104,15 @@ describe('collision flags and base height', () => {
     const west = colliders[2]?.rect;
     expect(west?.maxX).toBeCloseTo(-2.45, 9);
     expect(west?.maxZ).toBeCloseTo(1.0, 9);
+  });
+});
+
+describe('flag-gated placements', () => {
+  it('count as present without flags and only with their flag at runtime', () => {
+    const gated = { requiresFlag: 'yard.bench' };
+    expect(placementPresent(gated)).toBe(true);
+    expect(placementPresent(gated, {})).toBe(false);
+    expect(placementPresent(gated, { 'yard.bench': true })).toBe(true);
+    expect(placementPresent({}, {})).toBe(true);
   });
 });

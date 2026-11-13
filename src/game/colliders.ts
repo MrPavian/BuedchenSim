@@ -10,9 +10,11 @@ export function layoutColliders(
   layout: Pick<RegionLayout, 'kiosk' | 'placements'>,
   assets: Readonly<Record<string, AssetDef>>,
   doorOpen: boolean,
+  /** Story flags; pass them at runtime so flag-gated placements collide only once they exist. Omit for validation. */
+  flags?: Readonly<Record<string, boolean>>,
 ): Rect[] {
   return [
     ...kioskColliders(layout.kiosk, doorOpen),
-    ...placementColliders(layout, assets).map((c) => ({ ...c.rect })),
+    ...placementColliders(layout, assets, flags).map((c) => ({ ...c.rect })),
   ];
 }
