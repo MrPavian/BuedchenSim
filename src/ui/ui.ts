@@ -1,14 +1,32 @@
 import type { Game } from '../game/game';
 import './styles.css';
+import { createHud } from './hud';
+import { createModalHost, type PanelContext, type PanelId } from './modal';
+import { createConfirmClosePanel, createReportPanel } from './panels/dayClose';
+import { createGoodsPanel } from './panels/goods';
+import { createTillPanel } from './panels/till';
 import { texts } from './texts';
 
 export interface UiCallbacks {
   /** Called after the player confirmed "Neues Spiel"; main clears the save and resets the game. */
   onNewGame(): void;
+  /**
+   * A modal panel opened (true) or closed (false). main.ts uses it to switch world input off/on so the
+   * player neither walks nor triggers interactions while a panel is open.
+   */
+  onModalChange(open: boolean): void;
 }
+
+export type { PanelId };
 
 export interface Ui {
   notify(text: string): void;
+  /** Opens a panel ('report' only when a day report exists). Mainly for the debug hook; normally panels open via the world/HUD. */
+  openPanel(id: PanelId): void;
+  closePanel(): void;
+  currentPanel(): PanelId | null;
+  /** Per rendered frame: refreshes the HUD clock when the whole game minute changed. */
+  frame(): void;
   showFatal(message: string, details?: unknown): void;
   dispose(): void;
 }
@@ -84,9 +102,10 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
   });
   overlay.append(prompt);
 
+  let modalOpen = false;
   const renderPrompt = (): void => {
     const available = game.getAvailableInteraction();
-    if (!available) {
+    if (!available || modalOpen) {
       prompt.hidden = true;
       return;
     }
@@ -136,18 +155,101 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
   });
   overlay.append(newGame);
 
+  // Panels
+  const context: PanelContext = {
+    game,
+    notify,
+    refresh: () => modal.refresh(),
+    close: () => modal.close(),
+    open: (id) => modal.open(id),
+  };
+  const modal = createModalHost(
+    overlay,
+    {
+      goods: createGoodsPanel(context),
+      till: createTillPanel(context),
+      report: createReportPanel(context),
+      confirmClose: createConfirmClosePanel(context),
+    },
+    (open) => {
+      modalOpen = open;
+      renderPrompt();
+      callbacks.onModalChange(open);
+    },
+  );
+  const openPanel = (id: PanelId): void => {
+    if (id === 'report' && game.state.economy.lastReport === null) return;
+    modal.open(id);
+  };
+  const hud = createHud(game, overlay, {
+    openGoods: () => openPanel('goods'),
+    openTill: () => openPanel('till'),
+    closeDay: () => openPanel(game.state.calendar.phase === 'closed' ? 'report' : 'confirmClose'),
+  });
+  /** After a reload in phase 'closed' the report must be shown again. */
+  const syncReport = (): void => {
+    if (game.state.calendar.phase === 'closed') openPanel('report');
+  };
+  syncReport();
+
+  const refreshOn = [
+    'product.stock.changed',
+    'money.changed',
+    'order.placed',
+    'delivery.received',
+    'sale.completed',
+    'kiosk.shutter.changed',
+  ] as const;
   const offs = [
     game.signals.on('interaction.available.changed', renderPrompt),
-    game.signals.on('game.state.replaced', renderPrompt),
+    game.signals.on('interaction.triggered', ({ kind }) => {
+      if (kind === 'storage') openPanel('goods');
+      else if (kind === 'register') openPanel('till');
+    }),
+    game.signals.on('calendar.changed', () => {
+      hud.update();
+      modal.refresh();
+    }),
+    game.signals.on('day.ending', () => {
+      hud.update();
+      notify(texts.notices.daySummaryHint);
+    }),
+    game.signals.on('day.ended', () => {
+      hud.update();
+      openPanel('report');
+    }),
+    game.signals.on('day.started', ({ day }) => {
+      hud.update();
+      if (modal.current() === 'report') modal.close();
+      notify(texts.notices.dayStarted(day));
+    }),
+    game.signals.on('game.state.replaced', () => {
+      renderPrompt();
+      modal.close();
+      hud.update();
+      syncReport();
+    }),
+    ...refreshOn.map((name) =>
+      game.signals.on(name, () => {
+        hud.update();
+        modal.refresh();
+      }),
+    ),
   ];
 
   return {
     notify,
+    openPanel,
+    closePanel: () => modal.close(),
+    currentPanel: () => modal.current(),
+    frame: () => hud.frame(),
     showFatal(message, details) {
       showFatalError(root, { message, details });
     },
     dispose() {
       for (const off of offs) off();
+      modal.dispose();
+      hud.dispose();
       timers.forEach((t) => window.clearTimeout(t));
       if (confirmTimer !== undefined) window.clearTimeout(confirmTimer);
       overlay.remove();

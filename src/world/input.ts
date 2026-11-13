@@ -1,6 +1,8 @@
 export interface Input {
   /** Screen-relative direction on the ground plane (W = -Z, D = +X), normalised; zero if idle. */
   axis(): { x: number; z: number };
+  /** While disabled (a UI panel is open) movement and E are ignored; disabling releases all held keys. */
+  setEnabled(enabled: boolean): void;
   dispose(): void;
 }
 
@@ -22,12 +24,13 @@ function inFormControl(target: EventTarget | null): boolean {
 /** Keyboard state; `onInteract` fires on E keydown (no auto-repeat). */
 export function createInput(onInteract: () => void): Input {
   const down = new Set<string>();
+  let enabled = true;
   // Keys pressed since the last axis() read: a tap that starts and ends between two simulation steps
   // (e.g. during one slow frame) still moves the player for one step instead of being lost.
   const tapped = new Set<string>();
 
   const onKeyDown = (event: KeyboardEvent): void => {
-    if (inFormControl(event.target) || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (!enabled || inFormControl(event.target) || event.ctrlKey || event.metaKey || event.altKey) return;
     if (HANDLED.has(event.code)) {
       down.add(event.code);
       tapped.add(event.code);
@@ -52,6 +55,10 @@ export function createInput(onInteract: () => void): Input {
   const any = (codes: readonly string[]): boolean => codes.some((c) => down.has(c) || tapped.has(c));
 
   return {
+    setEnabled(next) {
+      enabled = next;
+      if (!next) clear();
+    },
     axis() {
       const x = (any(KEY_GROUPS.east) ? 1 : 0) - (any(KEY_GROUPS.west) ? 1 : 0);
       const z = (any(KEY_GROUPS.south) ? 1 : 0) - (any(KEY_GROUPS.north) ? 1 : 0);

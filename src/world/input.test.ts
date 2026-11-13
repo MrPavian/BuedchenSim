@@ -68,4 +68,22 @@ describe('input', () => {
     win.fire('keydown', { ...key('KeyE'), repeat: true });
     expect(onInteract).toHaveBeenCalledTimes(1);
   });
+
+  it('a disabled input ignores keys and E, and disabling releases held keys', () => {
+    const onInteract = vi.fn();
+    const input = createInput(onInteract);
+    win.fire('keydown', key('KeyW'));
+    input.setEnabled(false);
+    expect(input.axis()).toEqual({ x: 0, z: 0 });
+    win.fire('keydown', key('KeyD'));
+    win.fire('keydown', key('KeyE'));
+    expect(input.axis()).toEqual({ x: 0, z: 0 });
+    expect(onInteract).not.toHaveBeenCalled();
+    input.setEnabled(true);
+    expect(input.axis()).toEqual({ x: 0, z: 0 });
+    win.fire('keydown', key('KeyD'));
+    win.fire('keydown', key('KeyE'));
+    expect(input.axis()).toEqual({ x: 1, z: 0 });
+    expect(onInteract).toHaveBeenCalledTimes(1);
+  });
 });

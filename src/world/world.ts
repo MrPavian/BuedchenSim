@@ -38,6 +38,8 @@ export interface World {
   /** Draws a frame; alpha is the fraction of a fixed step left over, used to interpolate the player. */
   render(alpha: number): void;
   resize(): void;
+  /** Enables/disables player movement and the E key (disabled while a UI panel is open). Disabling releases held keys. */
+  setInputEnabled(enabled: boolean): void;
   dispose(): void;
   /** Debug accessor: renderer statistics of the last frame (draw calls, triangles) and the scene's light count. */
   getRenderStats(): { calls: number; triangles: number; geometries: number; textures: number; lights: number };
@@ -242,6 +244,10 @@ export function createWorld(game: Game, container: HTMLElement): World {
     },
 
     resize,
+
+    setInputEnabled(enabled) {
+      input.setEnabled(enabled);
+    },
 
     getRenderStats() {
       let lights = 0;

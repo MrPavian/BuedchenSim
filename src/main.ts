@@ -9,6 +9,7 @@ import { texts } from './ui/texts';
 import { WebGLUnavailableError, createWorld, type World } from './world/world';
 
 const AUTOSAVE_INTERVAL_MS = 10_000;
+const SAVE_DEBOUNCE_MS = 300;
 
 function getStorage(): KeyValueStore | null {
   try {
@@ -62,6 +63,10 @@ function start(): void {
     }
   };
 
+  // Panels switch world input off while open; the world may not exist yet when the first panel opens
+  // (e.g. the day report after a reload), so the state is remembered and applied after creation.
+  let world: World | null = null;
+  let modalOpen = false;
   ui = createUi(game, appRoot, {
     onNewGame() {
       saveStore.clear();
@@ -69,22 +74,53 @@ function start(): void {
       persist();
       ui?.notify(texts.newGame.started);
     },
+    onModalChange(open) {
+      modalOpen = open;
+      world?.setInputEnabled(!open);
+    },
   });
 
-  let world: World;
   try {
     world = createWorld(game, sceneRoot);
+    world.setInputEnabled(!modalOpen);
   } catch (error) {
     fatal(error instanceof WebGLUnavailableError ? texts.errors.webgl : texts.errors.generic, error);
     return;
   }
 
-  if (loaded.status === 'ok') ui.notify(texts.notices.loaded);
-  else if (loaded.status === 'corrupt' || loaded.status === 'unsupported_version') ui.notify(texts.notices.corrupt);
+  if (loaded.status === 'ok') {
+    if (loaded.warnings && loaded.warnings.length > 0) {
+      log.warn('Save adjusted to current content', loaded.warnings);
+      ui.notify(texts.notices.loadedAdjusted(loaded.warnings.length));
+    } else {
+      ui.notify(texts.notices.loaded);
+    }
+  } else if (loaded.status === 'corrupt' || loaded.status === 'unsupported_version') ui.notify(texts.notices.corrupt);
 
   // Autosave: after kiosk changes, periodically, and when the page goes away.
   game.signals.on('kiosk.door.changed', persist);
   game.signals.on('kiosk.shutter.changed', persist);
+  // Economy and calendar changes are saved shortly after the last one (debounced; pagehide saves at once).
+  let persistTimer: number | undefined;
+  const persistSoon = (): void => {
+    if (persistTimer !== undefined) window.clearTimeout(persistTimer);
+    persistTimer = window.setTimeout(() => {
+      persistTimer = undefined;
+      persist();
+    }, SAVE_DEBOUNCE_MS);
+  };
+  for (const name of [
+    'sale.completed',
+    'order.placed',
+    'delivery.received',
+    'day.ended',
+    'day.started',
+    'calendar.changed',
+    'product.stock.changed',
+    'money.changed',
+  ] as const) {
+    game.signals.on(name, persistSoon);
+  }
   window.setInterval(persist, AUTOSAVE_INTERVAL_MS);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') persist();
@@ -92,7 +128,7 @@ function start(): void {
   window.addEventListener('pagehide', persist);
 
   if (import.meta.env.DEV || new URLSearchParams(window.location.search).has('debug')) {
-    (window as unknown as { __buedchen: { game: Game; world: World } }).__buedchen = { game, world };
+    (window as unknown as { __buedchen: { game: Game; world: World; ui: Ui } }).__buedchen = { game, world, ui };
   }
 
   const loop = createLoop({
@@ -100,7 +136,10 @@ function start(): void {
       game.tick(dt);
       world.update(dt);
     },
-    render: (alpha) => world.render(alpha),
+    render: (alpha) => {
+      world?.render(alpha);
+      ui?.frame();
+    },
     schedule: (callback) => {
       if (!loopStopped) requestAnimationFrame(callback);
     },
