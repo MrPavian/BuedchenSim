@@ -103,17 +103,25 @@ Offene Restpunkte aus Phase 3:
 **Grundlage für Phase 4:** `economy.completeSale` ist die Verkaufsdomäne, die NPC-Kunden später wie der Kassenablauf aufrufen können (Bestand, Altersschranke, Phase und Klappe werden dort geprüft); `day.started`, `day.ended`, `sale.completed` und `product.stock.changed` sind vorhanden; die Uhr läuft deterministisch über `game.tick`, der Spielstand ist versioniert und migrierbar; die Nachfrage-Tags der Produkte stehen als Daten bereit. Der Wochentag ist als Ableitung aus dem Tageszähler vorhanden (`weekdayOf`, `WEEK_LENGTH` = 7, nicht gespeichert). Für Phase 4 fehlen noch geseedeter Zufall und eine Kunden- bzw. Besuchslogik; Kalender mit Datum und Jahreszeiten kommt eher mit Phase 5.
 
 ## Phase 4 – Bewohner und soziale Bindung (MVP)
-**Ziel:** das Viertel bekommt wiederkehrende Menschen und der Kiosk eine soziale Identität.
+**Ziel:** Das Viertel bekommt wiederkehrende Menschen mit Tagesabläufen, Persönlichkeiten, Beziehungen und Erinnerungen. Begegnungen und Entscheidungen haben spätere Folgen; einige Bewohner kaufen tatsächlich am Kiosk ein.
 
-Aufgaben:
-1. Drei bis fünf wiederkehrende NPCs mit stabilen IDs, Profilen, Tagesrhythmen, Vorlieben und Besuchszeiten anlegen.
-2. NPC-Bewegung und Aufenthaltsorte in der Three.js-Welt integrieren.
-3. Dialoge mit Bedingungen und gespeicherten Erinnerungs-/Quest-Flags ergänzen.
-4. Einfaches Beziehungssystem mit verständlichen Reaktionen entwickeln.
-5. Mindestens zwei kleine Alltagsgeschichten/Quest-Ketten umsetzen.
-6. Mindestens eine sichtbare oder spielerisch wirksame Konsequenz aus einer sozialen Handlung zeigen.
+**Konkreter Auftrag:** [Auftrag 04 – Bewohner, Kundenverhalten und soziale Bindung](auftraege/04-bewohner-und-soziale-bindung.md).
 
-**Abnahme:** Bewohner tauchen wiedererkennbar auf; Gespräche und Entscheidungen verändern gespeicherte Weltzustände; das System fühlt sich nicht wie ein isoliertes Quest-Menü an.
+Umfang:
+1. Vier wiederkehrende NPCs (N-002, N-003, N-006, N-007) mit eigenständigen Profilen, visuellen Modellen und stabilen IDs.
+2. Tagesroutinen, Wegpunkte, Aufenthaltsorte, Geh-/Idle-Animationen und kollisionsfreie Bewegung im Kioskbereich.
+3. Generisches, datengetriebenes Dialogsystem mit Bedingungen, Antwortoptionen und einmaligen Effekten.
+4. Persistentes Beziehungsmodell, Erinnerungen und Story-Flags.
+5. Zwei mehrstufige Alltagsgeschichten mit unterschiedlichen Ausgängen und späteren Reaktionen.
+6. Mindestens zwei NPCs als echte Kunden: Warenwunsch, Entscheidung des Spielers und Verkauf über die vorhandene Wirtschaftsdomäne.
+7. Altersprüfung auch für NPC-Kunden; Savegame-Schema 3 mit Migration 2→3 (und weiterhin 1→2→3).
+8. Deterministische Routinen/Entscheidungen und automatisierte Browserprüfung.
+
+**Abgrenzung:** Kein echtes Kalenderdatum, Wetter, Jahreszeiten, große Events, dynamische Nachfrage oder Spezialitäten/Rezepte; das bleibt Phase 5. Keine komplexe Bedürfnisse-Simulation und keine große Stadt.
+
+**Abnahme:** Vier Bewohner erscheinen wiedererkennbar nach plausiblen Routinen. Gespräche und Entscheidungen verändern Beziehungen und gespeicherte Erinnerungen. Zwei Geschichten besitzen unterschiedliche Ausgänge. NPC-Käufe verändern Bestand und Geld genau einmal und respektieren Altersgrenzen. Bestehende Phase-3-Systeme und Spielstände bleiben intakt.
+
+**Status (2026-11-14): Auftrag erstellt; Umsetzung steht aus.** Die Phase-3-Vorabprüfung und alle dokumentierten Grenzen sind Teil des Auftrags.
 
 ## Phase 5 – Events, Wetter und Kiosk-Traditionen
 **Ziel:** Ereignisse verbinden Wirtschaft, Menschen und Jahreszeiten.
