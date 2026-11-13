@@ -189,12 +189,12 @@ Strikte Trennung: **implementiert** ist in Abschnitt 5 beschrieben, **automatisi
 |---|---|
 | `npm run typecheck` | fehlerfrei |
 | `npm run lint` | fehlerfrei |
-| `npm run test` | 22 Dateien, 367 Tests bestanden (eigener Lauf am 2026-11-13) |
+| `npm run test` | 23 Dateien, 370 Tests bestanden (eigener Lauf am 2026-11-13) |
 | `npm run build` | erfolgreich, Größen siehe Abschnitt 8 |
-| `npm run check:browser` | 90 von 90 Prüfungen bestanden (eigener Lauf 2026-11-13, 683 Sekunden; davor zwei grüne Läufe des umsetzenden Subagenten) |
+| `npm run check:browser` | 98 von 98 Prüfungen bestanden (eigener Lauf 2026-11-13 nach der Nacharbeit, 727 Sekunden) |
 | `npm audit` | 0 Hinweise am 2026-11-12; am 2026-11-13 nicht erneut ausgeführt |
 
-**Automatisiert getestet mit Vitest (367 Tests, 22 Dateien; Dateien mit Auftrag-03-Bezug):**
+**Automatisiert getestet mit Vitest (370 Tests, 23 Dateien; Dateien mit Auftrag-03-Bezug):**
 - `src/game/economy.test.ts` (35): Startwerte, Bestellung (Kapitalprüfung bis auf den letzten Cent, genau eine offene Lieferung, Lagerkapazität inkl. reservierter Lieferung, gesperrt nach Tagesabschluss), Lieferung, Einräumen und Zurücknehmen (Lagerart, fremdes Produkt, Kapazität, Bestand), Verkauf (Buchungen, Atomarität, mehrere Plätze, nur Regalbestand, Klappe zu, Phasen), Alterskontrolle (gesperrt ohne, möglich mit Bestätigung, Ableitung nur aus Produktdaten, gemischter Warenkorb), Tagesbericht und Transaktionsgrenze, Invariante „Geld und Mengen bleiben nicht negative ganze Zahlen“ in einer langen Zufallssitzung.
 - `src/game/clock.test.ts` (10): ein Spielminute je Sekunde, Pause, 2× und 4×, ungültige Zeitschritte, Begrenzung bei 22:00 mit riesigem Zeitschritt und genau ein Signal, kein automatischer Abschluss, Unabhängigkeit von Tür und Klappe, genau ein Tagesabschluss, vorzeitiger Abschluss, nächster Tag.
 - `src/game/save/save.test.ts` (75): Rundlauf von Version 2, Migration 1→2 mit Erhalt von Position, Tür und Klappe, beschädigter Version-1-Stand, Wertebereiche, Verwerfen unbekannter Produkt- und Platz-IDs mit Warnungen, Kürzen auf geänderte Kapazität, kein Warenkorb im Spielstand.
@@ -204,9 +204,11 @@ Strikte Trennung: **implementiert** ist in Abschnitt 5 beschrieben, **automatisi
 - `src/game/game.test.ts` (15), `interaction.test.ts` (5): Tür und Klappe unverändert, Kasse und Lager ändern keinen Zustand und senden `interaction.triggered`.
 - Nicht automatisiert getestet sind die DOM-Panels selbst und das Rendering außerhalb der Browserprüfung; die Panels werden nur über die Browserprüfung (siehe unten) berührt.
 
-**Browserprüfung (Auftrag 03):** 90 Prüfungen, davon 43 im neuen Wirtschaftsabschnitt und 47 in den übrigen Abschnitten (Bewegung, Kollision, Interaktion, Sichtfreistellung, Platzierungen, Screenshots). Die Wirtschaftsaktionen werden über die echte Oberfläche mit Klicks und Tasten ausgelöst; der Debug-Zugang dient nur zum Lesen des Zustands und zum Versetzen der Figur. Geprüft wird:
+**Browserprüfung (Auftrag 03):** 98 Prüfungen, davon 51 im neuen Wirtschaftsabschnitt und 47 in den übrigen Abschnitten (Bewegung, Kollision, Interaktion, Sichtfreistellung, Platzierungen, Screenshots). Die Wirtschaftsaktionen werden über die echte Oberfläche mit Klicks und Tasten ausgelöst; der Debug-Zugang dient nur zum Lesen des Zustands und zum Versetzen der Figur. Geprüft wird:
 - HUD: Tag 1, 06:00 Uhr, Startkasse 300,00 €, Status folgt der Klappe.
 - E am Lagerpunkt öffnet die Warenverwaltung; bei offenem Panel bewegt sich die Figur nicht; Escape schließt.
+- Das HUD hat keine Schaltflächen für Kasse und Warenverwaltung; auf dem Gehweg und im Hof gibt es keinen Weg, sie zu öffnen; an Kasse und Lagerregal öffnen E und ein Klick auf den Hinweis das passende Panel; „Neues Spiel“ bzw. ein Zustandswechsel schließt ein offenes Panel.
+- Wochentag im HUD: „Mo · Tag 1“, nach dem Tageswechsel „Di · Tag 2“.
 - Bestellung: angezeigte Summe entspricht den Produktdaten; Kasse sinkt um genau die Summe; Bestellung über dem Kassenbestand und zweite Bestellung bei offener Lieferung werden sichtbar abgelehnt und ändern nichts.
 - Lieferung annehmen: Lager entspricht der Bestellung.
 - Einräumen: nur passende Produkte werden angeboten; Regalstände entsprechen den Daten; die 3D-Welt zeichnet je Platz genau so viele Einheiten wie im Bestand; der bestückte Innenraum unterscheidet sich im Bild deutlich vom leeren.
