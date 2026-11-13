@@ -11,6 +11,9 @@ import { createMaterials } from '../world/materials';
 const { layout, assets } = ruhrgebietPack;
 
 describe('content <-> world', () => {
+  // TODO(world): product factories do not exist yet (the world layer adds them with the stock rendering).
+  it.todo('every product asset has a factory');
+
   it('the real pack is valid', () => {
     expect(validateContent(ruhrgebietPack)).toEqual([]);
   });

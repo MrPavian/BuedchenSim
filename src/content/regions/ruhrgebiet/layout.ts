@@ -65,5 +65,24 @@ export const ruhrgebietLayout: RegionLayout = {
       // (front face z 2.17) and clear of the open one: a flat ellipse of x 1.0 / z 0.085 around z 2.265.
       marker: { position: { x: -1.0, z: 2.265 }, height: 1.0, radius: 1.0, radiusZ: 0.085 },
     },
+    // Till: standing spot behind the counter next to the register (about x -0.2, z 0.9; the counter blocks z > 0.9).
+    // Radius 0.45 keeps it nearer than the shutter only within ~0.4 m of the register; further west (x <= -0.8) the shutter wins.
+    // Marker: flat ellipse on the counter top, staff-side strip beside the register (register footprint z 1.325..1.725).
+    {
+      id: 'interaction.register',
+      kind: 'register',
+      position: { x: -0.2, z: 0.95 },
+      radius: 0.45,
+      marker: { position: { x: -0.2, z: 1.262 }, height: 1.0, radius: 0.24, radiusZ: 0.055 },
+    },
+    // Back storage: standing spot in front of the storage rack I-011 (x 1.5..2.7, z -1.85..-1.35), west of the
+    // freezer (x >= 2.2); the player circle fits at about x 1.75, z -1.0. Marker: ring on the floor in front of the rack.
+    {
+      id: 'interaction.storage',
+      kind: 'storage',
+      position: { x: 1.75, z: -1.0 },
+      radius: 0.6,
+      marker: { position: { x: 1.75, z: -1.0 }, height: 0.03, radius: 0.35 },
+    },
   ],
 };

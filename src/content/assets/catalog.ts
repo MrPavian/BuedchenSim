@@ -1,4 +1,5 @@
 import type { AssetDef, QuarterTurn } from '../../game/types';
+import { productAssets } from './productAssets';
 
 const ALL: QuarterTurn[] = [0, 90, 180, 270];
 
@@ -108,6 +109,8 @@ export const assetCatalog: Record<string, AssetDef> = {
     scalable: false,
     defaultRole: 'returns',
   },
+  // Product assets P-001 ... (one unit each); see productAssets.ts.
+  ...productAssets,
   // Ground assets: size is informational (the ground areas carry their own rects).
   'E-001': {
     assetId: 'E-001',

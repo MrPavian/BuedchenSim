@@ -7,6 +7,7 @@ import {
 } from '../game/placement';
 import { anyReachableInRect, anyReachableWithin, computeReachability } from '../game/reachability';
 import { rectContainsRect, rectsOverlap } from '../game/rects';
+import { validateStock } from './validateStock';
 import type { ContentPack, PlacementDef, QuarterTurn, Rect, WallOpening } from '../game/types';
 
 function collectNonFinite(value: unknown, path: string, out: string[]): void {
@@ -185,6 +186,8 @@ export function validateContent(pack: ContentPack): string[] {
 
   collectNonFinite(layout, 'layout', errors);
   collectNonFinite(pack.assets, 'assets', errors);
+  collectNonFinite(pack.products, 'products', errors);
+  collectNonFinite(pack.stockSlots, 'stockSlots', errors);
   if (errors.length > 0) return errors; // geometry checks are meaningless with NaN/Infinity
 
   if (!pack.regionId.startsWith('region.')) errors.push(`regionId "${pack.regionId}" must start with "region."`);
@@ -272,6 +275,8 @@ export function validateContent(pack: ContentPack): string[] {
       if (radiusZ !== undefined && !(radiusZ > 0)) errors.push(`interaction point "${p.id}" marker radiusZ must be positive`);
     }
   }
+
+  errors.push(...validateStock(pack));
 
   // Walkways: only meaningful when the geometry above is sound.
   if (errors.length === 0) checkReachability(pack, interior, errors);
