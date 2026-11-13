@@ -65,7 +65,7 @@ Weitere Screenshots aus der laufenden Anwendung: [Warenverwaltung](docs/screensh
 - **Offen:** O-5 Hosting und Lizenz.
 
 ## Nächster Schritt
-Phase 4 – **Bewohner und soziale Bindung** (wiederkehrende NPCs, Dialoge, Beziehungen, kleine Geschichten), siehe [Implementierungsplan](docs/IMPLEMENTIERUNGSPLAN.md). Ein Auftrag dafür existiert noch nicht und wird vor dem Start formuliert. Aufbauen kann Phase 4 auf der Verkaufsdomäne `economy.completeSale`, den Signalen und dem versionierten Spielstand.
+Phase 4 – **Bewohner, Kundenverhalten und soziale Bindung**. Der konkrete [Auftrag 04](docs/auftraege/04-bewohner-und-soziale-bindung.md) ist erstellt. Er umfasst vier wiederkehrende Bewohner, Tagesroutinen, Bewegung, Dialoge, Beziehungen, Erinnerungen, zwei Alltagsgeschichten und echte NPC-Käufe über die vorhandene Wirtschaftsdomäne. Wetter, Events und Kiosk-Traditionen bleiben Phase 5.
 
 ## Projekt-Dokumentation
 Die Art-Direction, Produktionsplanung, Regionen, fiktive Produktwelt, Claude-Code-Prompts und Three.js-Asset-Standards liegen unter [docs/artwork-prompts](docs/artwork-prompts/README.md).
