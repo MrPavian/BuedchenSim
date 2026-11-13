@@ -3,6 +3,10 @@
  * Coordinates: 1 unit = 1 m, Y up, ground plane is X/Z; +X = east (screen right),
  * +Z = south (toward the camera/street).
  */
+import type { CustomerLines, DialogueDef, NavDef, NpcDef, QuestDef } from './npcTypes';
+
+export type * from './npcTypes';
+
 export interface Vec2 {
   x: number;
   z: number;
@@ -125,6 +129,8 @@ export interface RegionLayout {
   walkBounds: Rect;
   spawn: { position: Vec2; heading: number };
   interactionPoints: InteractionPointDef[];
+  /** Hand-kept walking graph and places of the residents. */
+  nav: NavDef;
 }
 
 /** Kind of presentation place a product needs. */
@@ -198,4 +204,12 @@ export interface ContentPack {
   products: Record<string, ProductDef>;
   /** Presentation slots on placements. */
   stockSlots: StockSlotDef[];
+  /** Residents, keyed by npc id. */
+  npcs: Record<string, NpcDef>;
+  /** Dialogues, keyed by dialogue id. */
+  dialogues: Record<string, DialogueDef>;
+  /** Quests, keyed by quest id. */
+  quests: Record<string, QuestDef>;
+  /** Generic lines of the built-in customer dialogue. */
+  customerLines: CustomerLines;
 }

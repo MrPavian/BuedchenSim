@@ -46,7 +46,7 @@ function start(): void {
   // --- Save / load
   const saveStore = createSaveStore(getStorage());
   const loaded = saveStore.load(pack);
-  const game: Game = createGame(pack, loaded.status === 'ok' ? loaded.state : undefined);
+  const game: Game = createGame(pack, loaded.status === 'ok' ? loaded.state : undefined, () => Date.now() % 0x100000000);
 
   const sceneRoot = document.createElement('div');
   sceneRoot.className = 'scene';

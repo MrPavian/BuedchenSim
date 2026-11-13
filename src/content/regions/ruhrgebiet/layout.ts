@@ -85,4 +85,6 @@ export const ruhrgebietLayout: RegionLayout = {
       marker: { position: { x: 1.75, z: -1.0 }, height: 0.03, radius: 0.35 },
     },
   ],
+  // Residents' walking graph: filled by the residents content (phase 4, stage 2).
+  nav: { waypoints: [], edges: [], places: [] },
 };

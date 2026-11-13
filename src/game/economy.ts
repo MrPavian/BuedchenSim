@@ -2,6 +2,7 @@ import { STORAGE_CAPACITY_UNITS, TRANSACTION_LIMIT } from './balance';
 import type { DomainContext } from './domain';
 import type { ActionResult } from './result';
 import {
+  cartMinimumAge,
   findProduct,
   findSlot,
   freeStorageUnits,
@@ -17,6 +18,12 @@ export interface SaleRequest {
    * The player confirmed the ID check for THIS sale. Valid for this single call only and never stored.
    */
   ageCheckConfirmed: boolean;
+  /**
+   * A resident customer buys. Adds: 'unknown_customer'; for restricted goods the resident's own age (from content)
+   * must reach the minimum age ('customer_underage', even when `ageCheckConfirmed` is true: the player's confirmation
+   * is never proof of a resident's age). The player's till sales omit this field and behave as before.
+   */
+  customer?: { npcId: string };
 }
 
 export type SaleResult = { ok: true; transaction: Transaction } | { ok: false; reason: string };
@@ -57,7 +64,13 @@ function assertCount(value: number, what: string): number {
   return value;
 }
 
-function recordTransaction(ctx: DomainContext, kind: Transaction['kind'], lines: TransactionLine[], totalCents: number): Transaction {
+function recordTransaction(
+  ctx: DomainContext,
+  kind: Transaction['kind'],
+  lines: TransactionLine[],
+  totalCents: number,
+  npcId?: string,
+): Transaction {
   const { economy, calendar } = ctx.state();
   const transaction: Transaction = {
     id: economy.nextTransactionId,
@@ -66,6 +79,7 @@ function recordTransaction(ctx: DomainContext, kind: Transaction['kind'], lines:
     kind,
     lines,
     totalCents,
+    ...(npcId === undefined ? {} : { npcId }),
   };
   economy.nextTransactionId += 1;
   economy.transactions.push(transaction);
@@ -171,10 +185,18 @@ export function createEconomyApi(ctx: DomainContext): EconomyApi {
       const { economy } = state;
       const merged = mergeLines(ctx, request.lines, 'empty_cart');
       if (!merged.ok) return merged;
+      const customerId = request.customer?.npcId;
+      const customer =
+        customerId !== undefined && Object.hasOwn(ctx.content.npcs, customerId) ? ctx.content.npcs[customerId] : undefined;
+      if (request.customer && !customer) return { ok: false, reason: 'unknown_customer' };
       if (state.calendar.phase !== 'open') return { ok: false, reason: 'day_not_open' };
       if (!state.kiosk.shutterOpen) return { ok: false, reason: 'kiosk_closed' };
       const restricted = merged.lines.some((l) => findProduct(ctx.content, l.productId)?.minimumAge !== undefined);
       if (restricted && request.ageCheckConfirmed !== true) return { ok: false, reason: 'age_check_required' };
+      if (customer) {
+        const minimumAge = cartMinimumAge(ctx.content, merged.lines);
+        if (minimumAge !== null && customer.age < minimumAge) return { ok: false, reason: 'customer_underage' };
+      }
       for (const line of merged.lines) {
         if (line.quantity > shelfQuantity(state, line.productId)) return { ok: false, reason: 'insufficient_stock' };
       }
@@ -208,11 +230,15 @@ export function createEconomyApi(ctx: DomainContext): EconomyApi {
       economy.today.revenueCents += totalCents;
       economy.today.costOfGoodsSoldCents += costCents;
       economy.today.salesCount += 1;
-      const transaction = recordTransaction(ctx, 'sale', transactionLines, totalCents);
+      const transaction = recordTransaction(ctx, 'sale', transactionLines, totalCents, customer?.id);
 
       for (const line of merged.lines) stockChanged(line.productId);
       ctx.emit('money.changed', { cashCents: economy.cashCents });
-      ctx.emit('sale.completed', { transactionId: transaction.id, totalCents });
+      ctx.emit('sale.completed', {
+        transactionId: transaction.id,
+        totalCents,
+        ...(customer ? { npcId: customer.id } : {}),
+      });
       return { ok: true, transaction: structuredClone(transaction) };
     },
 

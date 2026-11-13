@@ -1,4 +1,15 @@
-import type { AssetDef, ContentPack, ProductDef, RegionLayout, StockSlotDef } from '../types';
+import type {
+  AssetDef,
+  ContentPack,
+  CustomerLines,
+  DialogueDef,
+  NavDef,
+  NpcDef,
+  ProductDef,
+  QuestDef,
+  RegionLayout,
+  StockSlotDef,
+} from '../types';
 
 /**
  * Self-contained test fixture so game tests do not depend on the content layer
@@ -98,6 +109,73 @@ const assets: Record<string, AssetDef> = {
   },
 };
 
+/**
+ * Walking graph of the fixture. West-to-east street line z 3.6 with a bypass (b1) around the edge w1-w2, two spots at
+ * the sales window (outside the south wall), two sidewalk spots and a yard in the east. All edges are clear of the colliders.
+ */
+export const fixtureNav: NavDef = {
+  waypoints: [
+    { id: 'wp.exit-west', position: { x: -10, z: 3.6 } },
+    { id: 'wp.w1', position: { x: -6, z: 3.6 } },
+    { id: 'wp.b1', position: { x: -4.25, z: 4.4 } },
+    { id: 'wp.w2', position: { x: -2.5, z: 3.6 } },
+    { id: 'wp.win-a', position: { x: -1.6, z: 2.55 } },
+    { id: 'wp.w3', position: { x: 1.2, z: 3.6 } },
+    { id: 'wp.win-b', position: { x: -0.4, z: 2.55 } },
+    { id: 'wp.w4', position: { x: 5, z: 3.6 } },
+    { id: 'wp.side-a', position: { x: 4.2, z: 2.8 } },
+    { id: 'wp.side-b', position: { x: 5.8, z: 2.8 } },
+    { id: 'wp.exit-east', position: { x: 10, z: 3.6 } },
+    { id: 'wp.y1', position: { x: 7, z: 1.0 } },
+    { id: 'wp.yard-a', position: { x: 7.5, z: -1.0 } },
+    { id: 'wp.yard-b', position: { x: 9, z: -1.0 } },
+  ],
+  edges: [
+    ['wp.exit-west', 'wp.w1'],
+    ['wp.w1', 'wp.w2'],
+    ['wp.w1', 'wp.b1'],
+    ['wp.b1', 'wp.w2'],
+    ['wp.w2', 'wp.win-a'],
+    ['wp.w2', 'wp.w3'],
+    ['wp.w3', 'wp.win-b'],
+    ['wp.w3', 'wp.w4'],
+    ['wp.w4', 'wp.side-a'],
+    ['wp.w4', 'wp.side-b'],
+    ['wp.w4', 'wp.exit-east'],
+    ['wp.w4', 'wp.y1'],
+    ['wp.y1', 'wp.yard-a'],
+    ['wp.y1', 'wp.yard-b'],
+  ],
+  places: [
+    { id: 'place.exit-west', kind: 'exit', spots: [{ waypointId: 'wp.exit-west', heading: Math.PI / 2 }] },
+    { id: 'place.exit-east', kind: 'exit', spots: [{ waypointId: 'wp.exit-east', heading: -Math.PI / 2 }] },
+    {
+      id: 'place.window',
+      kind: 'kiosk-window',
+      spots: [
+        { waypointId: 'wp.win-a', heading: Math.PI },
+        { waypointId: 'wp.win-b', heading: Math.PI },
+      ],
+    },
+    {
+      id: 'place.sidewalk',
+      kind: 'sidewalk',
+      spots: [
+        { waypointId: 'wp.side-a', heading: 0 },
+        { waypointId: 'wp.side-b', heading: 0 },
+      ],
+    },
+    {
+      id: 'place.yard',
+      kind: 'yard',
+      spots: [
+        { waypointId: 'wp.yard-a', heading: Math.PI },
+        { waypointId: 'wp.yard-b', heading: Math.PI },
+      ],
+    },
+  ],
+};
+
 const layout: RegionLayout = {
   kiosk: {
     assetId: 'K-001',
@@ -144,6 +222,7 @@ const layout: RegionLayout = {
       marker: { position: { x: -1.0, z: 1.95 }, height: 1.03 },
     },
   ],
+  nav: fixtureNav,
 };
 
 const products: Record<string, ProductDef> = {
@@ -236,4 +315,278 @@ const stockSlots: StockSlotDef[] = [
   },
 ];
 
-export const testPack: ContentPack = { regionId: 'region.test', name: 'Test', assets, layout, products, stockSlots };
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6] as const;
+
+const quests: Record<string, QuestDef> = {
+  'quest.dispute': {
+    id: 'quest.dispute',
+    title: 'Test dispute',
+    steps: [
+      { id: 'step.heard', journal: 'Heard about the dispute.' },
+      { id: 'step.decided', journal: 'Took a side or stayed out.' },
+    ],
+    outcomes: [
+      { id: 'outcome.mediated', journal: 'Mediated.' },
+      { id: 'outcome.neutral', journal: 'Stayed neutral.' },
+    ],
+  },
+};
+
+const npcs: Record<string, NpcDef> = {
+  'npc.stammkunde': {
+    id: 'npc.stammkunde',
+    name: 'Test regular',
+    age: 64,
+    role: 'Regular customer',
+    bio: 'Test bio',
+    assetId: 'N-002',
+    personalityTags: ['dry', 'observant'],
+    walkSpeed: 1.4,
+    startRelationship: 30,
+    homeExitPlaceId: 'place.exit-east',
+    routine: [
+      { id: 'r.morning-shop', weekdays: [...ALL_DAYS], from: 480, to: 600, activity: 'shop', placeId: 'place.window', chancePercent: 100 },
+      { id: 'r.evening-shop', weekdays: [...ALL_DAYS], from: 1080, to: 1200, activity: 'shop', placeId: 'place.window', chancePercent: 100 },
+      { id: 'r.weekend-yard', weekdays: [5, 6], from: 720, to: 840, activity: 'linger', placeId: 'place.yard', chancePercent: 100 },
+      { id: 'r.maybe-sidewalk', weekdays: [...ALL_DAYS], from: 900, to: 1000, activity: 'visit', placeId: 'place.sidewalk', chancePercent: 50 },
+    ],
+    likes: ['product.test-water', 'tag:thirst'],
+    dislikes: ['product.test-cola'],
+    relationships: [{ npcId: 'npc.nachbarin', kind: 'neighbour', note: 'Know each other for years.' }],
+    dialogueIds: ['dialogue.stammkunde.greeting', 'dialogue.stammkunde.dispute', 'dialogue.stammkunde.followup'],
+    wishes: [
+      {
+        id: 'wish.water',
+        lines: [{ productId: 'product.test-water', quantity: 2 }],
+        when: [{ type: 'time', from: 360, to: 1080 }],
+        text: 'Zwei Wasser, bitte.',
+        onSold: [{ type: 'relationship', npcId: 'npc.stammkunde', delta: 2, key: 'k.sold.water' }],
+      },
+      {
+        id: 'wish.beer',
+        lines: [{ productId: 'product.test-beer', quantity: 1 }],
+        when: [{ type: 'time', from: 1080, to: 1320 }],
+        text: 'Ein Pils zum Feierabend.',
+      },
+      {
+        id: 'wish.stock-out',
+        lines: [{ productId: 'product.test-water', quantity: 99 }],
+        when: [{ type: 'flag', id: 'test.big-order' }],
+        weight: 1000,
+        text: 'Gleich eine ganze Kiste.',
+      },
+    ],
+  },
+  'npc.kurier': {
+    id: 'npc.kurier',
+    name: 'Test courier',
+    age: 17,
+    role: 'Courier',
+    bio: 'Test bio',
+    assetId: 'N-006',
+    personalityTags: ['fast'],
+    walkSpeed: 1.8,
+    startRelationship: 5,
+    homeExitPlaceId: 'place.exit-west',
+    routine: [
+      { id: 'r.shop', weekdays: [...ALL_DAYS], from: 540, to: 720, activity: 'shop', placeId: 'place.window', chancePercent: 100 },
+    ],
+    likes: ['tag:thirst'],
+    dislikes: [],
+    relationships: [],
+    dialogueIds: ['dialogue.kurier.greeting'],
+    wishes: [
+      {
+        id: 'wish.kurier-tobacco',
+        lines: [{ productId: 'product.test-tobacco', quantity: 1 }],
+        when: [{ type: 'flag', id: 'test.kurier-tobacco' }],
+        weight: 1000,
+        text: 'Eine Schachtel Rauch.',
+      },
+      {
+        id: 'wish.kurier-beer',
+        lines: [{ productId: 'product.test-beer', quantity: 1 }],
+        when: [{ type: 'flag', id: 'test.kurier-beer' }],
+        weight: 1000,
+        text: 'Ein Pils.',
+      },
+      { id: 'wish.kurier-water', lines: [{ productId: 'product.test-water', quantity: 1 }], text: 'Ein Wasser.' },
+    ],
+  },
+  'npc.nachbarin': {
+    id: 'npc.nachbarin',
+    name: 'Test neighbour',
+    age: 52,
+    role: 'Neighbour',
+    bio: 'Test bio',
+    assetId: 'N-007',
+    personalityTags: ['chatty'],
+    walkSpeed: 1.2,
+    startRelationship: 15,
+    homeExitPlaceId: 'place.exit-west',
+    routine: [
+      { id: 'r.pass', weekdays: [...ALL_DAYS], from: 420, to: 480, activity: 'pass-by', placeId: 'place.sidewalk', chancePercent: 100 },
+      { id: 'r.yard-visit', weekdays: [0, 1, 2, 3, 4], from: 600, to: 960, activity: 'visit', placeId: 'place.yard', chancePercent: 100 },
+    ],
+    likes: [],
+    dislikes: [],
+    relationships: [{ npcId: 'npc.stammkunde', kind: 'neighbour', note: 'Know each other for years.' }],
+    dialogueIds: ['dialogue.nachbarin.greeting', 'dialogue.nachbarin.reaction'],
+  },
+};
+
+const dialogues: Record<string, DialogueDef> = {
+  'dialogue.stammkunde.greeting': {
+    id: 'dialogue.stammkunde.greeting',
+    npcId: 'npc.stammkunde',
+    priority: 1,
+    start: 'a',
+    nodes: {
+      a: {
+        text: 'Moin.',
+        options: [
+          { id: 'chat', text: 'Wie läuft es?', effects: [{ type: 'relationship', npcId: 'npc.stammkunde', delta: 2, key: 'k.chat' }], next: 'b' },
+          { id: 'evening', text: 'Schönen Feierabend.', when: [{ type: 'time', from: 1080, to: 1320 }] },
+          { id: 'bye', text: 'Tschüss.' },
+        ],
+      },
+      b: { text: 'Muss ja.', options: [{ id: 'bye', text: 'Tschüss.' }] },
+    },
+  },
+  'dialogue.stammkunde.dispute': {
+    id: 'dialogue.stammkunde.dispute',
+    npcId: 'npc.stammkunde',
+    priority: 10,
+    when: [{ type: 'questNotStarted', questId: 'quest.dispute' }],
+    start: 'a',
+    nodes: {
+      a: {
+        text: 'Hast du den Streit nebenan gehört?',
+        options: [
+          {
+            id: 'listen',
+            text: 'Erzähl.',
+            effects: [
+              { type: 'questStep', questId: 'quest.dispute', step: 'step.heard' },
+              { type: 'remember', npcId: 'npc.stammkunde', memoryId: 'told-dispute' },
+              { type: 'relationship', npcId: 'npc.stammkunde', delta: 3, key: 'k.listen' },
+            ],
+            next: 'b',
+          },
+          { id: 'dismiss', text: 'Nicht mein Problem.', effects: [{ type: 'relationship', npcId: 'npc.stammkunde', delta: -1, key: 'k.dismiss' }] },
+        ],
+      },
+      b: {
+        text: 'Und jetzt?',
+        options: [
+          {
+            id: 'mediate',
+            text: 'Ich rede mit beiden.',
+            when: [{ type: 'relationshipAtLeast', npcId: 'npc.stammkunde', value: 20 }],
+            effects: [
+              { type: 'questStep', questId: 'quest.dispute', step: 'step.decided' },
+              { type: 'questOutcome', questId: 'quest.dispute', outcome: 'outcome.mediated' },
+              { type: 'setFlag', id: 'test.mediated', value: true },
+              { type: 'remember', npcId: 'npc.stammkunde', memoryId: 'mediated' },
+              { type: 'relationship', npcId: 'npc.stammkunde', delta: 5, key: 'k.mediate' },
+            ],
+          },
+          {
+            id: 'neutral',
+            text: 'Ich halte mich raus.',
+            effects: [
+              { type: 'questStep', questId: 'quest.dispute', step: 'step.decided' },
+              { type: 'questOutcome', questId: 'quest.dispute', outcome: 'outcome.neutral' },
+              { type: 'relationship', npcId: 'npc.stammkunde', delta: -2, key: 'k.neutral' },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  'dialogue.stammkunde.followup': {
+    id: 'dialogue.stammkunde.followup',
+    npcId: 'npc.stammkunde',
+    priority: 20,
+    once: true,
+    when: [{ type: 'questOutcome', questId: 'quest.dispute', outcome: 'outcome.mediated' }],
+    start: 'a',
+    nodes: {
+      a: {
+        text: 'Danke fürs Vermitteln.',
+        options: [{ id: 'thanks', text: 'Gern.', effects: [{ type: 'relationship', npcId: 'npc.stammkunde', delta: 2, key: 'k.followup' }] }],
+      },
+    },
+  },
+  'dialogue.kurier.greeting': {
+    id: 'dialogue.kurier.greeting',
+    npcId: 'npc.kurier',
+    priority: 1,
+    start: 'a',
+    nodes: { a: { text: 'Keine Zeit.', options: [{ id: 'bye', text: 'Ok.' }] } },
+  },
+  'dialogue.nachbarin.greeting': {
+    id: 'dialogue.nachbarin.greeting',
+    npcId: 'npc.nachbarin',
+    priority: 1,
+    start: 'a',
+    nodes: {
+      a: {
+        text: 'Guten Tag.',
+        options: [
+          { id: 'weekend', text: 'Schönes Wochenende.', when: [{ type: 'weekday', days: [5, 6] }] },
+          { id: 'bye', text: 'Tag.' },
+        ],
+      },
+    },
+  },
+  'dialogue.nachbarin.reaction': {
+    id: 'dialogue.nachbarin.reaction',
+    npcId: 'npc.nachbarin',
+    priority: 10,
+    once: true,
+    when: [{ type: 'memory', npcId: 'npc.stammkunde', memoryId: 'mediated' }],
+    start: 'a',
+    nodes: {
+      a: { text: 'Man hört, du hast vermittelt.', options: [{ id: 'bye', text: 'Hm.' }] },
+    },
+  },
+};
+
+const customerLines: CustomerLines = {
+  sell: 'Bitte sehr.',
+  checkId: 'Ausweis bitte.',
+  decline: 'Habe ich nicht.',
+  close: 'Tschüss.',
+  idChecked: 'Bitte. Ich bin {age}.',
+  sold: 'Danke.',
+  declined: 'Schade.',
+  failed: {
+    insufficient_stock: 'Nicht genug da.',
+    customer_underage: 'Das darf ich dir nicht geben.',
+    age_check_required: 'Erst der Ausweis.',
+  },
+  failedFallback: 'Geht nicht.',
+};
+
+export const testPack: ContentPack = {
+  regionId: 'region.test',
+  name: 'Test',
+  assets,
+  layout,
+  products,
+  stockSlots,
+  npcs,
+  dialogues,
+  quests,
+  customerLines,
+};
+
+/** A pack without residents (nav empty) for tests of the economy and the interaction that need none. */
+export const testPackWithoutNpcs: ContentPack = {
+  ...testPack,
+  layout: { ...layout, nav: { waypoints: [], edges: [], places: [] } },
+  npcs: {},
+  dialogues: {},
+  quests: {},
+};

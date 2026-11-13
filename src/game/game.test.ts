@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { testPack } from './testing/fixture-pack';
 import { createGame } from './game';
-import { createInitialState } from './state';
+import { createInitialState, DEFAULT_WORLD_SEED } from './state';
 
 const content = testPack;
 const nearDoor = { x: 2.0, z: 2.6 };
@@ -25,6 +25,9 @@ describe('game facade', () => {
         transactions: [],
         nextTransactionId: 1,
       },
+      world: { seed: DEFAULT_WORLD_SEED },
+      npcs: expect.objectContaining({ 'npc.stammkunde': expect.objectContaining({ status: 'away', relationship: 30 }) }),
+      story: { flags: {}, quests: {}, seenDialogues: [], effectKeys: [] },
     });
     expect(game.getAvailableInteraction()).toBeNull();
   });
@@ -102,7 +105,7 @@ describe('game facade', () => {
   it('save() returns a deep copy', () => {
     const game = createGame(content);
     const snapshot = game.save();
-    expect(snapshot.schemaVersion).toBe(2);
+    expect(snapshot.schemaVersion).toBe(3);
     expect(typeof snapshot.savedAt).toBe('string');
     snapshot.state.player.position.x = 5;
     snapshot.state.kiosk.doorOpen = true;

@@ -1,23 +1,43 @@
 import { log } from '../../core/log';
-import { DAY_END_MINUTE, DAY_START_MINUTE, SPEEDS, TRANSACTION_LIMIT, type GameSpeed } from '../balance';
+import {
+  DAY_END_MINUTE,
+  DAY_START_MINUTE,
+  RELATIONSHIP_MAX,
+  RELATIONSHIP_MIN,
+  SAVE_LIMITS,
+  SPEEDS,
+  TRANSACTION_LIMIT,
+  type GameSpeed,
+} from '../balance';
+import { hashParts } from '../random';
 import type { ActionResult } from '../result';
 import { findProduct, findSlot, slotCapacityFor } from '../selectors';
 import {
   createInitialCalendar,
   createInitialEconomy,
+  createInitialNpcState,
+  createInitialStory,
+  homeExitPosition,
   type CalendarState,
   type DayPhase,
   type DayReport,
+  type DayTime,
   type EconomyState,
   type GameState,
+  type NpcState,
+  type NpcStatus,
+  type NpcWishState,
   type PendingDelivery,
+  type ProductLine,
+  type QuestProgress,
   type ShelfStock,
+  type StoryState,
   type Transaction,
   type TransactionLine,
 } from '../state';
-import type { ContentPack } from '../types';
+import type { ContentPack, NpcDef } from '../types';
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 export interface SaveFile {
   schemaVersion: number;
@@ -46,8 +66,21 @@ const migrateV1toV2: Migration = (save) => {
   return { ...save, state: { ...state, calendar: createInitialCalendar(), economy: createInitialEconomy() } };
 };
 
+/**
+ * 2 -> 3: adds the world seed, the (still empty) resident states and an empty story. Everything else stays untouched.
+ * The seed is derived from the region and the save time (deterministic: migrating the same file twice gives the same
+ * seed). The residents are not known here (migrations see no content): the content-aware validation adds the initial
+ * state of every resident missing from the save, without a warning for this empty list.
+ */
+const migrateV2toV3: Migration = (save) => {
+  const state = save['state'];
+  if (!isRecord(state)) return save; // validation reports it
+  const seed = hashParts('legacy-world', String(state['regionId']), String(save['savedAt']));
+  return { ...save, state: { ...state, world: { seed }, npcs: {}, story: createInitialStory() } };
+};
+
 /** migrations[n] converts version n to n+1. */
-export const migrations: Readonly<Record<number, Migration>> = { 1: migrateV1toV2 };
+export const migrations: Readonly<Record<number, Migration>> = { 1: migrateV1toV2, 2: migrateV2toV3 };
 
 export interface ParseOptions {
   /** Injectable for tests. */
@@ -162,7 +195,7 @@ function validateReport(raw: unknown): Checked<DayReport | null> {
   return { ok: true, value: out as unknown as DayReport };
 }
 
-function validateTransactions(raw: unknown): Checked<Transaction[]> {
+function validateTransactions(raw: unknown, content: ContentPack, warnings: string[]): Checked<Transaction[]> {
   const list = arrayAt(raw, 'state.economy.transactions');
   if (!list.ok) return list;
   if (list.value.length > TRANSACTION_LIMIT) {
@@ -198,7 +231,21 @@ function validateTransactions(raw: unknown): Checked<Transaction[]> {
       if (!price.ok) return price;
       outLines.push({ productId: productId.value, quantity: quantity.value, unitPriceCents: price.value });
     }
-    out.push({ id: id.value, day: day.value, minute: minute.value, kind: t['kind'], lines: outLines, totalCents: total.value });
+    const transaction: Transaction = {
+      id: id.value,
+      day: day.value,
+      minute: minute.value,
+      kind: t['kind'],
+      lines: outLines,
+      totalCents: total.value,
+    };
+    if (t['npcId'] !== undefined) {
+      const npcId = text(t['npcId'], `${path}.npcId`);
+      if (!npcId.ok) return npcId;
+      if (Object.hasOwn(content.npcs, npcId.value)) transaction.npcId = npcId.value;
+      else warnings.push(`transactions: unknown resident "${npcId.value}" removed from transaction ${id.value}`);
+    }
+    out.push(transaction);
   }
   return { ok: true, value: out };
 }
@@ -293,7 +340,7 @@ function validateEconomy(
 
   const lastReport = validateReport(e['lastReport']);
   if (!lastReport.ok) return lastReport;
-  const transactions = validateTransactions(e['transactions']);
+  const transactions = validateTransactions(e['transactions'], content, warnings);
   if (!transactions.ok) return transactions;
 
   return {
@@ -309,6 +356,274 @@ function validateEconomy(
       nextTransactionId: nextId.value,
     },
   };
+}
+
+function strings(value: unknown, path: string, limit: number): Checked<string[]> {
+  const list = arrayAt(value, path);
+  if (!list.ok) return list;
+  if (list.value.length > limit) return { ok: false, reason: `${path} holds more than ${limit} entries` };
+  const out: string[] = [];
+  for (const [i, entry] of list.value.entries()) {
+    const t = text(entry, `${path}[${i}]`);
+    if (!t.ok) return t;
+    out.push(t.value);
+  }
+  return { ok: true, value: out };
+}
+
+function nullableDayTime(raw: unknown, path: string): Checked<DayTime | null> {
+  if (raw === null) return { ok: true, value: null };
+  const obj = objectAt(raw, path);
+  if (!obj.ok) return obj;
+  const day = integer(obj.value['day'], `${path}.day`, 1);
+  if (!day.ok) return day;
+  const minute = integer(obj.value['minute'], `${path}.minute`);
+  if (!minute.ok) return minute;
+  return { ok: true, value: { day: day.value, minute: minute.value } };
+}
+
+function validateWorld(raw: unknown): Checked<{ seed: number }> {
+  const obj = objectAt(raw, 'state.world');
+  if (!obj.ok) return obj;
+  const seed = integer(obj.value['seed'], 'state.world.seed');
+  if (!seed.ok) return seed;
+  if (seed.value > 0xffffffff) return { ok: false, reason: 'state.world.seed must be a 32-bit unsigned integer' };
+  return { ok: true, value: { seed: seed.value } };
+}
+
+function validateStory(raw: unknown, content: ContentPack, warnings: string[]): Checked<StoryState> {
+  const obj = objectAt(raw, 'state.story');
+  if (!obj.ok) return obj;
+  const story = createInitialStory();
+
+  const flags = objectAt(obj.value['flags'], 'state.story.flags');
+  if (!flags.ok) return flags;
+  const flagEntries = Object.entries(flags.value);
+  if (flagEntries.length > SAVE_LIMITS.flags) return { ok: false, reason: `state.story.flags holds more than ${SAVE_LIMITS.flags} entries` };
+  for (const [id, value] of flagEntries) {
+    const b = bool(value, `state.story.flags["${id}"]`);
+    if (!b.ok) return b;
+    story.flags[id] = b.value;
+  }
+
+  const quests = objectAt(obj.value['quests'], 'state.story.quests');
+  if (!quests.ok) return quests;
+  for (const [questId, rawQuest] of Object.entries(quests.value)) {
+    const path = `state.story.quests["${questId}"]`;
+    const q = objectAt(rawQuest, path);
+    if (!q.ok) return q;
+    const step = q.value['step'];
+    const outcome = q.value['outcome'];
+    if (step !== null && typeof step !== 'string') return { ok: false, reason: `${path}.step must be a string or null` };
+    if (outcome !== null && typeof outcome !== 'string') return { ok: false, reason: `${path}.outcome must be a string or null` };
+    const def = Object.hasOwn(content.quests, questId) ? content.quests[questId] : undefined;
+    if (!def) {
+      warnings.push(`story: unknown quest "${questId}" dropped`);
+    } else if (
+      (step !== null && !def.steps.some((x) => x.id === step)) ||
+      (outcome !== null && !def.outcomes.some((x) => x.id === outcome))
+    ) {
+      warnings.push(`story: quest "${questId}" has an unknown step or outcome and was dropped`);
+    } else {
+      story.quests[questId] = { step, outcome } satisfies QuestProgress;
+    }
+  }
+
+  const seen = strings(obj.value['seenDialogues'], 'state.story.seenDialogues', SAVE_LIMITS.seenDialogues);
+  if (!seen.ok) return seen;
+  for (const id of seen.value) {
+    if (!Object.hasOwn(content.dialogues, id)) warnings.push(`story: unknown dialogue "${id}" dropped`);
+    else if (!story.seenDialogues.includes(id)) story.seenDialogues.push(id);
+  }
+
+  const keys = strings(obj.value['effectKeys'], 'state.story.effectKeys', SAVE_LIMITS.effectKeys);
+  if (!keys.ok) return keys;
+  story.effectKeys = [...new Set(keys.value)];
+  return { ok: true, value: story };
+}
+
+const NPC_STATUSES: readonly NpcStatus[] = ['away', 'walking', 'waiting', 'at_place', 'talking'];
+
+/** Strict shape check of one resident (ranges, enums, bounds); content references are checked afterwards. */
+function validateNpcShape(raw: unknown, path: string): Checked<NpcState> {
+  const obj = objectAt(raw, path);
+  if (!obj.ok) return obj;
+  const n = obj.value;
+  const status = n['status'];
+  if (!NPC_STATUSES.includes(status as NpcStatus)) return { ok: false, reason: `${path}.status must be one of ${NPC_STATUSES.join(', ')}` };
+  const pos = objectAt(n['position'], `${path}.position`);
+  if (!pos.ok) return pos;
+  const x = finite(pos.value['x'], `${path}.position.x`);
+  if (!x.ok) return x;
+  const z = finite(pos.value['z'], `${path}.position.z`);
+  if (!z.ok) return z;
+  const heading = finite(n['heading'], `${path}.heading`);
+  if (!heading.ok) return heading;
+  const nullableText = (value: unknown, p: string): Checked<string | null> =>
+    value === null ? { ok: true, value: null } : text(value, p);
+  const placeId = nullableText(n['placeId'], `${path}.placeId`);
+  if (!placeId.ok) return placeId;
+  let spotIndex: number | null = null;
+  if (n['spotIndex'] !== null) {
+    const spot = integer(n['spotIndex'], `${path}.spotIndex`);
+    if (!spot.ok) return spot;
+    spotIndex = spot.value;
+  }
+  const route = strings(n['route'], `${path}.route`, SAVE_LIMITS.routeWaypoints);
+  if (!route.ok) return route;
+  const routineId = nullableText(n['routineId'], `${path}.routineId`);
+  if (!routineId.ok) return routineId;
+  const relationship = integer(n['relationship'], `${path}.relationship`, RELATIONSHIP_MIN);
+  if (!relationship.ok) return relationship;
+  if (relationship.value > RELATIONSHIP_MAX) return { ok: false, reason: `${path}.relationship must be at most ${RELATIONSHIP_MAX}` };
+  const memories = strings(n['memories'], `${path}.memories`, SAVE_LIMITS.memoriesPerNpc);
+  if (!memories.ok) return memories;
+  const lastVisit = nullableDayTime(n['lastVisit'], `${path}.lastVisit`);
+  if (!lastVisit.ok) return lastVisit;
+  const lastTalk = nullableDayTime(n['lastTalk'], `${path}.lastTalk`);
+  if (!lastTalk.ok) return lastTalk;
+  let greetedDay: number | null = null;
+  if (n['greetedDay'] !== null) {
+    const g = integer(n['greetedDay'], `${path}.greetedDay`);
+    if (!g.ok) return g;
+    greetedDay = g.value;
+  }
+  const done = objectAt(n['doneToday'], `${path}.doneToday`);
+  if (!done.ok) return done;
+  const doneDay = integer(done.value['day'], `${path}.doneToday.day`);
+  if (!doneDay.ok) return doneDay;
+  const doneIds = strings(done.value['routineIds'], `${path}.doneToday.routineIds`, SAVE_LIMITS.routinesDonePerDay);
+  if (!doneIds.ok) return doneIds;
+
+  let wish: NpcWishState | null = null;
+  if (n['wish'] !== null) {
+    const w = objectAt(n['wish'], `${path}.wish`);
+    if (!w.ok) return w;
+    const wishId = text(w.value['wishId'], `${path}.wish.wishId`);
+    if (!wishId.ok) return wishId;
+    const ageChecked = bool(w.value['ageChecked'], `${path}.wish.ageChecked`);
+    if (!ageChecked.ok) return ageChecked;
+    const resolved = w.value['resolved'];
+    if (resolved !== null && resolved !== 'sold' && resolved !== 'declined') {
+      return { ok: false, reason: `${path}.wish.resolved must be null, sold or declined` };
+    }
+    const lines = arrayAt(w.value['lines'], `${path}.wish.lines`);
+    if (!lines.ok) return lines;
+    if (lines.value.length > SAVE_LIMITS.wishLines) return { ok: false, reason: `${path}.wish.lines holds too many entries` };
+    const outLines: ProductLine[] = [];
+    for (const [i, rawLine] of lines.value.entries()) {
+      const line = objectAt(rawLine, `${path}.wish.lines[${i}]`);
+      if (!line.ok) return line;
+      const productId = text(line.value['productId'], `${path}.wish.lines[${i}].productId`);
+      if (!productId.ok) return productId;
+      const quantity = integer(line.value['quantity'], `${path}.wish.lines[${i}].quantity`, 1);
+      if (!quantity.ok) return quantity;
+      outLines.push({ productId: productId.value, quantity: quantity.value });
+    }
+    wish = { wishId: wishId.value, lines: outLines, ageChecked: ageChecked.value, resolved };
+  }
+  let waitingSince: number | null = null;
+  if (n['waitingSince'] !== null) {
+    const w = finite(n['waitingSince'], `${path}.waitingSince`);
+    if (!w.ok) return w;
+    waitingSince = w.value;
+  }
+  return {
+    ok: true,
+    value: {
+      status: status as NpcStatus,
+      position: { x: x.value, z: z.value },
+      heading: heading.value,
+      placeId: placeId.value,
+      spotIndex,
+      route: route.value,
+      routineId: routineId.value,
+      relationship: relationship.value,
+      memories: [...new Set(memories.value)],
+      lastVisit: lastVisit.value,
+      lastTalk: lastTalk.value,
+      greetedDay,
+      doneToday: { day: doneDay.value, routineIds: doneIds.value },
+      wish,
+      waitingSince,
+    },
+  };
+}
+
+/**
+ * Brings a shape-valid resident in line with the content: returns a warning text when a reference is unknown (the
+ * moving parts then reset to "away at the home exit"; relationship, memories and times stay) and normalises the status
+ * ('talking' is never restored; away carries no place, route or wish).
+ */
+function reconcileNpc(npc: NpcState, def: NpcDef, content: ContentPack): string | null {
+  const nav = content.layout.nav;
+  const place = npc.placeId === null ? undefined : nav.places.find((p) => p.id === npc.placeId);
+  let problem: string | null = null;
+  if (npc.placeId !== null && !place) problem = `unknown place "${npc.placeId}"`;
+  else if (npc.route.some((id) => !nav.waypoints.some((w) => w.id === id))) problem = 'unknown waypoint in the route';
+  else if (npc.spotIndex !== null && (!place || npc.spotIndex >= place.spots.length)) problem = 'unknown spot';
+  else if (npc.routineId !== null && !def.routine.some((r) => r.id === npc.routineId)) problem = `unknown routine "${npc.routineId}"`;
+  else if (npc.wish) {
+    const wishId = npc.wish.wishId;
+    if (!def.wishes?.some((w) => w.id === wishId)) problem = `unknown wish "${wishId}"`;
+    else if (npc.wish.lines.some((l) => !Object.hasOwn(content.products, l.productId))) problem = 'unknown product in the wish';
+  }
+  const away = (atHome: boolean): void => {
+    npc.status = 'away';
+    if (atHome) npc.position = homeExitPosition(content, def);
+    npc.placeId = null;
+    npc.spotIndex = null;
+    npc.route = [];
+    npc.routineId = null;
+    npc.wish = null;
+    npc.waitingSince = null;
+  };
+  if (problem !== null) {
+    away(true);
+    return problem;
+  }
+  const openWish = npc.wish !== null && npc.wish.resolved === null;
+  if (npc.status === 'away') {
+    away(false);
+  } else if (npc.placeId === null) {
+    away(true);
+    return 'resident outside the world without a place';
+  } else if (npc.route.length > 0) {
+    npc.status = 'walking';
+  } else {
+    npc.status = openWish ? 'waiting' : 'at_place';
+  }
+  return null;
+}
+
+function validateNpcs(raw: unknown, content: ContentPack, warnings: string[]): Checked<Record<string, NpcState>> {
+  const obj = objectAt(raw, 'state.npcs');
+  if (!obj.ok) return obj;
+  const npcs: Record<string, NpcState> = {};
+  for (const [id, rawNpc] of Object.entries(obj.value)) {
+    if (!Object.hasOwn(content.npcs, id)) {
+      warnings.push(`npcs: unknown resident "${id}" dropped`);
+      continue;
+    }
+    const shape = validateNpcShape(rawNpc, `state.npcs["${id}"]`);
+    if (!shape.ok) return shape;
+    const def = content.npcs[id] as NpcDef;
+    const known = new Set(def.routine.map((r) => r.id));
+    const kept = shape.value.doneToday.routineIds.filter((r) => known.has(r));
+    if (kept.length < shape.value.doneToday.routineIds.length) warnings.push(`npcs: unknown routine ids of "${id}" dropped`);
+    shape.value.doneToday.routineIds = kept;
+    const problem = reconcileNpc(shape.value, def, content);
+    if (problem) warnings.push(`npcs: "${id}": ${problem}; reset to away`);
+    npcs[id] = shape.value;
+  }
+  const saved = Object.keys(obj.value).length;
+  for (const def of Object.values(content.npcs)) {
+    if (Object.hasOwn(npcs, def.id)) continue;
+    npcs[def.id] = createInitialNpcState(content, def);
+    // An empty list is what a migrated save carries; only a partial list is worth a warning.
+    if (saved > 0) warnings.push(`npcs: resident "${def.id}" is new and was added`);
+  }
+  return { ok: true, value: npcs };
 }
 
 function validateState(raw: unknown, content: ContentPack, warnings: string[]): Checked<GameState> {
@@ -341,6 +656,12 @@ function validateState(raw: unknown, content: ContentPack, warnings: string[]): 
   if (!calendar.ok) return calendar;
   const economy = validateEconomy(raw['economy'], content, warnings);
   if (!economy.ok) return economy;
+  const world = validateWorld(raw['world']);
+  if (!world.ok) return world;
+  const npcs = validateNpcs(raw['npcs'], content, warnings);
+  if (!npcs.ok) return npcs;
+  const story = validateStory(raw['story'], content, warnings);
+  if (!story.ok) return story;
 
   const b = content.layout.walkBounds;
   return {
@@ -354,6 +675,9 @@ function validateState(raw: unknown, content: ContentPack, warnings: string[]): 
       kiosk: { doorOpen: doorOpen.value, shutterOpen: shutterOpen.value },
       calendar: calendar.value,
       economy: economy.value,
+      world: world.value,
+      npcs: npcs.value,
+      story: story.value,
     },
   };
 }
