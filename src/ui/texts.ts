@@ -1,7 +1,13 @@
 import type { InteractionAction } from '../game/interaction';
+import type { Weekday } from '../game/selectors';
+
+const weekdayShort = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] as const;
+const weekdayLong = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'] as const;
 
 /** All player-visible strings live here (German). */
 export const texts = {
+  weekdayShort,
+  weekdayLong,
   controls: {
     move: { keys: 'WASD / Pfeiltasten', label: 'Bewegen' },
     interact: { keys: 'E', label: 'Interagieren' },
@@ -43,7 +49,7 @@ export const texts = {
   },
   hud: {
     label: 'Betriebsanzeige',
-    day: (day: number) => `Tag ${day}`,
+    day: (day: number, weekday: Weekday) => `${weekdayShort[weekday]} · Tag ${day}`,
     open: 'Geöffnet',
     closed: 'Geschlossen',
     cash: 'Kasse',
@@ -54,8 +60,6 @@ export const texts = {
     speed: (speed: number) => `${speed}×`,
     closeDay: 'Tag abschließen',
     showReport: 'Abrechnung',
-    goods: 'Waren',
-    till: 'Kasse',
     awaitingClose: 'Es ist 22:00 – der Tag muss abgeschlossen werden.',
     awaitingCloseAction: 'Jetzt abschließen',
     dayClosedHint: 'Der Tag ist abgeschlossen.',
@@ -171,7 +175,7 @@ export const texts = {
     keep: 'Bestände und Kasse bleiben unverändert, es wird nichts automatisch aufgefüllt oder gutgeschrieben.',
     confirm: 'Tag abschließen',
     cancel: 'Noch nicht',
-    reportTitle: (day: number) => `Tagesabrechnung – Tag ${day}`,
+    reportTitle: (day: number, weekday: Weekday) => `Tagesabrechnung – ${weekdayLong[weekday]}, Tag ${day}`,
     rows: {
       day: 'Tag',
       revenue: 'Umsatz',

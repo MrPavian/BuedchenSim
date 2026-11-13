@@ -182,8 +182,6 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
     modal.open(id);
   };
   const hud = createHud(game, overlay, {
-    openGoods: () => openPanel('goods'),
-    openTill: () => openPanel('till'),
     closeDay: () => openPanel(game.state.calendar.phase === 'closed' ? 'report' : 'confirmClose'),
   });
   /** After a reload in phase 'closed' the report must be shown again. */
@@ -201,7 +199,14 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
     'kiosk.shutter.changed',
   ] as const;
   const offs = [
-    game.signals.on('interaction.available.changed', renderPrompt),
+    game.signals.on('interaction.available.changed', ({ interaction }) => {
+      renderPrompt();
+      // A place-bound panel never outlives its place (input is locked while open; this guards teleports/replacements).
+      const open = modal.current();
+      if ((open === 'till' && interaction?.kind !== 'register') || (open === 'goods' && interaction?.kind !== 'storage')) {
+        modal.close();
+      }
+    }),
     game.signals.on('interaction.triggered', ({ kind }) => {
       if (kind === 'storage') openPanel('goods');
       else if (kind === 'register') openPanel('till');

@@ -1,3 +1,4 @@
+import { weekdayOf } from '../../game/selectors';
 import { button, el, testId } from '../dom';
 import { formatClock, formatEuro, formatEuroSigned } from '../format';
 import type { Panel, PanelContext } from '../modal';
@@ -48,7 +49,7 @@ export function createReportPanel(ctx: PanelContext): Panel {
     id: 'report',
     title: () => {
       const report = ctx.game.state.economy.lastReport;
-      return report ? texts.dayClose.reportTitle(report.day) : texts.dayClose.confirmTitle;
+      return report ? texts.dayClose.reportTitle(report.day, weekdayOf(report.day)) : texts.dayClose.confirmTitle;
     },
     reset() {
       message = null;

@@ -948,8 +948,22 @@ try {
     const status = await txt('hud-status');
     const open = await attr('hud-status', 'data-open');
     const s = await st();
-    record('E1a HUD: Tag 1, Uhr ab 06:00 (noch am Morgen), Startkasse 300,00 €', day === 'Tag 1' && minutes >= 360 && minutes <= 375 && cash === eur(START_CASH) && s.economy.cashCents === START_CASH, `${day}, ${await txt('hud-clock')}, ${cash}`);
+    record('E1a HUD: „Mo · Tag 1“, Uhr ab 06:00 (noch am Morgen), Startkasse 300,00 €', day === 'Mo · Tag 1' && minutes >= 360 && minutes <= 375 && cash === eur(START_CASH) && s.economy.cashCents === START_CASH, `${day}, ${await txt('hud-clock')}, ${cash}`);
     record('E1b HUD: Status „Geschlossen“ bei geschlossener Klappe, Tempo 1× aktiv, nicht pausiert', status === 'Geschlossen' && open === 'false' && !s.kiosk.shutterOpen && (await attr('hud-speed-1', 'aria-pressed')) === 'true' && (await attr('hud-pause', 'data-paused')) === 'false', `${status}`);
+  });
+
+  // ---------------------------------------------------------------- E1c place-bound panels: no HUD buttons, nothing at the spawn
+  await section('E1c Platzbindung am Start', async () => {
+    const hudButtons = await page.evaluate(() => [...document.querySelectorAll('.ui-hud [data-testid]')].map((n) => n.getAttribute('data-testid')));
+    const tillGoods = await page.locator('[data-testid="hud-open-till"], [data-testid="hud-open-goods"]').count();
+    record('E1c HUD hat keine Kassen-/Waren-Knöpfe (nur Tempo, Pause, Tagesabschluss)', tillGoods === 0 && hudButtons.includes('hud-close-day') && hudButtons.includes('hud-pause'), hudButtons.join(', '));
+    const at = await pos();
+    const k = await econKey();
+    const promptAtSpawn = await promptText();
+    await pressE();
+    const s = await st();
+    record('E1d Auf dem Gehweg (Spawn): kein Prompt, E öffnet weder Kasse noch Lager noch sonst ein Panel, nichts ändert sich', promptAtSpawn === null && (await panelOpen()) === null && (await econKey()) === k && s.kiosk.doorOpen === false && s.kiosk.shutterOpen === false, `Prompt ${JSON.stringify(promptAtSpawn)}, Position ${f(at.x)}/${f(at.z)}, Panel ${await panelOpen()}`);
+    record('E1e HUD zeigt am ersten Tag den Montag („Mo · Tag 1“)', (await txt('hud-day')) === 'Mo · Tag 1' && s.calendar.day === 1, await txt('hud-day'));
   });
 
   // ---------------------------------------------------------------- E2 walk to storage, panel opens, input locked
@@ -978,6 +992,12 @@ try {
     record('E2e Escape schließt das Panel; danach bewegt S den Spieler wieder', closed && (await panelOpen()) === null && run.dz > 0.4, `Δz=${f(run.dz)}`);
     await walkTo({ x: 1.75, z: 0.5 });
     await walkTo({ x: 1.75, z: -1.0 });
+    const storagePrompt = await promptText();
+    await page.locator('.ui-prompt').click();
+    const clickOpened = await vis('panel-goods');
+    record('E2f Lagerpunkt: Prompt „Lager öffnen“; ein Klick auf den Prompt öffnet das Warenpanel wie E', storagePrompt === 'Lager öffnen' && clickOpened && (await panelOpen()) === 'goods', `Prompt ${JSON.stringify(storagePrompt)}, Panel ${await panelOpen()}`);
+    await page.keyboard.press('Escape');
+    await gone('panel-goods');
     // Reference screenshots (empty shelves) for the later sanity check; control = same view a moment later.
     await waitUntil(async () => !(await visibility()).roof, 8000);
     await page.waitForFunction(() => document.querySelectorAll('.ui-notice').length === 0, null, { timeout: 10000 }).catch(() => undefined);
@@ -1102,8 +1122,10 @@ try {
   // ---------------------------------------------------------------- E6 sale
   await section('E6 Verkauf', async () => {
     await walkVia([{ x: 1.75, z: 0.62 }, { x: -0.2, z: 0.62 }, { x: -0.2, z: 0.95 }], 0.12);
+    const registerPrompt = await promptText();
     await pressE();
     if (!(await vis('panel-till'))) throw new Error('Kassenpanel öffnet nicht');
+    record('E6g Kassenpunkt: Prompt „Kasse bedienen“, E öffnet das Kassenpanel', registerPrompt === 'Kasse bedienen' && (await panelOpen()) === 'till', `Prompt ${JSON.stringify(registerPrompt)}`);
     // (a) shutter still closed: rejected
     await clickN(`till-add-${ID.chips}`, 1);
     const k0 = await econKey();
@@ -1112,6 +1134,11 @@ try {
     const msg = await messageText('till-message');
     record('E6a Verkauf bei geschlossener Klappe wird sichtbar abgelehnt, nichts ändert sich', warning && msg !== null && /Verkaufsklappe/.test(msg) && (await econKey()) === k0 && (await attr('hud-status', 'data-open')) === 'false', `Meldung ${JSON.stringify(msg)}`);
     await tid('till-cancel').click();
+    await gone('panel-till');
+    await page.locator('.ui-prompt').click();
+    const tillByClick = await vis('panel-till');
+    record('E6h Ein Klick auf den Prompt öffnet die Kasse wie E', tillByClick && (await panelOpen()) === 'till', `Panel ${await panelOpen()}`);
+    await page.keyboard.press('Escape');
     await gone('panel-till');
     // open the shutter with the real E key at the shutter point
     const counter = footprint(placementOf('placement.counter'));
@@ -1269,9 +1296,9 @@ try {
     record('E9d Reload in Phase „closed“: Bericht erscheint wieder, Zahlen bleiben', reportBack && JSON.stringify(s2.economy.lastReport) === savedReport && s2.calendar.phase === 'closed' && rows2.revenue === eur(exp.revenue) && rows2.purchases === eur(exp.purchases) && rows2.cashEnd === eur(exp.cashEnd), JSON.stringify(rows2));
     // next day
     await tid('report-next-day').click();
-    await waitUntil(async () => ((await txt('hud-day')) === 'Tag 2' ? true : null), 4000);
+    await waitUntil(async () => ((await txt('hud-day')) === 'Di · Tag 2' ? true : null), 4000);
     const s3 = await st();
-    record('E9e „Nächsten Tag beginnen“: Tag 2, 06:00, Kasse/Lager/Regale unverändert, Tagessummen leer, Bericht geschlossen', (await txt('hud-day')) === 'Tag 2' && s3.calendar.day === 2 && s3.calendar.phase === 'open' && s3.calendar.minute >= 360 && s3.calendar.minute < 363 && s3.economy.cashCents === shelfSnapshot.cash && JSON.stringify(s3.economy.storage) === JSON.stringify(shelfSnapshot.storage) && JSON.stringify(s3.economy.shelves) === JSON.stringify(shelfSnapshot.shelves) && s3.economy.today.revenueCents === 0 && s3.economy.today.purchaseCents === 0 && (await panelOpen()) === null && (await txt('hud-cash')) === eur(shelfSnapshot.cash), `Uhr ${await txt('hud-clock')}, Kasse ${await txt('hud-cash')}`);
+    record('E9e „Nächsten Tag beginnen“: HUD „Di · Tag 2“ (Dienstag), 06:00, Kasse/Lager/Regale unverändert, Tagessummen leer, Bericht geschlossen', (await txt('hud-day')) === 'Di · Tag 2' && s3.calendar.day === 2 && s3.calendar.phase === 'open' && s3.calendar.minute >= 360 && s3.calendar.minute < 363 && s3.economy.cashCents === shelfSnapshot.cash && JSON.stringify(s3.economy.storage) === JSON.stringify(shelfSnapshot.storage) && JSON.stringify(s3.economy.shelves) === JSON.stringify(shelfSnapshot.shelves) && s3.economy.today.revenueCents === 0 && s3.economy.today.purchaseCents === 0 && (await panelOpen()) === null && (await txt('hud-cash')) === eur(shelfSnapshot.cash), `Uhr ${await txt('hud-clock')}, Kasse ${await txt('hud-cash')}`);
   });
 
   // ---------------------------------------------------------------- E11a save round trip (current format)
@@ -1319,10 +1346,31 @@ try {
     await reload(false);
     const s = await st();
     const noticeShown = await page.evaluate(() => window.__notices.includes('Spielstand geladen'));
-    record('E11c v1-Spielstand lädt: Position, Tür und Klappe bleiben, Wirtschaft mit Anfangswerten (Tag 1, 06:00, 300,00 €, leer)', Math.hypot(s.player.position.x + 3.5, s.player.position.z + 0.3) < 0.05 && s.kiosk.doorOpen === true && s.kiosk.shutterOpen === true && s.economy.cashCents === START_CASH && Object.keys(s.economy.storage).length === 0 && Object.keys(s.economy.shelves).length === 0 && s.economy.pendingDelivery === null && s.economy.lastReport === null && s.calendar.day === 1 && s.calendar.minute >= 360 && s.calendar.minute < 375 && s.calendar.phase === 'open' && noticeShown && (await txt('hud-day')) === 'Tag 1' && (await txt('hud-cash')) === eur(START_CASH) && (await attr('hud-status', 'data-open')) === 'true', `Tag ${s.calendar.day}, ${await txt('hud-clock')}, ${await txt('hud-cash')}, Hinweis ${noticeShown}`);
+    record('E11c v1-Spielstand lädt: Position, Tür und Klappe bleiben, Wirtschaft mit Anfangswerten (Tag 1, 06:00, 300,00 €, leer)', Math.hypot(s.player.position.x + 3.5, s.player.position.z + 0.3) < 0.05 && s.kiosk.doorOpen === true && s.kiosk.shutterOpen === true && s.economy.cashCents === START_CASH && Object.keys(s.economy.storage).length === 0 && Object.keys(s.economy.shelves).length === 0 && s.economy.pendingDelivery === null && s.economy.lastReport === null && s.calendar.day === 1 && s.calendar.minute >= 360 && s.calendar.minute < 375 && s.calendar.phase === 'open' && noticeShown && (await txt('hud-day')) === 'Mo · Tag 1' && (await txt('hud-cash')) === eur(START_CASH) && (await attr('hud-status', 'data-open')) === 'true', `Tag ${s.calendar.day}, ${await txt('hud-clock')}, ${await txt('hud-cash')}, Hinweis ${noticeShown}`);
     await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('buedchensim.save.slot1')));
     record('E11d Nach dem Laden wird im aktuellen Format (schemaVersion 2) gespeichert', stored.schemaVersion === 2 && stored.state.economy?.cashCents === START_CASH && stored.state.calendar?.day === 1, `schemaVersion ${stored.schemaVersion}`);
+  });
+
+  // ---------------------------------------------------------------- E14 place-bound panels away from the place / state replacement
+  await section('E14 Platzbindung', async () => {
+    // (a) away from the register (here the yard west of the kiosk) there is no prompt and E opens nothing.
+    const k = await econKey();
+    const away = await promptText();
+    await pressE();
+    record('E14a Abseits von Kasse und Lager (Hof): kein Prompt, E öffnet kein Panel', away === null && (await panelOpen()) === null && (await econKey()) === k, `Prompt ${JSON.stringify(away)}`);
+    // (b) a state replacement ("Neues Spiel") closes an open till panel cleanly.
+    await seedSave({ player: { position: { x: -0.2, z: 0.95 }, heading: Math.PI }, kiosk: { doorOpen: true, shutterOpen: true } });
+    const atRegister = await promptText();
+    await pressE();
+    const tillOpen = await vis('panel-till');
+    // The modal backdrop covers "Neues Spiel", so the replacement is triggered through the game (as main's onNewGame does).
+    await page.evaluate(() => window.__buedchen.game.reset());
+    const closedByReset = await gone('panel-till', 4000);
+    const afterPrompt = await promptText();
+    const s = await st();
+    const run = await hold(['KeyS'], (p, b) => Math.hypot(p.x - b.x, p.z - b.z) > 0.3, 5000);
+    record('E14b Spielstand-Ersetzung (reset) bei offener Kasse: Panel schließt, Spieler zurück am Start ohne Prompt, Eingabe wieder frei', atRegister === 'Kasse bedienen' && tillOpen && closedByReset && (await panelOpen()) === null && afterPrompt === null && s.calendar.day === 1 && s.economy.cashCents === START_CASH && Math.hypot(run.dx, run.dz) > 0.3, `Prompt am Punkt ${JSON.stringify(atRegister)}, danach ${JSON.stringify(afterPrompt)}, Position ${f(s.player.position.x)}/${f(s.player.position.z)}`);
   });
 
   if (runEconomy) {
@@ -1385,7 +1433,7 @@ try {
     record('Screenshot auftrag-03-innen-bestueckt.png geschrieben (Innenraum, Dach weg)', plan.errors.length === 0 && plan.units >= 150 && plan.units <= 400 && plan.products >= 20, `${plan.units} Einheiten auf ${plan.slots} Plätzen, ${plan.products} Produkte${plan.fallbacks.length ? `, Ausweichprodukte: ${plan.fallbacks.join('; ')}` : ''}${plan.errors.length ? `, Fehler: ${plan.errors.join('; ')}` : ''}`);
 
     // Till: normal + age-restricted product in the cart, ID check ticked, sold with the real UI.
-    await tid('hud-open-till').click();
+    await page.evaluate(() => window.__buedchen.ui.openPanel('till')); // not about how the panel opens (see E6)
     await vis('panel-till');
     await clickN(`till-add-${ID.chips}`, 1);
     await clickN(`till-add-${ID.pils}`, 1);
@@ -1401,7 +1449,7 @@ try {
     await gone('panel-till');
 
     // Goods management: stock overview with storage and shelf columns.
-    await tid('hud-open-goods').click();
+    await page.evaluate(() => window.__buedchen.ui.openPanel('goods'));
     await vis('panel-goods');
     await sleep(500);
     await capture(page, 'auftrag-03-warenverwaltung.png');

@@ -1,12 +1,11 @@
 import { SPEEDS } from '../game/balance';
 import type { Game } from '../game/game';
+import { weekdayOf } from '../game/selectors';
 import { button, el, testId } from './dom';
 import { formatClock, formatEuro } from './format';
 import { texts } from './texts';
 
 export interface HudActions {
-  openGoods(): void;
-  openTill(): void;
   /** "Tag abschließen" (confirmation) or, when the day is already closed, the report. */
   closeDay(): void;
 }
@@ -19,7 +18,7 @@ export interface Hud {
   dispose(): void;
 }
 
-/** Compact always-visible bar: day, clock, cash, kiosk status, pause/speed, panel buttons, day close. */
+/** Compact always-visible bar: day, clock, cash, kiosk status, pause/speed, day close. Till and goods open only at their places in the world. */
 export function createHud(game: Game, parent: HTMLElement, actions: HudActions): Hud {
   const root = el('div', 'ui-hud');
   root.setAttribute('role', 'group');
@@ -49,10 +48,8 @@ export function createHud(game: Game, parent: HTMLElement, actions: HudActions):
     speedGroup.append(b);
     return { speed, b };
   });
-  const goods = button(texts.hud.goods, 'hud-open-goods', actions.openGoods);
-  const till = button(texts.hud.till, 'hud-open-till', actions.openTill);
   const closeDay = button(texts.hud.closeDay, 'hud-close-day', actions.closeDay, 'ui-btn ui-btn-primary');
-  controls.append(pause, speedGroup, goods, till, closeDay);
+  controls.append(pause, speedGroup, closeDay);
 
   const hint = el('div', 'ui-hud-hint');
   hint.setAttribute('role', 'status');
@@ -73,7 +70,7 @@ export function createHud(game: Game, parent: HTMLElement, actions: HudActions):
   const update = (): void => {
     const { calendar, economy, kiosk } = game.state;
     lastMinute = Math.floor(calendar.minute);
-    setText(day, texts.hud.day(calendar.day));
+    setText(day, texts.hud.day(calendar.day, weekdayOf(calendar.day)));
     setText(clock, formatClock(calendar.minute));
     setText(cash, formatEuro(economy.cashCents));
     setText(status, kiosk.shutterOpen ? texts.hud.open : texts.hud.closed);
