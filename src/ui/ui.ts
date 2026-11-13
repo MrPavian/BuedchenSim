@@ -21,7 +21,7 @@ export type { PanelId };
 
 export interface Ui {
   notify(text: string): void;
-  /** Opens a panel ('report' only when a day report exists). Mainly for the debug hook; normally panels open via the world/HUD. */
+  /** Opens a panel ('report' only when a day report exists). Mainly for the debug hook; normally the till and goods panels open only at their interaction points and the report via the HUD. */
   openPanel(id: PanelId): void;
   closePanel(): void;
   currentPanel(): PanelId | null;

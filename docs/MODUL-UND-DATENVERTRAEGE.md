@@ -520,7 +520,7 @@ export interface GameState {
   economy: EconomyState;
 }
 ```
-Nur JSON-Daten und stabile IDs. Nicht im Zustand: Warenkorb, Altersbestätigung, offene Panels, Bestellentwurf. Anfangswerte: Tag 1, 06:00, Tempo 1×, nicht pausiert, Phase `open`, 30.000 Cent, leere Bestände, keine Lieferung, leere Tagessummen, kein Bericht, `nextTransactionId` 1.
+Nur JSON-Daten und stabile IDs. Nicht im Zustand: Warenkorb, Altersbestätigung, offene Panels, Bestellentwurf, Wochentag (abgeleitet aus `calendar.day` über `weekdayOf`, kein Schema-Wechsel). Anfangswerte: Tag 1, 06:00, Tempo 1×, nicht pausiert, Phase `open`, 30.000 Cent, leere Bestände, keine Lieferung, leere Tagessummen, kein Bericht, `nextTransactionId` 1.
 
 Phasen: `open` = Uhr läuft (sofern nicht pausiert); `awaiting_close` = 22:00 erreicht, die Uhr steht und wartet auf `economy.closeDay()`; `closed` = Tag abgeschlossen, wartet auf `calendar.startNextDay()`.
 
@@ -529,6 +529,7 @@ Phasen: `open` = Uhr läuft (sofern nicht pausiert); `awaiting_close` = 22:00 er
 |---|---|---|
 | `START_CASH_CENTS` | 30000 | Startkapital 300,00 € |
 | `DAY_START_MINUTE` / `DAY_END_MINUTE` | 360 / 1320 | 06:00 / 22:00 |
+| `WEEK_LENGTH` | 7 | Tage je Woche; Tag 1 ist ein Montag. Der Wochentag wird aus dem Tageszähler abgeleitet (`weekdayOf`) und nicht gespeichert |
 | `GAME_MINUTES_PER_SECOND` | 1 | Spielminuten je reale Sekunde bei Tempo 1× |
 | `SPEEDS`, `DEFAULT_SPEED` | `[1, 2, 4]`, 1 | erlaubte Tempostufen |
 | `TRANSACTION_LIMIT` | 200 | gespeicherte Transaktionen |
@@ -559,11 +560,11 @@ Alle Aktionen liefern `{ ok: true }` oder `{ ok: false, reason }` (`ActionResult
 | `economy.completeSale({ lines, ageCheckConfirmed })` | atomarer Verkauf aus Warenplätzen zum `suggestedPriceCents`; Bestand wird über die Plätze in Inhaltsreihenfolge abgebucht; Kasse und Tagesumsatz steigen, `costOfGoodsSoldCents` und `salesCount` auch; Transaktion `sale` | `empty_cart`; `invalid_quantity`; `unknown_product`; `day_not_open` (Phase ≠ `open`); `kiosk_closed` (Verkaufsklappe zu); `age_check_required` (mindestens eine Zeile mit `minimumAge`, `ageCheckConfirmed` nicht `true`); `insufficient_stock` (Regalbestand, nicht Lager) |
 | `economy.closeDay()` | in Phase `open` oder `awaiting_close`: erzeugt `lastReport`, Phase `closed`, sendet `calendar.changed` und `day.ended` | `day_already_closed` |
 
-Weitere Ablehnungsgründe der Fassade: `player.setPose` → `invalid_pose`; `interact` → `nothing_in_range`; `load` → `region_mismatch`. Pause sperrt weder Bestellung noch Verkauf noch Einräumen. `restock`, `unstock` und Verkauf hängen nicht von der Position der Figur ab; die Oberfläche kann sie überall auslösen.
+Weitere Ablehnungsgründe der Fassade: `player.setPose` → `invalid_pose`; `interact` → `nothing_in_range`; `load` → `region_mismatch`. Pause sperrt weder Bestellung noch Verkauf noch Einräumen. `restock`, `unstock` und Verkauf hängen nicht von der Position der Figur ab. Die Oberfläche öffnet Kasse und Warenverwaltung seit der Nacharbeit zu Auftrag 03 nur am Kassenpunkt (`register`) bzw. Lagerpunkt (`storage`); die Ortsregel liegt in `ui.ts`, nicht in der Fassade (siehe [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md)).
 
 `interact()` an einem Punkt vom Typ `register` oder `storage` ändert keinen Zustand und sendet `interaction.triggered`; an Tür und Klappe schaltet es wie bisher. `AvailableInteraction.action` kennt zusätzlich `register.use` und `storage.use`.
 
-Lesende Hilfen (`selectors.ts`, ohne Veränderung): `findProduct`, `findSlot`, `storageQuantity`, `storageUnits`, `pendingUnits`, `freeStorageUnits`, `shelfQuantity`, `slotCapacityFor`, `slotsAccepting`, `cartNeedsAgeCheck`, `cartMinimumAge`, `cartTotalCents`, `orderTotalCents`.
+Lesende Hilfen (`selectors.ts`, ohne Veränderung): `findProduct`, `findSlot`, `storageQuantity`, `storageUnits`, `pendingUnits`, `freeStorageUnits`, `shelfQuantity`, `slotCapacityFor`, `slotsAccepting`, `cartNeedsAgeCheck`, `cartMinimumAge`, `cartTotalCents`, `orderTotalCents`, `weekdayOf` (Tag 1 = Montag, Index 0 bis 6).
 
 ### 15.5 Signale (`events.ts`)
 | Signal | Nutzlast | Wann |

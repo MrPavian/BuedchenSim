@@ -114,13 +114,13 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 **Konsequenzen:** Was das Spiel zulässt, ist genau das, was die Welt zeichnet, und Modelle überlappen nicht. Die Plätze stehen als Daten in `slots.ts` und werden gegen die echten Möbelfabriken geprüft (Integrationstest). Ändert sich ein Möbel, müssen die Platzmaße mitgezogen werden. Die Maße gelten für Maßstab 1 (kein Asset ist skalierbar). Produkte, die nicht in einen Platz passen, haben dort Kapazität 0.
 
 ### ADR-012 – Ein P-Asset je Produkt, gemeinsame Modellfabriken je Verpackungsart
-**Status:** Entschieden (umgesetzt in Auftrag 03).
+**Status:** Entschieden (umgesetzt in Auftrag 03; Etiketten nachgearbeitet am 2026-11-13).
 
 **Kontext:** Das Register führte P-001 bis P-030 als Sammeleintrag. Der Auftrag erlaubt gemeinsame Fabriken bei gleicher Form, verlangt aber unterscheidbare Produkte.
 
 **Entscheidung:** Jedes der 28 Produkte hat genau eine Asset-ID (`P-001` bis `P-028`, in Katalogreihenfolge) mit dem Maß einer Einheit; die Validierung verlangt, dass eine Asset-ID nur einem Produkt gehört. Zehn Fabriken je Verpackungsart (`PackageKind`) bauen die Form; Farben, Beschriftung und Etikett kommen aus dem `ProductDef`, Maße aus dem Asset. P-029 und P-030 bleiben frei.
 
-**Konsequenzen:** Ein neues Produkt braucht nur Daten, solange die Verpackungsart existiert. Die Form ist je Verpackungsart gleich. Die Etiketten sind Canvas-Texturen; Text auf Flaschen und Dosen ist aus Kameraabstand nicht lesbar. Die Produktdarstellung nutzt `InstancedMesh` je Modellteil und Produkt.
+**Konsequenzen:** Ein neues Produkt braucht nur Daten, solange die Verpackungsart existiert. Die Form ist je Verpackungsart gleich. Die Etiketten sind Canvas-Texturen mit Akzentfeld und Emblem je Markenfamilie; ein Produktwort steht nur bei physisch mindestens 2,6 cm Schrifthöhe. Text auf Flaschen und Dosen ist aus Kameraabstand nicht lesbar, Wörter auf Beuteln nur bei doppelter Pixeldichte. Die Produktdarstellung nutzt `InstancedMesh` je Modellteil und Produkt.
 
 ### ADR-013 – Lieferung trifft sofort ein, wird aber ausdrücklich angenommen
 **Status:** Entschieden (umgesetzt in Auftrag 03).
@@ -148,6 +148,15 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 **Entscheidung:** Verkauft wird zum vorgeschlagenen Verkaufspreis des Produkts (`suggestedPriceCents`). Es gibt keinen Preis im Spielstand und keine Aktion `setPrice`.
 
 **Konsequenzen:** Weniger Zustand und kein Balancing ohne Nachfrage. Eine spätere Preisfunktion braucht Zustand je Produkt, eine Migration und die Nachfragewirkung (Phase 5).
+
+### ADR-016 – Kasse und Warenverwaltung sind ortsgebunden; die Ortsregel liegt in der UI, nicht in der Verkaufsdomäne
+**Status:** Entschieden (umgesetzt in der Nacharbeit zu Auftrag 03, 2026-11-13).
+
+**Kontext:** Die Schaltflächen „Waren“ und „Kasse“ im HUD öffneten die Panels an jeder Stelle, auch außerhalb des Kiosks. Das widersprach der Vorstellung, dass der Kiosk der Ort des Spielers ist, und machte den Verkauf zu einer Handlung ohne Ort.
+
+**Entscheidung:** Die Kasse öffnet sich nur am Interaktionspunkt `interaction.register`, die Warenverwaltung nur am Punkt `interaction.storage`, jeweils mit E oder per Klick auf die Eingabeaufforderung. Ein offenes Panel schließt sich, wenn die Figur den Punkt verlässt oder der Spielstand ersetzt wird. Die Verkaufsdomäne `economy.completeSale` prüft die Position nicht; `restock` und `unstock` ebenfalls nicht. Der Debug-Hook `ui.openPanel(...)` umgeht die Ortsregel bewusst.
+
+**Konsequenzen:** Die Ortsregel ist eine reine UI-Regel und lässt sich ohne Änderung am Spielzustand ändern. NPC-Kunden in Phase 4 können dieselbe Verkaufsdomäne nutzen, ohne an der Spielerposition zu hängen. Die Test-IDs `hud-open-goods` und `hud-open-till` entfallen. Der Tag-abschließen-Knopf bleibt im HUD.
 
 ---
 

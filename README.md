@@ -16,7 +16,7 @@ npm install
 npm run dev
 ```
 
-Danach die angezeigte Adresse im Desktop-Browser öffnen. Steuerung: **WASD** oder Pfeiltasten zum Laufen, **E** zum Interagieren (oder Klick auf den Hinweis). Mit **E** an der Kasse (hinter der Theke neben der Kasse) öffnet sich die Kasse, mit **E** am Lagerregal im Kiosk die Warenverwaltung. Die Schaltflächen **Waren** und **Kasse** in der Leiste oben öffnen die beiden Oberflächen auch von jeder anderen Stelle; **Escape** schließt sie. Solange ein Fenster offen ist, steht die Figur still, die Uhr läuft weiter.
+Danach die angezeigte Adresse im Desktop-Browser öffnen. Steuerung: **WASD** oder Pfeiltasten zum Laufen, **E** zum Interagieren (oder Klick auf den Hinweis). Mit **E** an der Kasse (hinter der Theke neben der Kasse) öffnet sich die Kasse, mit **E** am Lagerregal im Kiosk die Warenverwaltung. Kasse und Warenverwaltung sind ortsgebunden; die Leiste oben hat dafür keine Schaltflächen. Sie zeigt den Tag mit Wochentag (z. B. „Mo · Tag 1“). **Escape** schließt die Oberflächen. Solange ein Fenster offen ist, steht die Figur still, die Uhr läuft weiter.
 
 | Befehl | Zweck |
 |---|---|

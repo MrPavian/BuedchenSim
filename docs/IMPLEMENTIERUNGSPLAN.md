@@ -90,17 +90,17 @@ Umfang:
 **Abnahme:** Der Spieler kann in der laufenden Anwendung Ware bestellen, erhalten, einräumen und verkaufen. Geld und Bestände bleiben konsistent; altersbeschränkte Waren sind ohne bestätigte Altersprüfung gesperrt. Die Spieluhr ist pausierbar/vorspulbar, Tagesabschluss und Savegame-Migration funktionieren.
 
 **Status (2026-11-13): umgesetzt mit Auftrag 03.** O-3 und O-4 sind in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md) entschieden und umgesetzt. Einzelheiten, Prüfergebnisse und Einschränkungen: [TECHNISCHER-IST-STAND.md](TECHNISCHER-IST-STAND.md); Verträge: [MODUL-UND-DATENVERTRAEGE.md, Abschnitt 15](MODUL-UND-DATENVERTRAEGE.md); Katalog: [PRODUKTKATALOG.md](PRODUKTKATALOG.md).
-- Umgesetzt: 28 fiktive Produkte (`P-001` bis `P-028`) mit 3D-Modellen und Etiketten, 67 Warenplätze mit geometrischer Kapazität, Hinterlager, Bestellung mit sofort eintreffender, ausdrücklich anzunehmender Lieferung, Einräumen und Zurücknehmen, Kasse mit Warenkorb, Transaktionen und Alterskontrolle als Verkaufsschranke, Spieluhr (1 Minute = 1 Sekunde, 06:00–22:00, Pause, 1×/2×/4×, Halt bei 22:00 bis zum ausdrücklichen Abschluss), Tagesabrechnung, HUD und Panels, sichtbarer Bestand im Regal, Savegame Version 2 mit Migration 1→2.
+- Umgesetzt: 28 fiktive Produkte (`P-001` bis `P-028`) mit 3D-Modellen und Etiketten, 67 Warenplätze mit geometrischer Kapazität, Hinterlager, Bestellung mit sofort eintreffender, ausdrücklich anzunehmender Lieferung, Einräumen und Zurücknehmen, Kasse mit Warenkorb, Transaktionen und Alterskontrolle als Verkaufsschranke, Spieluhr (1 Minute = 1 Sekunde, 06:00–22:00, Pause, 1×/2×/4×, Halt bei 22:00 bis zum ausdrücklichen Abschluss), Tagesabrechnung, HUD und Panels (Kasse nur am Kassenpunkt, Warenverwaltung nur am Lagerpunkt; keine HUD-Schaltflächen dafür), abgeleiteter Wochentag im HUD (Tag 1 = Montag, nicht gespeichert), sichtbarer Bestand im Regal, Savegame Version 2 mit Migration 1→2.
 - Automatisiert getestet: 367 Tests in 22 Dateien (eigener Lauf 2026-11-13); Browserprüfung in Headless-Chromium: 90 von 90 Prüfungen bestanden (eigener Lauf 2026-11-13, davor zwei grüne Läufe des umsetzenden Subagenten). Manuell auf echter Grafikhardware: nicht geprüft.
 
 Offene Restpunkte aus Phase 3:
 - Keine Preisänderung durch den Spieler (Verkauf zum vorgeschlagenen Preis); keine Kosten außer Einkäufen; Lieferung ohne Wartezeit; Lager nur als Zähler (400 Stück).
-- Etiketten auf Flaschen und Dosen aus Kameraabstand nicht lesbar; volle Regale sind dreiecksreich (Messwert 452.000 Dreiecke bei 1.513 Einheiten), Leistung auf echter Hardware ungemessen.
+- Etiketten nur teilweise lesbar: Flaschen und Dosen (4–6 px breit) aus Kameraabstand nicht lesbar, Wörter auf Beuteln nur bei doppelter Pixeldichte; Emblem, Farbfeld und Kronkorkenfarbe tragen die Unterscheidung. Volle Regale sind dreiecksreich (Messwert 452.000 Dreiecke bei 1.513 Einheiten), Leistung auf echter Hardware ungemessen.
 - Verworfene Lieferzeilen nach Inhaltsänderungen werden nicht erstattet; Platzmaße ignorieren Platzierungsskalierung; Rolle→Lagerart je Rolle statt je Asset.
 - Markennamen sind Arbeitstitel und rechtlich nicht geprüft.
 - Prüfung auf echter Grafikhardware und in Firefox/Safari nach [PRUEFANLEITUNG-MANUELL.md](PRUEFANLEITUNG-MANUELL.md), nun auch für den Wirtschaftskreislauf, steht aus.
 
-**Grundlage für Phase 4:** `economy.completeSale` ist die Verkaufsdomäne, die NPC-Kunden später wie der Kassenablauf aufrufen können (Bestand, Altersschranke, Phase und Klappe werden dort geprüft); `day.started`, `day.ended`, `sale.completed` und `product.stock.changed` sind vorhanden; die Uhr läuft deterministisch über `game.tick`, der Spielstand ist versioniert und migrierbar; die Nachfrage-Tags der Produkte stehen als Daten bereit. Für Phase 4 fehlen noch Wochentag/Kalender (kommt eher mit Phase 5), geseedeter Zufall und eine Kunden- bzw. Besuchslogik.
+**Grundlage für Phase 4:** `economy.completeSale` ist die Verkaufsdomäne, die NPC-Kunden später wie der Kassenablauf aufrufen können (Bestand, Altersschranke, Phase und Klappe werden dort geprüft); `day.started`, `day.ended`, `sale.completed` und `product.stock.changed` sind vorhanden; die Uhr läuft deterministisch über `game.tick`, der Spielstand ist versioniert und migrierbar; die Nachfrage-Tags der Produkte stehen als Daten bereit. Der Wochentag ist als Ableitung aus dem Tageszähler vorhanden (`weekdayOf`, `WEEK_LENGTH` = 7, nicht gespeichert). Für Phase 4 fehlen noch geseedeter Zufall und eine Kunden- bzw. Besuchslogik; Kalender mit Datum und Jahreszeiten kommt eher mit Phase 5.
 
 ## Phase 4 – Bewohner und soziale Bindung (MVP)
 **Ziel:** das Viertel bekommt wiederkehrende Menschen und der Kiosk eine soziale Identität.
@@ -119,7 +119,7 @@ Aufgaben:
 **Ziel:** Ereignisse verbinden Wirtschaft, Menschen und Jahreszeiten.
 
 Aufgaben:
-1. Kleinen Kalender für Wochentage, Jahreszeiten und besondere Termine einführen, passend zur bestehenden Zeitlogik.
+1. Kleinen Kalender für Datum, Jahreszeiten und besondere Termine einführen, passend zur bestehenden Zeitlogik; der Wochentag ist als Ableitung bereits vorhanden.
 2. Mindestens ein Event (z. B. Spieltag oder Straßenfest) mit Vorbereitung, Durchführung und Nachwirkung umsetzen.
 3. Wetter bzw. Temperatur mit Waren-Nachfrage und NPC-Verhalten verbinden.
 4. Eine eigene Kiosk-Spezialität als entstehende Tradition implementieren – beispielsweise selbstgemachte Frikadellen: Rezept/Herstellung, Kosten, Angebot, Feedback und wiederkehrende Nachfrage.

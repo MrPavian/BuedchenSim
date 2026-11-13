@@ -103,15 +103,15 @@ Tests liegen als `*.test.ts` neben dem Code.
 `day.started`, `day.ending`, `day.ended`, `calendar.changed`, `product.stock.changed`, `money.changed`, `sale.completed`, `order.placed`, `delivery.received`, `interaction.triggered`; Details in [MODUL-UND-DATENVERTRAEGE.md, Abschnitt 15](MODUL-UND-DATENVERTRAEGE.md).
 
 *HUD, Panels und Bedienung*
-- Kompaktes HUD: Tag, Uhrzeit, Kassenstand, Status „Geöffnet/Geschlossen“ (aus der Verkaufsklappe abgeleitet), Pause/Weiter, Tempo 1×/2×/4×, **immer verfügbare Schaltflächen „Waren“ und „Kasse“**, „Tag abschließen“ (nach Abschluss „Abrechnung“) und ein Hinweis mit Schaltfläche, sobald es 22:00 ist.
+- Kompaktes HUD: Tag mit abgeleitetem Wochentag (z. B. „Mo · Tag 1“), Uhrzeit, Kassenstand, Status „Geöffnet/Geschlossen“ (aus der Verkaufsklappe abgeleitet), Pause/Weiter, Tempo 1×/2×/4×, „Tag abschließen“ (nach Abschluss „Abrechnung“) und ein Hinweis mit Schaltfläche, sobald es 22:00 ist. Die HUD hat keine Schaltflächen für Waren oder Kasse.
 - Panels (jeweils ein Modal über abgedunkeltem Hintergrund, Escape und „Schließen“ schließen, Tab bleibt im Dialog): Warenverwaltung mit vier Reitern (Bestand, Bestellen, Lieferung, Einräumen), Kasse mit Warenkorb und Altersprüfung, Bestätigung des Tagesabschlusses, Tagesabrechnung mit „Nächsten Tag beginnen“.
-- Öffnen: „Waren“ und „Kasse“ über das HUD an jeder Stelle; zusätzlich mit E am Kassenpunkt (hinter der Theke neben der Kasse) bzw. am Lagerpunkt (vor dem Lagerregal) jeweils über die Interaktionspunkte `interaction.register` und `interaction.storage` (Kasse öffnet die Kasse, Lager die Warenverwaltung). Nach einem Neuladen in der Phase „closed“ öffnet sich die Abrechnung wieder.
+- Öffnen nur ortsgebunden: Die Kasse öffnet sich am Kassenpunkt (hinter der Theke neben der Kasse, `interaction.register`), die Warenverwaltung am Lagerpunkt (vor dem Lagerregal, `interaction.storage`). Jeweils mit E oder per Klick auf die Eingabeaufforderung („Kasse bedienen“ bzw. „Lager öffnen“). Ein offenes Panel schließt sich, wenn die Figur den passenden Punkt verlässt oder der Spielstand ersetzt wird (Laden, „Neues Spiel“). Die Ortsregel liegt in der Oberfläche; `economy.completeSale` prüft die Position der Figur nicht, damit später NPC-Kunden dieselbe Verkaufsdomäne nutzen können. Der Debug-Hook `ui.openPanel(...)` (nur mit `?debug` bzw. in DEV) umgeht die Ortsregel. Nach einem Neuladen in der Phase „closed“ öffnet sich die Abrechnung wieder.
 - **Eingabesperre:** Solange ein Panel offen ist, ignoriert die Welt Bewegung und E und lässt gehaltene Tasten los (`world.setInputEnabled`). Die Uhr läuft dabei weiter.
 - Die Oberfläche ändert keine Spielwerte: Warenkorb und Altersbestätigung leben nur im Panel, Aktionen laufen über die `Game`-Fassade, Ablehnungsgründe werden auf deutsche Texte abgebildet.
 
 *3D-Ware*
 - Zehn Verpackungsfabriken (Glasflasche, PET-Flasche, Dose, Beutel, Tafel, Schachtel, Stieleis, Eisbecher, Backware, Heft) bauen eine Einheit mit Pivot Bodenmitte und dem Maß des Produkt-Assets; Farbe, Beschriftung und Maße machen die 28 Produkte unterscheidbar.
-- Etiketten sind Canvas-Texturen je Produkt (Farbband, Akzent, Beschriftung; Bier und Tabak schlicht ohne Zierformen). Flaschen und Dosen tragen Text nur formal; aus Kameraabstand sind es Farbblöcke (siehe Einschränkungen).
+- Etiketten sind Canvas-Texturen je Produkt mit großem Akzentfeld und einem originalen Emblem je fiktiver Markenfamilie (z. B. Scheibe, Raute, Stern, Blitz). Ein Produktwort steht nur, wenn die Schrift physisch mindestens 2,6 cm hoch ist; sonst zeigt das Etikett das Emblem mit einem großen Anfangsbuchstaben. Flaschen und Dosen sind umlaufend und wiederholen sich, damit sie von jeder Seite lesbar wirken; Kronkorken tragen die Akzentfarbe (Bier: Stahl). Bier und Tabak behalten ein schlichtes Band ohne Emblem. Eine Textur je Produkt; Draw Calls unverändert, Texturspeicher höher. Zur Lesbarkeit siehe Einschränkungen.
 - Die Bestandsdarstellung (`stockView.ts`) zeichnet für jeden belegten Platz die ersten n Positionen aus `slotUnitPositions`, als `InstancedMesh` je Modellteil und Produkt, ohne Schatten. Leere Plätze bleiben leer. Aktualisierung nur bei `product.stock.changed` und `game.state.replaced`, nur für betroffene Produkte. Die Rückseite des Mittelregals ist gespiegelt, Hefte liegen geneigt auf den Ablagen des Ständers.
 
 *Savegame*
@@ -283,15 +283,14 @@ Der Override setzt eine neuere Hauptversion durch, als die betroffenen Pakete se
 - **Keine Kosten außer Einkäufen:** Es gibt weder Miete noch Personal, Strom oder Schwund; der Tagesbericht kennt nur Umsatz, Wareneinsatz und Einkäufe.
 - **Lieferung sofort:** Es gibt weder Lieferzeit noch Lieferfahrzeug; Annahme ist ausdrücklich, eine zweite Bestellung erst danach möglich. Das Geld wird bei der Bestellung abgebucht, nicht bei der Annahme.
 - **Lager ist ein Zähler:** höchstens 400 Stück insgesamt (`STORAGE_CAPACITY_UNITS`), ohne Platzbedarf je Produkt und ohne sichtbare Lagerware im Regal `I-011`.
-- **Kasse und Waren überall bedienbar:** Die HUD-Schaltflächen „Waren“ und „Kasse“ öffnen die Panels an jeder Stelle, auch außerhalb des Kiosks; die Interaktionspunkte sind eine zusätzliche Möglichkeit. Verkauf und Bestellung sind nicht an die Position der Figur gebunden (verkauft werden kann nur bei geöffneter Verkaufsklappe).
-- **Etiketten unlesbar aus Kameraabstand:** Die Beschriftung auf Flaschen und Dosen ist zu klein und erscheint als Farbblöcke; lesbar ist sie vor allem auf Heften und Beuteln. Die Produkte unterscheiden sich über Farben, Form und Maße.
+- **Etiketten nur teilweise lesbar:** Bei normaler Spielkamera (1280×720) sind Hefte, Beutel, Schachteln und Eiswaren über Farbfeld und Emblem erkennbar; Wörter auf Beuteln sind nur bei doppelter Pixeldichte lesbar. Flaschen und Dosen sind nur 4–6 px breit, ihre Beschriftung ist nicht lesbar; sie unterscheiden sich über Farbteilung und Kronkorkenfarbe.
 - **Volle Regale sind dreiecksreich** (etwa 452.000 Dreiecke bei 1.513 Einheiten, Messwert aus Abschnitt 6); die Leistung auf echter Grafikhardware ist ungemessen.
 - **Verworfene Zeilen einer offenen Lieferung werden nicht erstattet:** Nach einer Inhaltsänderung entfernt das Laden unbekannte Produktzeilen einer offenen Lieferung ohne Rückbuchung des bereits abgebuchten Betrags.
 - **Platzmaße gelten für Maßstab 1:** Kapazität und Validierung der Warenplätze ignorieren die Skalierung einer Platzierung (die Darstellung wendet sie an). Kein Asset ist derzeit skalierbar.
 - **Zuordnung Rolle zu Lagerart je Rolle, nicht je Asset:** `STORAGE_KINDS_BY_ROLE` gilt für alle Möbel derselben Rolle.
 - **Der Verkauf bucht nach Produkt, nicht nach Platz:** Der Warenkorb enthält Produkte; das Spiel nimmt die Ware aus den Plätzen in Inhaltsreihenfolge, der Spieler wählt keinen Platz.
 - Chips (P-009, 27 cm hoch) passen nicht in die 26 cm hohen Plätze des Mittelregals; die Einräum-Ansicht bietet sie dort deshalb nicht an. In den Wandregalen passen 15 je Platz.
-- **Spielzeit-Datum:** Es gibt nur einen Tageszähler, keinen Wochentag und kein Kalenderdatum.
+- **Spielzeit-Datum:** Es gibt nur einen Tageszähler. Der Wochentag wird daraus abgeleitet (Tag 1 = Montag, `WEEK_LENGTH` = 7) und nicht gespeichert; ein Kalenderdatum und eine Jahreszeit gibt es nicht.
 - **Markennamen sind Arbeitstitel** und rechtlich nicht geprüft; vor einer Veröffentlichung ist eine Recherche nötig.
 - **Die DOM-Panels haben keine eigenen Einzeltests;** sie werden nur durch die Browserprüfung abgedeckt, die in Headless-Chromium lief.
 
@@ -305,7 +304,7 @@ Der Override setzt eine neuere Hauptversion durch, als die betroffenen Pakete se
 | Finanzen, Kasse, Tagesabschluss | vorhanden (Basis) | Kasse mit Warenkorb und Altersprüfung (O-4 umgesetzt), Tagesbericht; keine weiteren Kosten |
 | NPCs, Routinen, Beziehungen | nicht vorhanden | Phase 4; Verkaufsdomäne `economy.completeSale` ist dafür vorbereitet |
 | Dialoge, Quests, Geschichten | nicht vorhanden | Phase 4 |
-| Kalender, Wetter, Events | teilweise vorhanden | Tageszähler und Uhr; kein Wochentag, keine Jahreszeit, kein Wetter, keine Events (Phase 5) |
+| Kalender, Wetter, Events | teilweise vorhanden | Tageszähler, Uhr und abgeleiteter Wochentag; kein Kalenderdatum, keine Jahreszeit, kein Wetter, keine Events (Phase 5) |
 | Rezepte und Kiosk-Traditionen | nicht vorhanden | Phase 5 |
 | UI | vorhanden (Basis) | HUD, Warenverwaltung, Kasse, Tagesabschluss, Hinweise; kein Touch |
 | Savegames und Datenmigration | vorhanden | Version 2, Migration 1→2, Verwerfen unbekannter IDs |
