@@ -52,7 +52,7 @@ const domGlobals = [
 ].map((name) => ({ name, message: 'No DOM globals in this layer; inject what you need from main.ts.' }));
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', 'coverage/**'] },
+  { ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'experiments/**'] }, // experiments: separate proofs of concept, not part of the game
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

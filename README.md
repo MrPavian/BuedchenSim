@@ -52,6 +52,7 @@ Weitere Screenshots aus der laufenden Anwendung: [Warenverwaltung](docs/screensh
 ![Innenraum mit Einrichtung (Stand Auftrag 02, noch ohne Ware)](docs/screenshots/auftrag-02-innen.png)
 
 - [Technischer Ist-Stand](docs/TECHNISCHER-IST-STAND.md) – was tatsächlich implementiert und geprüft ist
+- [ThreeRT – Proof of Concept](docs/THREERT-POC.md) – separater Versuch mit einem Pfadverfolger; Ergebnis: nicht als Hauptrenderer, allenfalls als Offline-Werkzeug
 - [Architektur-Entscheidungen (ADRs)](docs/ARCHITEKTUR-ENTSCHEIDUNGEN.md)
 - [Modul- und Datenverträge](docs/MODUL-UND-DATENVERTRAEGE.md)
 - [Produktkatalog](docs/PRODUKTKATALOG.md) – alle 28 Produkte mit Preisen, Alterskennzeichen, Asset-IDs und Warenplätzen
