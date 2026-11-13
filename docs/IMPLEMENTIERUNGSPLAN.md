@@ -91,7 +91,7 @@ Umfang:
 
 **Status (2026-11-13): umgesetzt mit Auftrag 03.** O-3 und O-4 sind in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md) entschieden und umgesetzt. Einzelheiten, Prüfergebnisse und Einschränkungen: [TECHNISCHER-IST-STAND.md](TECHNISCHER-IST-STAND.md); Verträge: [MODUL-UND-DATENVERTRAEGE.md, Abschnitt 15](MODUL-UND-DATENVERTRAEGE.md); Katalog: [PRODUKTKATALOG.md](PRODUKTKATALOG.md).
 - Umgesetzt: 28 fiktive Produkte (`P-001` bis `P-028`) mit 3D-Modellen und Etiketten, 67 Warenplätze mit geometrischer Kapazität, Hinterlager, Bestellung mit sofort eintreffender, ausdrücklich anzunehmender Lieferung, Einräumen und Zurücknehmen, Kasse mit Warenkorb, Transaktionen und Alterskontrolle als Verkaufsschranke, Spieluhr (1 Minute = 1 Sekunde, 06:00–22:00, Pause, 1×/2×/4×, Halt bei 22:00 bis zum ausdrücklichen Abschluss), Tagesabrechnung, HUD und Panels, sichtbarer Bestand im Regal, Savegame Version 2 mit Migration 1→2.
-- Automatisiert getestet: 367 Tests in 22 Dateien (eigener Lauf 2026-11-13); Browserprüfung in Headless-Chromium: [[BROWSERCHECK]]. Manuell auf echter Grafikhardware: nicht geprüft.
+- Automatisiert getestet: 367 Tests in 22 Dateien (eigener Lauf 2026-11-13); Browserprüfung in Headless-Chromium: 90 von 90 Prüfungen bestanden (eigener Lauf 2026-11-13, davor zwei grüne Läufe des umsetzenden Subagenten). Manuell auf echter Grafikhardware: nicht geprüft.
 
 Offene Restpunkte aus Phase 3:
 - Keine Preisänderung durch den Spieler (Verkauf zum vorgeschlagenen Preis); keine Kosten außer Einkäufen; Lieferung ohne Wartezeit; Lager nur als Zähler (400 Stück).

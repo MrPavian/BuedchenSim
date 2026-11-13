@@ -38,7 +38,7 @@ TypeScript 7 wurde nicht gewählt, weil typescript-eslint 8.72.2 nur TypeScript 
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint inklusive Schichtenregel |
 | `npm run test` | Vitest |
-| `npm run check:browser` | baut, startet die Anwendung in Chromium, prüft sie mit echten Tastendrücken und schreibt Screenshots nach `docs/screenshots/` (Laufzeit in der Entwicklungsumgebung mit Software-Rendering: [[BROWSERCHECK]]) |
+| `npm run check:browser` | baut, startet die Anwendung in Chromium, prüft sie mit echten Tastendrücken und schreibt Screenshots nach `docs/screenshots/` (Laufzeit in der Entwicklungsumgebung mit Software-Rendering: rund 11–12 Minuten); mit `-- --only economy` läuft nur der Wirtschaftsabschnitt |
 
 `check:browser` braucht einen zu Playwright 1.63.0 passenden Chromium. Auf einem frischen Rechner einmalig `npx playwright install chromium` ausführen.
 
@@ -191,7 +191,7 @@ Strikte Trennung: **implementiert** ist in Abschnitt 5 beschrieben, **automatisi
 | `npm run lint` | fehlerfrei |
 | `npm run test` | 22 Dateien, 367 Tests bestanden (eigener Lauf am 2026-11-13) |
 | `npm run build` | erfolgreich, Größen siehe Abschnitt 8 |
-| `npm run check:browser` | [[BROWSERCHECK]] |
+| `npm run check:browser` | 90 von 90 Prüfungen bestanden (eigener Lauf 2026-11-13, 683 Sekunden; davor zwei grüne Läufe des umsetzenden Subagenten) |
 | `npm audit` | 0 Hinweise am 2026-11-12; am 2026-11-13 nicht erneut ausgeführt |
 
 **Automatisiert getestet mit Vitest (367 Tests, 22 Dateien; Dateien mit Auftrag-03-Bezug):**
@@ -202,11 +202,30 @@ Strikte Trennung: **implementiert** ist in Abschnitt 5 beschrieben, **automatisi
 - `src/integration/stock-view.test.ts` (11) und `content-world.test.ts` (8): Darstellung folgt dem Bestand (Einräumen, Verkauf, Zurücknehmen, Zustandswechsel), nichts bei leeren Plätzen, wenige Instanzen-Meshes bei vollem Kiosk, Spiegelung der Mittelregal-Rückseite, Hefte auf der geneigten Ablage, jedes der 28 Produktmodelle passt auf 2 cm zum Maß seines Assets (Pivot unten Mitte), Produkte einer Verpackungsart teilen nie ihren ganzen Materialsatz (eigene Etiketten).
 - `src/ui/viewModel.test.ts` (16), `src/ui/format.test.ts` (6): Cent-Formatierung, Warenkorb- und Bestellsummen, Abbildung aller Ablehnungsgründe auf Texte, Altersangaben.
 - `src/game/game.test.ts` (15), `interaction.test.ts` (5): Tür und Klappe unverändert, Kasse und Lager ändern keinen Zustand und senden `interaction.triggered`.
-- Nicht automatisiert getestet sind die DOM-Panels selbst und das Rendering außerhalb der Browserprüfung; die Panels werden nur über die Browserprüfung ([[BROWSERCHECK]]) berührt.
+- Nicht automatisiert getestet sind die DOM-Panels selbst und das Rendering außerhalb der Browserprüfung; die Panels werden nur über die Browserprüfung (siehe unten) berührt.
 
-**Browserprüfung (Auftrag 03):** [[BROWSERCHECK]]
+**Browserprüfung (Auftrag 03):** 90 Prüfungen, davon 43 im neuen Wirtschaftsabschnitt und 47 in den übrigen Abschnitten (Bewegung, Kollision, Interaktion, Sichtfreistellung, Platzierungen, Screenshots). Die Wirtschaftsaktionen werden über die echte Oberfläche mit Klicks und Tasten ausgelöst; der Debug-Zugang dient nur zum Lesen des Zustands und zum Versetzen der Figur. Geprüft wird:
+- HUD: Tag 1, 06:00 Uhr, Startkasse 300,00 €, Status folgt der Klappe.
+- E am Lagerpunkt öffnet die Warenverwaltung; bei offenem Panel bewegt sich die Figur nicht; Escape schließt.
+- Bestellung: angezeigte Summe entspricht den Produktdaten; Kasse sinkt um genau die Summe; Bestellung über dem Kassenbestand und zweite Bestellung bei offener Lieferung werden sichtbar abgelehnt und ändern nichts.
+- Lieferung annehmen: Lager entspricht der Bestellung.
+- Einräumen: nur passende Produkte werden angeboten; Regalstände entsprechen den Daten; die 3D-Welt zeichnet je Platz genau so viele Einheiten wie im Bestand; der bestückte Innenraum unterscheidet sich im Bild deutlich vom leeren.
+- Verkauf: bei geschlossener Klappe abgelehnt; Abbrechen ändert nichts; Verkauf ändert Kasse, Regalbestand, HUD und 3D-Bestand um genau die richtigen Beträge.
+- Altersprüfung: ohne Häkchen abgelehnt, mit Häkchen möglich, Bestätigung wird nicht gemerkt.
+- Uhr: Pause hält die Uhr bei laufender Simulation an; Vorspulen wirkt; die Tempo-Schaltflächen zeigen den Zustand.
+- Tagesabschluss: Abrechnung stimmt mit den erwarteten Zahlen überein; kein zweiter Abschluss; nach Neuladen erscheint die Abrechnung wieder; nächster Tag beginnt um 06:00 Uhr ohne Geld- oder Warenänderung.
+- 22:00 Uhr: Die Uhr bleibt stehen, der Hinweis erscheint genau einmal, es gibt keinen automatischen Abschluss.
+- Savegame: Rundlauf im neuen Format; ein Spielstand im Format 1 lädt mit Position, Tür und Klappe und Anfangswerten der Wirtschaft und wird danach im Format 2 gespeichert.
+- WebGL-Kontext geht nicht verloren, keine Konsolen- oder Seitenfehler.
 
-Screenshots aus der laufenden Anwendung (Auftrag 03): [[SCREENSHOTS]]
+Screenshots aus der laufenden Anwendung (Auftrag 03), alle angesehen:
+- `docs/screenshots/auftrag-03-innen-bestueckt.png` – Innenraum mit bestückten Regalen, Kühlschrank, Zeitschriftenständer und Theke
+- `docs/screenshots/auftrag-03-kasse.png` – Kasse mit Warenkorb und bestätigter Altersprüfung
+- `docs/screenshots/auftrag-03-warenverwaltung.png` – Warenverwaltung, Reiter „Bestand"
+- `docs/screenshots/auftrag-03-tagesabschluss.png` – Tagesabrechnung
+- `docs/screenshots/auftrag-03-ansicht-{aussen,innen,rueckseite,seite}.png` – die vier Ansichten der Sichtfreistellung mit HUD
+
+Für die Bilder mit Ware wurde der Spielstand über den Debug-Zugang vorbereitet (höherer Kassenbestand, breites Sortiment); sie zeigen deshalb keinen regulären Spielverlauf. Die Dateien `auftrag-01-*.png` und `auftrag-02-*.png` werden von der Browserprüfung nicht mehr überschrieben.
 
 **Stand der Browserprüfung aus Auftrag 02 (2026-11-12, zur Einordnung):** 43 von 43 Prüfungen bestanden in Headless-Chromium mit Software-Rendering (ca. 26–29 Bilder/s). Sie deckte Bewegung, Kollision, Tür und Klappe, Platzierungen, Sichtfreistellung, Silhouette, Markierungen und Neuladen ab. Screenshots: `docs/screenshots/auftrag-02-aussen.png`, `auftrag-02-innen.png`, `auftrag-02-rueckseite.png`, `auftrag-02-seite.png`; `auftrag-01-*.png` zeigen den Stand der Greybox.
 
@@ -250,7 +269,7 @@ Der Override setzt eine neuere Hauptversion durch, als die betroffenen Pakete se
 - Die Silhouette schaltet an Gebäudeecken hart um (ganz sichtbar oder gar nicht), gedämpft durch eine kleine Hysterese.
 - Die Sichtbarkeitsprüfungen für Figur und Markierung zählen Bildpunkte in bestimmten Farben. Das ist ein Näherungswert, kein Bildvergleich.
 - Ein früherer Lauf der Browserprüfung brach einmal mit geschlossenem Browser ab. Die Ursache ließ sich nicht reproduzieren; das Skript meldet Absturz, Trennung und Kontextverlust jetzt ausdrücklich.
-- Laufzeit der Browserprüfung: [[BROWSERCHECK]]
+- Die Browserprüfung dauert mit Software-Rendering rund 11–12 Minuten.
 - Der Ladepfad für externe GLB-Modelle (ADR-006) ist weiterhin ungetestet; alle Assets entstehen im Code.
 - Die Browserprüfung löst das Speichern vor dem Neuladen selbst über ein `pagehide`-Ereignis aus. Ob der Browser dieses Ereignis beim Neuladen zuverlässig sendet, ist nicht separat belegt; das 10-Sekunden-Intervall fängt das ab.
 - Die Straße ist nicht begehbar. Es gibt keine Höhenunterschiede und keine vertikale Kollision.
@@ -271,7 +290,7 @@ Der Override setzt eine neuere Hauptversion durch, als die betroffenen Pakete se
 - **Platzmaße gelten für Maßstab 1:** Kapazität und Validierung der Warenplätze ignorieren die Skalierung einer Platzierung (die Darstellung wendet sie an). Kein Asset ist derzeit skalierbar.
 - **Zuordnung Rolle zu Lagerart je Rolle, nicht je Asset:** `STORAGE_KINDS_BY_ROLE` gilt für alle Möbel derselben Rolle.
 - **Der Verkauf bucht nach Produkt, nicht nach Platz:** Der Warenkorb enthält Produkte; das Spiel nimmt die Ware aus den Plätzen in Inhaltsreihenfolge, der Spieler wählt keinen Platz.
-- **Einräumen in zu kleine Plätze wird angeboten und abgelehnt:** z. B. Chips (P-009) in das Mittelregal (Kapazität 0); das Spiel lehnt mit `slot_capacity_exceeded` ab.
+- Chips (P-009, 27 cm hoch) passen nicht in die 26 cm hohen Plätze des Mittelregals; die Einräum-Ansicht bietet sie dort deshalb nicht an. In den Wandregalen passen 15 je Platz.
 - **Spielzeit-Datum:** Es gibt nur einen Tageszähler, keinen Wochentag und kein Kalenderdatum.
 - **Markennamen sind Arbeitstitel** und rechtlich nicht geprüft; vor einer Veröffentlichung ist eine Recherche nötig.
 - **Die DOM-Panels haben keine eigenen Einzeltests;** sie werden nur durch die Browserprüfung abgedeckt, die in Headless-Chromium lief.

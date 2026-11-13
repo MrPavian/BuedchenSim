@@ -39,9 +39,13 @@ Phase 3 ist umgesetzt ([Auftrag 03](docs/auftraege/03-waren-wirtschaftskreislauf
 
 Noch nicht vorhanden: Preisänderungen, Kunden und Nachfrage (Verkäufe sind ein Kassenvorgang des Spielers), Bewohner, Wetter, Events, Audio. Alle Marken sind frei erfunden; die Namen sind Arbeitstitel und rechtlich nicht geprüft. Das Sortiment steht im [Produktkatalog](docs/PRODUKTKATALOG.md).
 
-**Prüfstand:** Geprüft wurde ausschließlich automatisch: Typecheck, Lint, 367 Unit- und Integrationstests, Build sowie die Browserprüfung ([[BROWSERCHECK]]) in Headless-Chromium mit Software-Rendering. Die Prüfung auf echter Grafikhardware und in Firefox oder Safari steht aus; die Schritte dafür stehen in der [manuellen Prüfanleitung](docs/PRUEFANLEITUNG-MANUELL.md).
+**Prüfstand:** Geprüft wurde ausschließlich automatisch: Typecheck, Lint, 367 Unit- und Integrationstests, Build sowie die Browserprüfung (90 von 90 Prüfungen bestanden) in Headless-Chromium mit Software-Rendering. Die Prüfung auf echter Grafikhardware und in Firefox oder Safari steht aus; die Schritte dafür stehen in der [manuellen Prüfanleitung](docs/PRUEFANLEITUNG-MANUELL.md).
 
-[[SCREENSHOTS]]
+![Innenraum mit bestückten Regalen](docs/screenshots/auftrag-03-innen-bestueckt.png)
+
+![Kasse mit Warenkorb und Altersprüfung](docs/screenshots/auftrag-03-kasse.png)
+
+Weitere Screenshots aus der laufenden Anwendung: [Warenverwaltung](docs/screenshots/auftrag-03-warenverwaltung.png), [Tagesabrechnung](docs/screenshots/auftrag-03-tagesabschluss.png).
 
 ![Kiosk von außen](docs/screenshots/auftrag-02-aussen.png)
 

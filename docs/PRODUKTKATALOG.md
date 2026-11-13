@@ -98,4 +98,4 @@ Kapazität je Platz in Stück (Wandregal N/W jeweils 12 Plätze, Angaben „36/4
 | P-027 | Zechenhof Filter 20er | Theke | 5 | Theke 45 |
 | P-028 | Zechenhof Drehtabak 30 g | Theke | 5 | Theke 14 |
 
-Auffälligkeit: Chips (P-009, 27 cm hoch) passen nicht in die 26 cm hohen Mittelregal-Plätze (Kapazität 0 dort; ein Einräumen dorthin lehnt das Spiel mit `slot_capacity_exceeded` ab, die Oberfläche bietet die Plätze aber trotzdem an). Im Wandregal passen 15 je Platz.
+Auffälligkeit: Chips (P-009, 27 cm hoch) passen nicht in die 26 cm hohen Mittelregal-Plätze (Kapazität 0 dort). Die Einräum-Ansicht bietet diese Plätze für Chips nicht an; ein direkter Aufruf würde vom Spiel mit `slot_capacity_exceeded` abgelehnt.
