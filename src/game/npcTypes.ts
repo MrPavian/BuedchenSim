@@ -1,4 +1,6 @@
+import type { Season } from './date';
 import type { Weekday } from './selectors';
+import type { WeatherCondition } from './weather';
 import type { Vec2 } from './types';
 
 /**
@@ -52,6 +54,12 @@ export type Condition =
   | { type: 'seen'; dialogueId: string }
   | { type: 'memory'; npcId: string; memoryId: string }
   | { type: 'dayAtLeast'; day: number }
+  /** Today's weather is one of these (Auftrag 05). */
+  | { type: 'weather'; conditions: WeatherCondition[] }
+  /** The current temperature (°C) is at least / below the value. */
+  | { type: 'temperatureAtLeast'; value: number }
+  | { type: 'temperatureBelow'; value: number }
+  | { type: 'season'; seasons: Season[] }
   | { type: 'not'; condition: Condition }
   | { type: 'any'; conditions: Condition[] };
 

@@ -1,3 +1,4 @@
+import { environmentOf } from './environment';
 import { describe, expect, it, vi } from 'vitest';
 import { RELATIONSHIP_TIER_THRESHOLDS } from './balance';
 import type { DomainContext } from './domain';
@@ -241,7 +242,7 @@ describe('relationship: keyed effects, daily greeting, clamp, tiers', () => {
     const emit: DomainContext['emit'] = (name, payload) => {
       if (name === 'relationship.changed') changed(payload);
     };
-    const ctx: DomainContext = { state: () => mutable(game), content: testPack, emit };
+    const ctx: DomainContext = { state: () => mutable(game), content: testPack, emit, env: () => environmentOf(testPack, game.state) };
     mutable(game).npcs[KURIER]!.relationship = 99;
     expect(changeRelationship(ctx, KURIER, 50)).toBe(true);
     expect(game.state.npcs[KURIER]?.relationship).toBe(100);
@@ -269,7 +270,7 @@ describe('story: quests and memories', () => {
   function storyCtx() {
     const state = createInitialState(testPack);
     const emitted: [string, unknown][] = [];
-    const ctx: DomainContext = { state: () => state, content: testPack, emit: (n, p) => void emitted.push([n, p]) };
+    const ctx: DomainContext = { state: () => state, content: testPack, emit: (n, p) => void emitted.push([n, p]), env: () => environmentOf(testPack, state) };
     return { state, ctx, emitted };
   }
 

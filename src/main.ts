@@ -7,6 +7,7 @@ import { createSaveStore, type KeyValueStore } from './game/save/save';
 import { createUi, showFatalError, type Ui } from './ui/ui';
 import { texts } from './ui/texts';
 import { WebGLUnavailableError, createWorld, type World } from './world/world';
+import type { EffectsLevel } from './ui/ui';
 
 const AUTOSAVE_INTERVAL_MS = 10_000;
 const SAVE_DEBOUNCE_MS = 300;
@@ -67,6 +68,15 @@ function start(): void {
   // (e.g. the day report after a reload), so the state is remembered and applied after creation.
   let world: World | null = null;
   let modalOpen = false;
+  // Weather particles setting (device setting, not game state).
+  const EFFECTS_KEY = 'buedchensim.settings.weatherEffects';
+  let weatherEffects: EffectsLevel = 'full';
+  try {
+    const stored = window.localStorage.getItem(EFFECTS_KEY);
+    if (stored === 'full' || stored === 'reduced' || stored === 'off') weatherEffects = stored;
+  } catch {
+    // keep the default
+  }
   ui = createUi(game, appRoot, {
     onNewGame() {
       saveStore.clear();
@@ -78,11 +88,22 @@ function start(): void {
       modalOpen = open;
       world?.setInputEnabled(!open);
     },
+    onWeatherEffects(level) {
+      weatherEffects = level;
+      world?.setWeatherEffects(level);
+      try {
+        window.localStorage.setItem(EFFECTS_KEY, level);
+      } catch {
+        // A per-device convenience only; without storage the setting lasts until reload.
+      }
+    },
+    weatherEffects: () => weatherEffects,
   });
 
   try {
     world = createWorld(game, sceneRoot);
     world.setInputEnabled(!modalOpen);
+    world.setWeatherEffects(weatherEffects);
   } catch (error) {
     fatal(error instanceof WebGLUnavailableError ? texts.errors.webgl : texts.errors.generic, error);
     return;

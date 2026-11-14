@@ -13,6 +13,26 @@ function ctx(patch: (state: ReturnType<typeof createInitialState>) => void = () 
 const yes = (c: Condition, context: ConditionContext = ctx()): boolean => evaluateCondition(c, context);
 
 describe('evaluateCondition', () => {
+  it('environment conditions (weather, temperature, season) read env and never match without it', () => {
+    const base = ctx();
+    const env = {
+      day: 1,
+      season: 'summer' as const,
+      weather: { day: 1, condition: 'light-rain' as const, low: 12, high: 21, anomaly: 0 },
+      temperature: 18.5,
+    };
+    const withEnv: ConditionContext = { ...base, env };
+    expect(yes({ type: 'weather', conditions: ['light-rain', 'heavy-rain'] }, withEnv)).toBe(true);
+    expect(yes({ type: 'weather', conditions: ['sunny'] }, withEnv)).toBe(false);
+    expect(yes({ type: 'temperatureAtLeast', value: 18 }, withEnv)).toBe(true);
+    expect(yes({ type: 'temperatureAtLeast', value: 19 }, withEnv)).toBe(false);
+    expect(yes({ type: 'temperatureBelow', value: 19 }, withEnv)).toBe(true);
+    expect(yes({ type: 'season', seasons: ['summer'] }, withEnv)).toBe(true);
+    expect(yes({ type: 'season', seasons: ['winter'] }, withEnv)).toBe(false);
+    expect(yes({ type: 'weather', conditions: ['light-rain'] }, base)).toBe(false);
+    expect(yes({ type: 'temperatureBelow', value: 100 }, base)).toBe(false);
+  });
+
   it('flag: missing counts as false, value defaults to true', () => {
     expect(yes({ type: 'flag', id: 'f' })).toBe(false);
     expect(yes({ type: 'flag', id: 'f', value: false })).toBe(true);

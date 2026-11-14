@@ -1,4 +1,5 @@
 import type { Signals } from '../core/signals';
+import type { Environment } from './environment';
 import type { GameEvents } from './events';
 import type { GameState } from './state';
 import type { ContentPack } from './types';
@@ -8,4 +9,6 @@ export interface DomainContext {
   state(): GameState;
   readonly content: ContentPack;
   readonly emit: Signals<GameEvents>['emit'];
+  /** Derived environment of the current state (weather, temperature, season); never saved. */
+  env(): Environment;
 }

@@ -26,7 +26,8 @@ export function createSidewalkE001(def: GroundAreaDef, m: Materials): Object3D {
   const texture = createSlabTexture();
   texture.repeat.set(w / 4, d / 4);
   m.textures.push(texture);
-  const mesh = new Mesh(new BoxGeometry(w, SIDEWALK_HEIGHT, d), new MeshLambertMaterial({ map: texture }));
+  // Named 'paved' so the atmosphere view can darken it when wet.
+  const mesh = new Mesh(new BoxGeometry(w, SIDEWALK_HEIGHT, d), new MeshLambertMaterial({ map: texture, name: 'paved' }));
   mesh.position.set(cx, SIDEWALK_HEIGHT / 2, cz);
   mesh.receiveShadow = true;
   mesh.name = 'E-001';
@@ -41,7 +42,7 @@ export function createStreetE002(def: GroundAreaDef, m: Materials): Object3D {
   const texture = createNoiseTexture(palette.asphalt, 0.12, 5);
   texture.repeat.set(w / 4, d / 4);
   m.textures.push(texture);
-  root.add(flatPlane(def, new MeshLambertMaterial({ map: texture }), 0.001));
+  root.add(flatPlane(def, new MeshLambertMaterial({ map: texture, name: 'paved' }), 0.001));
 
   const dashLength = 2;
   const gap = 2;

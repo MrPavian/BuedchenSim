@@ -1,6 +1,8 @@
 import { createSignals, type Signals } from '../core/signals';
 import { createCalendarApi, tickClock, type CalendarApi } from './clock';
 import type { DomainContext } from './domain';
+import { climateOf, environmentOf, type Environment } from './environment';
+import { forecast, weatherOfDay, type DayWeather, type ForecastDay } from './weather';
 import { createEconomyApi, type CloseDayResult, type EconomyApi, type SaleRequest, type SaleResult } from './economy';
 import type { GameEvents } from './events';
 import { createDialogueEngine, type DialogueApi } from './dialogue';
@@ -33,6 +35,15 @@ export type {
   SaleResult,
 };
 
+export interface WeatherApi {
+  /** Season, today's weather and the current temperature. */
+  environment(): Environment;
+  /** Today and the next six days (three exact, four as a tendency). */
+  forecast(): ForecastDay[];
+  /** The weather of any game day (for tools and tests; the player sees only the forecast). */
+  onDay(day: number): DayWeather;
+}
+
 export interface Game {
   readonly state: DeepReadonly<GameState>;
   readonly content: ContentPack;
@@ -46,6 +57,8 @@ export interface Game {
   readonly npcs: NpcApi;
   /** The open conversation (at most one): current node, choosing options, closing. */
   readonly dialogue: DialogueApi;
+  /** Derived weather (never saved; pure functions of seed and day): today, the 7-day forecast, any day. */
+  readonly weather: WeatherApi;
   /**
    * Advances the day clock by real seconds (called from the fixed-step update of the loop) and the residents with it.
    * Ignores invalid dt; clock and residents stand still while paused; the clock also stands still outside phase 'open'.
@@ -117,7 +130,7 @@ export function createGame(content: ContentPack, initialState?: GameState, seed?
     signals.emit('interaction.available.changed', { interaction: next ? { ...next } : null });
   };
 
-  const ctx: DomainContext = { state: () => state, content, emit: signals.emit };
+  const ctx: DomainContext = { state: () => state, content, emit: signals.emit, env: () => environmentOf(content, state) };
   const calendar = createCalendarApi(ctx);
   const economy = createEconomyApi(ctx);
   const sim = createNpcSim(ctx);
@@ -176,6 +189,11 @@ export function createGame(content: ContentPack, initialState?: GameState, seed?
     economy,
     npcs,
     dialogue,
+    weather: {
+      environment: () => ctx.env(),
+      forecast: () => forecast(state.world.seed, climateOf(content), state.calendar.day),
+      onDay: (day) => weatherOfDay(state.world.seed, climateOf(content), day),
+    },
     tick(dtSeconds) {
       tickClock(ctx, dtSeconds);
       if (npcIds.length === 0) return;

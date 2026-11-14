@@ -1,7 +1,7 @@
 import { SPEEDS } from '../game/balance';
 import type { Game } from '../game/game';
 import { weekdayOf } from '../game/selectors';
-import { hudDateText } from './calendarViewModel';
+import { hudDateText, hudWeatherText } from './calendarViewModel';
 import { button, el, testId } from './dom';
 import { formatClock, formatEuro } from './format';
 import { texts } from './texts';
@@ -86,7 +86,7 @@ export function createHud(game: Game, parent: HTMLElement, actions: HudActions):
     const { calendar, economy, kiosk } = game.state;
     lastMinute = Math.floor(calendar.minute);
     setText(day, texts.hud.day(calendar.day, weekdayOf(calendar.day)));
-    setText(date, hudDateText(calendar.day));
+    setText(date, `${hudDateText(calendar.day)} · ${hudWeatherText(game)}`);
     setText(clock, formatClock(calendar.minute));
     setText(cash, formatEuro(economy.cashCents));
     setText(status, kiosk.shutterOpen ? texts.hud.open : texts.hud.closed);

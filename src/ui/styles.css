@@ -285,7 +285,7 @@ body {
 
 .ui-calendar-day {
   display: grid;
-  grid-template-columns: 150px 1fr;
+  grid-template-columns: 130px minmax(260px, 1.4fr) 1fr;
   gap: 10px;
   align-items: center;
   padding: 6px 10px;
@@ -937,4 +937,42 @@ body {
 
 .ui-panel-body > .ui-journal-entry:last-child {
   margin-bottom: 14px;
+}
+
+.ui-calendar-weather {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.ui-calendar-weather[data-sure='false'] {
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.ui-calendar-symbol {
+  width: 1.4em;
+  text-align: center;
+  font-size: 16px;
+}
+
+.ui-calendar-range {
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-calendar-now {
+  margin: 6px 0 0;
+}
+
+.ui-calendar-settings {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.ui-calendar-settings [aria-pressed='true'] {
+  outline: 1px solid var(--ui-accent);
 }

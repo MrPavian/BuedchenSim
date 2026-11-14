@@ -21,7 +21,13 @@ export interface UiCallbacks {
    * player neither walks nor triggers interactions while a panel is open.
    */
   onModalChange(open: boolean): void;
+  /** The player changed the weather particle setting (a device setting; main applies it to the world and stores it). */
+  onWeatherEffects(level: EffectsLevel): void;
+  weatherEffects(): EffectsLevel;
 }
+
+/** Weather particles: full, a quarter, or none (lighting and wet ground stay). */
+export type EffectsLevel = 'full' | 'reduced' | 'off';
 
 export type { PanelId };
 
@@ -174,6 +180,8 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
     refresh: () => modal.refresh(),
     close: () => modal.close(),
     open: (id) => modal.open(id),
+    weatherEffects: () => callbacks.weatherEffects(),
+    setWeatherEffects: (level) => callbacks.onWeatherEffects(level),
   };
   const modal = createModalHost(
     overlay,

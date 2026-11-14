@@ -1,9 +1,13 @@
+import type { Environment } from './environment';
 import type { Condition } from './npcTypes';
 import { weekdayOf } from './selectors';
 import type { DeepReadonly, GameState } from './state';
 
-/** What conditions may read. */
-export type ConditionContext = DeepReadonly<Pick<GameState, 'npcs' | 'story' | 'calendar'>>;
+/**
+ * What conditions may read. `env` is the derived environment (weather, temperature, season; see environment.ts);
+ * without it, environment conditions never match.
+ */
+export type ConditionContext = DeepReadonly<Pick<GameState, 'npcs' | 'story' | 'calendar'>> & { readonly env?: Environment };
 
 function has(record: object, key: string): boolean {
   return Object.hasOwn(record, key);
@@ -42,6 +46,14 @@ export function evaluateCondition(cond: DeepReadonly<Condition>, ctx: ConditionC
       return has(ctx.npcs, cond.npcId) && (ctx.npcs[cond.npcId]?.memories.includes(cond.memoryId) ?? false);
     case 'dayAtLeast':
       return ctx.calendar.day >= cond.day;
+    case 'weather':
+      return ctx.env !== undefined && cond.conditions.includes(ctx.env.weather.condition);
+    case 'temperatureAtLeast':
+      return ctx.env !== undefined && ctx.env.temperature >= cond.value;
+    case 'temperatureBelow':
+      return ctx.env !== undefined && ctx.env.temperature < cond.value;
+    case 'season':
+      return ctx.env !== undefined && cond.seasons.includes(ctx.env.season);
     case 'not':
       return !evaluateCondition(cond.condition, ctx);
     case 'any':

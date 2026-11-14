@@ -1,3 +1,4 @@
+import { WEATHER_CONDITIONS } from '../game/weather';
 import { NPC_CLEARANCE_MARGIN, NPC_RADIUS, NPC_TALK_RADIUS, RELATIONSHIP_MAX, RELATIONSHIP_MIN } from '../game/balance';
 import { PLAYER_RADIUS } from '../game/constants';
 import { layoutColliders } from '../game/colliders';
@@ -214,6 +215,20 @@ function validateCondition(c: Condition, where: string, refs: Refs, errors: stri
     }
     case 'dayAtLeast':
       if (!isInt(c.day) || c.day < 1) errors.push(`${where}: dayAtLeast needs an integer >= 1`);
+      return;
+    case 'weather':
+      if (c.conditions.length === 0 || c.conditions.some((w) => !WEATHER_CONDITIONS.includes(w))) {
+        errors.push(`${where}: weather needs known conditions (${WEATHER_CONDITIONS.join(', ')})`);
+      }
+      return;
+    case 'temperatureAtLeast':
+    case 'temperatureBelow':
+      if (!Number.isFinite(c.value) || c.value < -30 || c.value > 50) errors.push(`${where}: ${c.type} needs a temperature in °C (-30..50)`);
+      return;
+    case 'season':
+      if (c.seasons.length === 0 || c.seasons.some((x) => !['spring', 'summer', 'autumn', 'winter'].includes(x))) {
+        errors.push(`${where}: season needs spring, summer, autumn or winter`);
+      }
       return;
     case 'not':
       validateCondition(c.condition, where, refs, errors, flagsRead);

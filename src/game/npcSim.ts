@@ -107,6 +107,7 @@ export function createNpcSim(ctx: DomainContext): NpcSim {
     const weekday = weekdayOf(day);
     const done = doneIds(npc, day);
     const rt = runtimeOf(id);
+    const cond = { ...state, env: ctx.env() };
     if (rt.rollDay !== day) {
       rt.rollDay = day;
       rt.rolls.clear();
@@ -115,7 +116,7 @@ export function createNpcSim(ctx: DomainContext): NpcSim {
       if (minute < entry.from || minute >= entry.to) continue;
       if (!entry.weekdays.includes(weekday)) continue;
       if (done.includes(entry.id)) continue;
-      if (!conditionsHold(entry.when, state)) continue;
+      if (!conditionsHold(entry.when, cond)) continue;
       let passed = rt.rolls.get(entry.id);
       if (passed === undefined) {
         passed = roll(state.world.seed, day, id, 'routine', entry.id) * 100 < entry.chancePercent;
@@ -468,7 +469,7 @@ export function createNpcSim(ctx: DomainContext): NpcSim {
     if (place?.kind !== 'kiosk-window') return;
     const now = absoluteMinute(calendar.day, calendar.minute);
     if (state.kiosk.shutterOpen && open) {
-      const wish = pickWish(def, state, state.world.seed, entry.id);
+      const wish = pickWish(def, { ...state, env: ctx.env() }, state.world.seed, entry.id);
       if (!wish) {
         leave(id);
         return;

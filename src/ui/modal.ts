@@ -12,6 +12,9 @@ export interface PanelContext {
   refresh(): void;
   close(): void;
   open(id: PanelId): void;
+  /** Device setting for weather particles. */
+  weatherEffects(): 'full' | 'reduced' | 'off';
+  setWeatherEffects(level: 'full' | 'reduced' | 'off'): void;
 }
 
 export interface Panel {

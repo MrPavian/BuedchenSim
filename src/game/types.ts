@@ -4,6 +4,7 @@
  * +Z = south (toward the camera/street).
  */
 import type { CustomerLines, DialogueDef, NavDef, NpcDef, QuestDef } from './npcTypes';
+import type { Climate } from './weather';
 
 export type * from './npcTypes';
 
@@ -217,4 +218,6 @@ export interface ContentPack {
   quests: Record<string, QuestDef>;
   /** Generic lines of the built-in customer dialogue. */
   customerLines: CustomerLines;
+  /** Monthly climate (Auftrag 05); absent = a temperate default. */
+  climate?: Climate;
 }

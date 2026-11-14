@@ -29,7 +29,8 @@ import { createPlacementGates } from './placementGates';
 import { shouldShowSilhouette } from './occlusionRules';
 import { createPlayerFigure } from './playerFigure';
 import { createRenderer } from './renderer';
-import { createAtmosphereView } from './views/atmosphereView';
+import { createAtmosphereView, type AtmosphereInfo } from './views/atmosphereView';
+import type { EffectsLevel } from './views/precipitation';
 import { createKioskView } from './views/kioskView';
 import { createMarkerView } from './views/markerView';
 import { createResidentView, type ResidentInfo } from './views/residentView';
@@ -47,6 +48,10 @@ export interface World {
   /** Enables/disables player movement and the E key (disabled while a UI panel is open). Disabling releases held keys. */
   setInputEnabled(enabled: boolean): void;
   dispose(): void;
+  /** Weather particles: full, reduced or off (lighting and wet ground stay; the simulation is unaffected). */
+  setWeatherEffects(level: EffectsLevel): void;
+  /** Debug accessor: season, weather and particles the atmosphere shows. */
+  getAtmosphere(): AtmosphereInfo;
   /** Debug accessor: renderer statistics of the last frame (draw calls, triangles) and the scene's light count. */
   getRenderStats(): { calls: number; triangles: number; geometries: number; textures: number; lights: number };
   /** Debug accessor: pose of a placement read from the actual scene object (null for unknown ids). */
@@ -171,11 +176,15 @@ export function createWorld(game: Game, container: HTMLElement): World {
   }
 
   const vegetation: MeshLambertMaterial[] = [materials.base];
+  const paved: MeshLambertMaterial[] = [];
   scene.traverse((o) => {
     const m = (o as Mesh).material as MeshLambertMaterial | undefined;
-    if (m && !Array.isArray(m) && m.name === 'yard' && !vegetation.includes(m)) vegetation.push(m);
+    if (!m || Array.isArray(m)) return;
+    if (m.name === 'yard' && !vegetation.includes(m)) vegetation.push(m);
+    if (m.name === 'paved' && !paved.includes(m)) paved.push(m);
   });
-  const atmosphere = createAtmosphereView(game, { scene, fog, sun, hemisphere, vegetation });
+  const atmosphere = createAtmosphereView(game, { scene, fog, sun, hemisphere, vegetation, paved });
+  scene.add(atmosphere.root);
 
   const kioskView = createKioskView(game, kioskRoot);
   const occlusion = createOcclusion({ parts: kioskView.parts, kiosk: layout.kiosk });
@@ -289,7 +298,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
       else followCamera.update(dt, pose);
 
       kioskView.update(needsSnap ? 1e3 : dt);
-      atmosphere.update(needsSnap ? 1e3 : dt);
+      atmosphere.update(needsSnap ? 1e3 : dt, pose);
       markers.update(elapsed);
       scene.updateMatrixWorld(true);
       occlusion.update(dt, followCamera.camera, pose, needsSnap);
@@ -305,6 +314,12 @@ export function createWorld(game: Game, container: HTMLElement): World {
     setInputEnabled(enabled) {
       input.setEnabled(enabled);
     },
+
+    setWeatherEffects(level) {
+      atmosphere.setEffects(level);
+    },
+
+    getAtmosphere: () => atmosphere.info(),
 
     getRenderStats() {
       let lights = 0;
@@ -368,6 +383,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
       offStory();
       offGatesReplaced();
       residents.dispose();
+      atmosphere.dispose();
       input.dispose();
       kioskView.dispose();
       markers.dispose();

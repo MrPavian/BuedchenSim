@@ -106,7 +106,7 @@ export function createDialogueEngine(ctx: DomainContext, economy: EconomyApi, si
       const d = dialogueOf(id);
       if (!d || d.npcId !== npcId) continue;
       if (d.once && state.story.seenDialogues.includes(d.id)) continue;
-      if (!conditionsHold(d.when, state)) continue;
+      if (!conditionsHold(d.when, { ...state, env: ctx.env() })) continue;
       if (best === null || d.priority > best.priority) best = d;
     }
     return best;
@@ -222,12 +222,13 @@ export function createDialogueEngine(ctx: DomainContext, economy: EconomyApi, si
     const node = d && Object.hasOwn(d.nodes, s.nodeId) ? d.nodes[s.nodeId] : undefined;
     if (!d || !node) return null;
     const state = ctx.state();
+    const cond = { ...state, env: ctx.env() };
     return {
       npcId: s.npcId,
       dialogueId: d.id,
       nodeId: s.nodeId,
       text: node.text,
-      options: node.options.filter((o) => conditionsHold(o.when, state)).map((o) => ({ id: o.id, text: o.text })),
+      options: node.options.filter((o) => conditionsHold(o.when, cond)).map((o) => ({ id: o.id, text: o.text })),
     };
   };
 
@@ -236,7 +237,7 @@ export function createDialogueEngine(ctx: DomainContext, economy: EconomyApi, si
     const node = d && Object.hasOwn(d.nodes, s.nodeId) ? d.nodes[s.nodeId] : undefined;
     const option = node?.options.find((o) => o.id === optionId);
     if (!d || !node || !option) return { ok: false, reason: 'unknown_option' };
-    if (!conditionsHold(option.when, ctx.state())) return { ok: false, reason: 'option_unavailable' };
+    if (!conditionsHold(option.when, { ...ctx.state(), env: ctx.env() })) return { ok: false, reason: 'option_unavailable' };
 
     // Customer effects first: a failing sale aborts the option before any other effect is applied.
     const effects: readonly DeepReadonly<Effect>[] = option.effects ?? [];
