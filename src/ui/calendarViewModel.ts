@@ -14,6 +14,8 @@ export interface CalendarDayView {
   season: Season;
   /** Names of the events on this day (as the player can know them today). */
   events: string[];
+  /** Expected demand changes, strongest first: "Eis ↑↑", "Zeitungen ↓" (empty when nothing stands out). */
+  demand: string[];
   weather: {
     symbol: string;
     /** "Sonnig" for the exact days, "eher nass" for the tendency days. */
@@ -74,11 +76,12 @@ function longLabel(day: number): string {
 }
 
 /** Pure: reads the state, changes nothing (opening the panel never changes the game). */
-export function buildCalendarView(game: Pick<Game, 'state' | 'content' | 'weather' | 'events'>): CalendarView {
+export function buildCalendarView(game: Pick<Game, 'state' | 'content' | 'weather' | 'events' | 'demand'>): CalendarView {
   const today = game.state.calendar.day;
   const d = dateOfDay(today);
   const days: CalendarDayView[] = [];
   const forecast = game.weather.forecast();
+  const outlook = game.demand.outlook();
   for (let i = 0; i < 7; i += 1) {
     const day = today + i;
     const di = dateOfDay(day);
@@ -100,6 +103,11 @@ export function buildCalendarView(game: Pick<Game, 'state' | 'content' | 'weathe
       longLabel: longLabel(day),
       season: di.season,
       events: game.events.onDay(day).map((e) => e.name),
+      demand: (outlook[i]?.groups ?? [])
+        .filter((g) => Math.abs(g.delta) >= 6)
+        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+        .slice(0, 3)
+        .map((g) => `${g.label} ${g.delta >= 15 ? '↑↑' : g.delta > 0 ? '↑' : g.delta <= -15 ? '↓↓' : '↓'}`),
     });
   }
   const env = game.weather.environment();

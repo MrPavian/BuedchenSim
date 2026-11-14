@@ -39,6 +39,7 @@ export const texts = {
     when: (from: string, to: string) => (from === to ? from : `${from} – ${to}`),
     hours: (from: string, to: string) => `${from}–${to} Uhr`,
     demand: (groups: string) => `Mehr Nachfrage: ${groups}`,
+    demandShort: 'Nachfrage',
   },
   weather: {
     conditions: {

@@ -24,6 +24,7 @@ import { weekdayOf } from './selectors';
 import type { NpcState, NpcStatus } from './state';
 import { addMemory } from './story';
 import { pickWish } from './wishes';
+import { NEUTRAL_DEMAND, demandContextOf, routineChance, wishDemandFactor } from './demand';
 
 /** Absolute game minute: `day * 1440 + minute`. */
 export function absoluteMinute(day: number, minute: number): number {
@@ -119,7 +120,8 @@ export function createNpcSim(ctx: DomainContext): NpcSim {
       if (!conditionsHold(entry.when, cond)) continue;
       let passed = rt.rolls.get(entry.id);
       if (passed === undefined) {
-        passed = roll(state.world.seed, day, id, 'routine', entry.id) * 100 < entry.chancePercent;
+        // The chance includes event visitors and the resident's weather response (Auftrag 05); rolled once per day.
+        passed = roll(state.world.seed, day, id, 'routine', entry.id) * 100 < routineChance(entry, def, cond.env, content.events);
         rt.rolls.set(entry.id, passed);
       }
       if (passed) return entry;
@@ -475,7 +477,16 @@ export function createNpcSim(ctx: DomainContext): NpcSim {
     if (place?.kind !== 'kiosk-window') return;
     const now = absoluteMinute(calendar.day, calendar.minute);
     if (state.kiosk.shutterOpen && open) {
-      const wish = pickWish(def, { ...state, env: ctx.env() }, state.world.seed, entry.id);
+      const env = ctx.env();
+      const demandCtx = demandContextOf(env, calendar.minute, content.events);
+      const demand = content.demand ?? NEUTRAL_DEMAND;
+      const wish = pickWish(def, { ...state, env }, state.world.seed, entry.id, (w) =>
+        wishDemandFactor(
+          w.lines.map((l) => content.products[l.productId]).filter((p) => p !== undefined),
+          demand,
+          demandCtx,
+        ),
+      );
       if (!wish) {
         leave(id);
         return;

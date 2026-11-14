@@ -2,6 +2,7 @@ import type { ContentPack } from '../../../game/types';
 import { assetCatalog } from '../../assets/catalog';
 import { ruhrgebietClimate } from './climate';
 import { ruhrgebietCustomerLines } from './customerLines';
+import { ruhrgebietDemand } from './demand';
 import { ruhrgebietEvents } from './events';
 import { ruhrgebietDialogues } from './dialogues';
 import { worldDialogues } from './dialoguesWorld';
@@ -33,4 +34,5 @@ export const ruhrgebietPack: ContentPack = {
   customerLines: ruhrgebietCustomerLines,
   climate: ruhrgebietClimate,
   events: ruhrgebietEvents,
+  demand: ruhrgebietDemand,
 };

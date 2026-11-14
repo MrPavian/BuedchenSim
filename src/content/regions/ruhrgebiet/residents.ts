@@ -198,6 +198,8 @@ export const ruhrgebietResidents: Record<string, NpcDef> = {
       'dialogue.guenter.paket-abgelehnt',
     ],
     wishes: guenterWishes,
+    // Bad knee and a stick: wet, icy or very hot days keep him at home more often.
+    weatherResponse: { 'light-rain': -10, 'heavy-rain': -30, snow: -35, frost: -30, fog: -5, hot: -15 },
   },
   [DERYA]: {
     id: DERYA,
@@ -277,6 +279,8 @@ export const ruhrgebietResidents: Record<string, NpcDef> = {
       'dialogue.derya.foto-kuehl',
     ],
     wishes: deryaWishes,
+    // Works next door anyway; only real winter or a downpour keeps her in the workshop.
+    weatherResponse: { 'heavy-rain': -10, snow: -15, frost: -10, hot: -5 },
   },
   [JONAS]: {
     id: JONAS,
@@ -319,6 +323,8 @@ export const ruhrgebietResidents: Record<string, NpcDef> = {
       'dialogue.jonas.paket-danach',
     ],
     wishes: jonasWishes,
+    // A courier rides in any weather; heat makes him stop for a drink more often.
+    weatherResponse: { snow: -10, hot: 10 },
   },
   [MARLENE]: {
     id: MARLENE,
@@ -383,6 +389,8 @@ export const ruhrgebietResidents: Record<string, NpcDef> = {
       'dialogue.marlene.foto-kuehl',
     ],
     wishes: marleneWishes,
+    // Prefers a dry walk to the kiosk; fog and rain keep her inside more often.
+    weatherResponse: { 'light-rain': -10, 'heavy-rain': -20, snow: -20, frost: -15, fog: -10, hot: -10 },
   },
 };
 

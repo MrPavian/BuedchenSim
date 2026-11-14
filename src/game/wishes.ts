@@ -11,18 +11,24 @@ export function pickWish(
   ctx: ConditionContext,
   seed: number,
   routineId: string,
+  /** Optional weight factor per wish (Auftrag 05: demand); 1 when absent. */
+  factor: (wish: WishDef) => number = () => 1,
 ): WishDef | null {
   const wishes = def.wishes;
   if (!wishes || wishes.length === 0) return null;
+  const weight = (wish: WishDef): number => {
+    const f = factor(wish);
+    return weightOf(wish) * (Number.isFinite(f) && f > 0 ? f : 0);
+  };
   let total = 0;
-  for (const wish of wishes) if (conditionsHold(wish.when, ctx)) total += weightOf(wish);
+  for (const wish of wishes) if (conditionsHold(wish.when, ctx)) total += weight(wish);
   if (total <= 0) return null;
   let target = roll(seed, ctx.calendar.day, def.id, 'wish', routineId) * total;
   let last: WishDef | null = null;
   for (const wish of wishes) {
     if (!conditionsHold(wish.when, ctx)) continue;
     last = wish;
-    target -= weightOf(wish);
+    target -= weight(wish);
     if (target < 0) return wish;
   }
   return last;

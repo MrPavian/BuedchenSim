@@ -187,6 +187,11 @@ export interface NpcDef {
   relationships: NpcRelationshipDef[];
   dialogueIds: string[];
   wishes?: WishDef[];
+  /**
+   * How the weather changes the chance of this resident's routines, in percentage points per condition ('hot' = 28 °C
+   * or more). Residents react differently: an old man with a bad knee stays home in the rain, a courier comes anyway.
+   */
+  weatherResponse?: Partial<Record<WeatherCondition | 'hot', number>>;
 }
 
 /**

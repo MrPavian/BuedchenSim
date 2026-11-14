@@ -4,6 +4,7 @@
  * +Z = south (toward the camera/street).
  */
 import type { CustomerLines, DialogueDef, NavDef, NpcDef, QuestDef } from './npcTypes';
+import type { DemandConfig } from './demand';
 import type { EventDef } from './eventCalendar';
 import type { Climate } from './weather';
 
@@ -223,4 +224,6 @@ export interface ContentPack {
   climate?: Climate;
   /** Neighbourhood events (Auftrag 05); absent = none. */
   events?: EventDef[];
+  /** Demand model (Auftrag 05); absent = every product at its base demand. */
+  demand?: DemandConfig;
 }

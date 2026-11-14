@@ -2,7 +2,9 @@ import { createSignals, type Signals } from '../core/signals';
 import { createCalendarApi, tickClock, type CalendarApi } from './clock';
 import type { DomainContext } from './domain';
 import { climateOf, environmentOf, type Environment } from './environment';
-import { forecast, weatherOfDay, type DayWeather, type ForecastDay } from './weather';
+import { forecast, forecastFor, weatherOfDay, type DayWeather, type ForecastDay } from './weather';
+import { NEUTRAL_DEMAND, demandContextOf, demandFor, groupDeltas, type DemandBreakdown, type DemandOutlookDay } from './demand';
+import { dateOfDay } from './date';
 import { eventStates, eventsOnDay, type EventDef, type EventState } from './eventCalendar';
 import { createEconomyApi, type CloseDayResult, type EconomyApi, type SaleRequest, type SaleResult } from './economy';
 import type { GameEvents } from './events';
@@ -52,6 +54,16 @@ export interface EventApi {
   onDay(day: number): EventDef[];
 }
 
+export interface DemandApi {
+  /** Current demand of a product with its parts (null for unknown products). Never sells anything. */
+  forProduct(productId: string): DemandBreakdown | null;
+  /**
+   * Expected demand per product group at noon for today and the next six days, from what the player can know: the
+   * forecast (a tendency for days 4-7) and the announced events.
+   */
+  outlook(): DemandOutlookDay[];
+}
+
 export interface Game {
   readonly state: DeepReadonly<GameState>;
   readonly content: ContentPack;
@@ -69,6 +81,8 @@ export interface Game {
   readonly weather: WeatherApi;
   /** Neighbourhood events (derived, never saved). */
   readonly events: EventApi;
+  /** Demand (derived, never saved; influences residents only). */
+  readonly demand: DemandApi;
   /**
    * Advances the day clock by real seconds (called from the fixed-step update of the loop) and the residents with it.
    * Ignores invalid dt; clock and residents stand still while paused; the clock also stands still outside phase 'open'.
@@ -207,6 +221,41 @@ export function createGame(content: ContentPack, initialState?: GameState, seed?
     events: {
       current: () => eventStates(content.events ?? [], state.calendar.day, state.calendar.minute, state.world.seed, climateOf(content)),
       onDay: (day) => eventsOnDay(content.events ?? [], day, state.calendar.day, state.world.seed, climateOf(content)),
+    },
+    demand: {
+      forProduct(productId) {
+        const product = Object.hasOwn(content.products, productId) ? content.products[productId] : undefined;
+        if (!product) return null;
+        return demandFor(product, content.demand ?? NEUTRAL_DEMAND, demandContextOf(ctx.env(), state.calendar.minute, content.events));
+      },
+      outlook() {
+        const config = content.demand ?? NEUTRAL_DEMAND;
+        const products = Object.values(content.products);
+        const climate = climateOf(content);
+        const today = state.calendar.day;
+        const tendencyCondition = { fair: 'sunny', changeable: 'cloudy', wet: 'light-rain', wintry: 'frost' } as const;
+        const days: DemandOutlookDay[] = [];
+        for (let offset = 0; offset < 7; offset += 1) {
+          const f = forecastFor(state.world.seed, climate, today, offset);
+          const day = today + offset;
+          const date = dateOfDay(day);
+          const events = eventsOnDay(content.events ?? [], day, today, state.world.seed, climate);
+          const condition = f.condition ?? tendencyCondition[f.tendency];
+          const noon = f.low + (f.high - f.low) * 0.85;
+          days.push({
+            day,
+            groups: groupDeltas(products, config, {
+              weather: condition,
+              temperature: noon,
+              season: date.season,
+              weekday: date.weekday,
+              minute: 12 * 60,
+              activeEvents: events,
+            }),
+          });
+        }
+        return days;
+      },
     },
     tick(dtSeconds) {
       tickClock(ctx, dtSeconds);

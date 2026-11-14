@@ -103,6 +103,7 @@ export const ruhrgebietGuests: Record<string, NpcDef> = {
     ],
     dialogueIds: [],
     wishes: oleWishes,
+    weatherResponse: { 'heavy-rain': -10 },
   },
   [HILDE]: {
     id: HILDE,
@@ -129,5 +130,6 @@ export const ruhrgebietGuests: Record<string, NpcDef> = {
     ],
     dialogueIds: [],
     wishes: hildeWishes,
+    weatherResponse: { 'heavy-rain': -20, frost: -20, snow: -20 },
   },
 };

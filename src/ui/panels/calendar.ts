@@ -37,7 +37,13 @@ export function createCalendarPanel(ctx: PanelContext): Panel {
         );
         const events = testId(el('span', d.events.length > 0 ? 'ui-calendar-events' : 'ui-muted ui-small'), `calendar-events-${d.day}`);
         events.textContent = d.events.length > 0 ? d.events.join(' · ') : texts.calendar.noEvents;
-        row.append(label, weather, events);
+        const info = el('span', 'ui-calendar-info');
+        info.append(events);
+        if (d.demand.length > 0) {
+          const demand = testId(el('span', 'ui-calendar-demand', `${texts.calendar.demandShort}: ${d.demand.join(', ')}`), `calendar-demand-${d.day}`);
+          info.append(demand);
+        }
+        row.append(label, weather, info);
         list.append(row);
       }
       body.append(list);
