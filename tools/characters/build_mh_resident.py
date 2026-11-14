@@ -485,66 +485,114 @@ def rigid_part(obj, rig, bone):
     mod.object = rig
 
 
-def build_cap(rig, hair, body, texture):
-    """Flat cap ("Schiebermütze") over the hair: flattened crown pulled forward plus a short brim; tweed texture."""
-    import bmesh
+def build_cap(rig, hair, body, brows, texture):
+    """Flat cap ("Schiebermütze") fitted to the head.
 
-    co = [hair.matrix_world @ v.co for v in hair.data.vertices]
-    lo = Vector((min(c.x for c in co), min(c.y for c in co), min(c.z for c in co)))
-    hi = Vector((max(c.x for c in co), max(c.y for c in co), max(c.z for c in co)))
-    cx, cy = (lo.x + hi.x) / 2, (lo.y + hi.y) / 2
-    rx, ry = (hi.x - lo.x) / 2 * 0.97, (hi.y - lo.y) / 2 * 0.99
-    band = hi.z - 0.078  # lower edge of the cap, low on the forehead
-    # The cap presses the hair flat: hair above the band is squashed onto the skull, so a shallow crown covers it.
-    skull = max(v.co.z for v in body.data.vertices)
-    for v in hair.data.vertices:
-        if v.co.z > band:
-            v.co.z = band + (v.co.z - band) * 0.55
-    top = max(skull, max(v.co.z for v in hair.data.vertices)) + 0.008
-    mesh = bpy.data.meshes.new("cap")
+    The crown is a shell sampled from the actual skull and hair surfaces (rays from the head centre), so it follows
+    the head; it sits low on the forehead and lower at the back, the upper part is pulled forward over a short brim.
+    Hair under the cap is removed.
+    """
+    import bmesh
+    from mathutils.bvhtree import BVHTree
+
+    def tree(obj):
+        me = obj.data
+        return BVHTree.FromPolygons([v.co.copy() for v in me.vertices], [tuple(p.vertices) for p in me.polygons])
+
+    body_t, hair_t = tree(body), tree(hair)
+    hco = [v.co for v in hair.data.vertices]
+    cx = (min(c.x for c in hco) + max(c.x for c in hco)) / 2
+    cy = (min(c.y for c in hco) + max(c.y for c in hco)) / 2
+    brow_z = sum(v.co.z for v in brows.data.vertices) / len(brows.data.vertices)
+    centre = Vector((cx, cy + 0.012, brow_z - 0.005))
+
+    def surface(d):
+        hb = body_t.ray_cast(centre, d)[0]
+        hh = hair_t.ray_cast(centre, d)[0]
+        rb = (hb - centre).length if hb else 0.09
+        rh = (hh - centre).length if hh else rb
+        # On the skull, lying on flattened hair: never inside the head, never as far out as loose hair.
+        return max(rb + 0.013, min(rh * 0.97, rb + 0.024))
+
+    seg, rings = 40, 12
+    grid = []
+    for k in range(seg):
+        a = 2 * math.pi * k / seg
+        front = max(0.0, -math.sin(a))  # 1 at the face (-Y), 0 at the sides and back
+        e0 = math.radians(2.0 + 22.0 * front - 6.0 * max(0.0, math.sin(a)))
+        row = []
+        for r in range(rings + 1):
+            t = r / rings
+            e = e0 + (math.radians(88.0) - e0) * t
+            d = Vector((math.cos(a) * math.cos(e), math.sin(a) * math.cos(e), math.sin(e)))
+            p = centre + d * surface(d)
+            # Flat-cap profile: the crown is pulled forward and slightly widened above the band, the top flattened.
+            lift = t * t
+            p.y -= 0.045 * lift
+            p.x = cx + (p.x - cx) * (1.0 + 0.10 * math.sin(math.pi * min(1.0, t * 1.2)))
+            p.z -= 0.024 * lift * (1.0 + 0.6 * max(0.0, math.sin(a)))
+            row.append(p)
+        grid.append(row)
+
     bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=14, radius=1.0, calc_uvs=True)
-    keep = []
-    for v in bm.verts:
-        x, y, z = v.co
-        if z < -0.02:
-            keep.append(v)
+    vs = [[bm.verts.new(p) for p in row] for row in grid]
+    apex = bm.verts.new(sum((row[-1] for row in grid), Vector()) / seg)
+    for k in range(seg):
+        k2 = (k + 1) % seg
+        for r in range(rings):
+            bm.faces.new((vs[k][r], vs[k2][r], vs[k2][r + 1], vs[k][r + 1]))
+        bm.faces.new((vs[k][rings], vs[k2][rings], apex))
+    # Brim: from the front part of the band, out and slightly down.
+    brim = []
+    for k in range(seg):
+        a = 2 * math.pi * k / seg
+        front = -math.sin(a)
+        if front < 0.35:
+            brim.append(None)
             continue
-        # Crown from the band (t = 0) to a flat top (t = 1). It bulges outwards above the band and its upper part
-        # is pulled forward over the brim (-Y is the face), the typical flat-cap profile.
-        t = (z + 0.02) / 1.02
-        height = (top - band) * (1 - (1 - t) ** 3) * (1 - 0.25 * max(0.0, -y) * t)
-        bulge = 1.01 + 0.10 * math.sin(math.pi * min(1.0, t * 1.25)) * (1 - t)
-        v.co = Vector((cx + x * rx * bulge, cy + y * ry * bulge * 1.04 - 0.025 * t ** 1.2, band + height))
-    bmesh.ops.delete(bm, geom=keep, context="VERTS")
-    # Brim: a short half ring in front at the band height.
-    ring = []
-    for i in range(17):
-        a = math.pi + math.pi * i / 16
-        inner = Vector((cx + math.cos(a) * rx * 0.98, cy + math.sin(a) * ry * 0.98, band + 0.004))
-        outer = Vector((cx + math.cos(a) * rx * 1.05, cy + math.sin(a) * (ry + 0.045), band - 0.006))
-        ring.append((bm.verts.new(inner), bm.verts.new(outer)))
-    for (a1, b1), (a2, b2) in zip(ring, ring[1:]):
-        bm.faces.new((a1, a2, b2, b1))
+        w = (front - 0.35) / 0.65
+        base = grid[k][0]
+        out = Vector((base.x - cx, base.y - cy, 0.0)).normalized()
+        tip = base + out * (0.052 * w ** 0.6) + Vector((0, 0, -0.016 * w))
+        brim.append(bm.verts.new(tip))
+    for k in range(seg):
+        k2 = (k + 1) % seg
+        if brim[k] is not None and brim[k2] is not None:
+            bm.faces.new((vs[k][0], brim[k], brim[k2], vs[k2][0]))
     bm.normal_update()
+    mesh = bpy.data.meshes.new("cap")
     bm.to_mesh(mesh)
     bm.free()
     obj = bpy.data.objects.new("cap", mesh)
     bpy.context.scene.collection.objects.link(obj)
-    if not mesh.uv_layers:
-        mesh.uv_layers.new(name="UVMap")
-    uv = mesh.uv_layers[0]
+    uv = mesh.uv_layers.new(name="UVMap")
+    zmin = min(v.co.z for v in mesh.vertices)
     for poly in mesh.polygons:
         poly.use_smooth = True
         for li in poly.loop_indices:
             c = mesh.vertices[mesh.loops[li].vertex_index].co
-            # Cylindrical mapping around the head into the left half of the tweed texture.
             a = math.atan2(c.y - cy, c.x - cx)
-            uv.data[li].uv = (0.05 + 0.40 * (a + math.pi) / (2 * math.pi), 0.2 + 0.6 * (c.z - band + 0.01) / 0.12)
+            uv.data[li].uv = (0.05 + 0.40 * (a + math.pi) / (2 * math.pi), 0.2 + 0.6 * (c.z - zmin) / 0.14)
     solid = obj.modifiers.new("solid", "SOLIDIFY")
     solid.thickness = 0.004
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.modifier_apply(modifier=solid.name)
+
+    # Remove the hair under the cap: every face with a vertex above the band (in the direction seen from the centre).
+    def under_cap(co):
+        d = co - centre
+        a = math.atan2(d.y, d.x)
+        front = max(0.0, -math.sin(a))
+        e0 = math.radians(2.0 + 22.0 * front - 6.0 * max(0.0, math.sin(a)))
+        return math.atan2(d.z, math.hypot(d.x, d.y)) > e0 + math.radians(3.0)
+
+    hb = bmesh.new()
+    hb.from_mesh(hair.data)
+    gone = [f for f in hb.faces if any(under_cap(v.co) for v in f.verts)]
+    bmesh.ops.delete(hb, geom=gone, context="FACES")
+    hb.to_mesh(hair.data)
+    hb.free()
+
     img = load_image(texture, 512)
     recolor(img, lambda px: _tint(px, (0.55, 0.50, 0.42), 1.25))
     obj.data.materials.append(material("cap", (1.0, 1.0, 1.0), 0.95, img))
@@ -756,7 +804,7 @@ def main():
 
     build_actions(rig)
     hair = bpy.data.objects["hair"]
-    build_cap(rig, hair, body, os.path.join(A, items["cap_texture"]))
+    build_cap(rig, hair, body, bpy.data.objects["eyebrows"], os.path.join(A, items["cap_texture"]))
     build_stick(rig)
     rig.name = spec["name"]
 
