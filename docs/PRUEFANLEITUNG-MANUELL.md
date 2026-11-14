@@ -119,7 +119,18 @@ Misst die anspruchsvollste Figurenszene: alle vier GLB-Bewohner an der Hofbank u
 
 Erwartet: `residents` zeigt viermal `glb`; `render.calls` rund 380–400, `render.triangles` rund 270.000–310.000. Wichtig für die Bewertung sind `gpu`, `canvas` (Auflösung und Pixeldichte), `fps` und `frameMs` (Median, 95-%-Wert, Maximum).
 
+## Das lebendige Viertel (Auftrag 05)
+Mit der veröffentlichten Seite oder `npm run dev`. Ein neues Spiel beginnt am Montag, 7. Juni 2027.
+
+48. **Datum und Kalender:** Im HUD steht „7. Juni 2027 · Sommer“ mit Wettersymbol und Temperatur. Klick darauf (oder Taste K) öffnet den Kalender: heute, Wetter jetzt, sieben Tage (drei „sicher“, vier „Tendenz“), Veranstaltungen mit Status und Nachfragepfeilen. Schließen und erneut öffnen ändert nichts am Spiel.
+49. **Wettereffekte:** im Kalender „Wettereffekte“ auf „aus“, „reduziert“, „voll“ stellen; an einem Regentag (siehe Vorhersage, oder Tage mit „Tag abschließen“ überspringen) verschwinden bzw. erscheinen die Regenlinien, das Spiel läuft unverändert weiter. Pflaster wirkt bei Regen dunkler.
+50. **Heimspiel:** Am Samstag, 12. Juni 2027 (Tag 5) hängen blau-goldene Wimpel und eine Fahne am Büdchen; zwischen 11:30 und 14:30 kommt Ole ans Fenster und wünscht sich Bier und Chips; Günter spricht über das Spiel. Nach 20:00 Uhr endet das Heimspiel (Kalender: „beendet“), die Dekoration bleibt bis zum Tagesende.
+51. **Frikadelle:** Im Lager „Warenverwaltung“ → „Bestellen“: Frikadellenmasse, Senf, Röstzwiebeln und Brötchen bestellen, Lieferung annehmen. Reiter „Spezialität“: Zutaten im Lager prüfen, Durchgänge wählen, „Herstellung starten“ – der Fortschritt läuft, nach 40 Spielminuten liegen 6 Frikadellen je Durchgang im Lager (Hinweis erscheint). Unter „Einräumen“ auf die Theke legen und an Bewohner verkaufen; nach dem Verkauf erscheint eine Kundenstimme, Bekanntheit und „Nächste Stufe“ ändern sich.
+52. **Stufen:** Nach mehreren guten Verkäufen an wiederkehrende Bewohner wird die Frikadelle „Geheimtipp“: links neben dem Fenster steht ein Kundenstopper. Mit „Kultstatus“ hängt die Tafel „Frikadellen-Freitag“ zwischen Fenster und Tür, und der Kalender zeigt freitags den Frikadellen-Freitag.
+53. **Jahreszeiten:** Über „Tag abschließen“ in den Herbst bzw. Winter spielen (oder einen Spielstand mit späterem Tag laden): Rasen und Licht ändern sich, im Dezember Lichterkette und Tanne, bei Schnee eine Schneedecke.
+54. **Neustart:** Seite neu laden: Datum, Wetter, Veranstaltungen, Lager und Spezialität (Stufe, Bekanntheit, laufende Herstellung) sind unverändert.
+
 ## Protokoll
-| Datum | Gerät / Grafikkarte | Betriebssystem | Browser und Version | Schritte 1–47 | Bilder/s | Auffälligkeiten |
+| Datum | Gerät / Grafikkarte | Betriebssystem | Browser und Version | Schritte 1–54 | Bilder/s | Auffälligkeiten |
 |---|---|---|---|---|---|---|
 | | | | | | | |
