@@ -25,6 +25,8 @@ export interface ResidentInfo {
   animation: ResidentAnimation;
   /** Head position projected to CSS pixels relative to the canvas; null while hidden or off screen. */
   screen: { x: number; y: number } | null;
+  /** 'glb' once the resident's model file is loaded and swapped in, otherwise 'procedural' (fallback). */
+  model: 'glb' | 'procedural';
 }
 
 export type ScreenProjector = (world: { x: number; y: number; z: number }) => { x: number; y: number; visible: boolean };
@@ -58,6 +60,7 @@ interface Entry {
   speed: number;
   /** Needs the next frame to jump to the target instead of interpolating. */
   snap: boolean;
+  model: 'glb' | 'procedural';
 }
 
 function wrapAngle(a: number): number {
@@ -93,6 +96,7 @@ export function createResidentView(game: Game, materials: Materials): ResidentVi
       visualHeading: 0,
       speed: 0,
       snap: true,
+      model: 'procedural' as const,
     });
   }
 
@@ -116,6 +120,7 @@ export function createResidentView(game: Game, materials: Materials): ResidentVi
           root.remove(old);
           root.add(next.root);
           e.figure = next;
+          e.model = 'glb';
         })
         .catch((error: unknown) => log.warn(`resident model ${model.url} not loaded, keeping the procedural figure`, error));
     }
@@ -211,6 +216,7 @@ export function createResidentView(game: Game, materials: Materials): ResidentVi
           heading: e.visualHeading,
           animation: e.figure.animation(),
           screen: p && p.visible ? { x: p.x, y: p.y } : null,
+          model: e.model,
         };
       });
     },

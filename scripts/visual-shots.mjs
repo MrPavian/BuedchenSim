@@ -22,6 +22,10 @@ const flag = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
 const outDir = path.resolve(flag('--out', 'visual-shots'));
 const scale = Number(flag('--scale', '2'));
 const only = flag('--only', '').split(',').filter(Boolean);
+// --block n-003.glb: aborts that request (checks the procedural fallback when a resident model is missing).
+const block = flag('--block', '');
+// --corrupt n-007.glb: serves broken bytes for that model (checks the fallback for a damaged file).
+const corrupt = flag('--corrupt', '');
 mkdirSync(outDir, { recursive: true });
 
 const G = 'npc.guenter';
@@ -55,6 +59,12 @@ const VIEWS = {
       [D]: { place: 'place.yard-bench', spot: 2 },
       [J]: { place: 'place.corner', spot: 0, pos: { x: -5.4, z: 3.3 }, heading: Math.PI / 2 },
     },
+  },
+  gespraech: {
+    note: 'Gespräch: der Spieler spricht Günter am Verkaufsfenster an (Taste E), Sprechgeste und Gesichtsausdruck nach 3 s',
+    state: { day: 2, minute: 878, player: { x: -0.6, z: 3.6, h: Math.PI }, door: true, shutter: true, fill: 'some' },
+    npcs: { [G]: { place: 'place.kiosk-window', spot: 1 } },
+    act: 'talk',
   },
   detail: {
     note: 'Detail Materialien: Ausschnitt der Fassade (Klinker, Putzband, Schild, Markise, Fensterbank, Tür) aus der Außenansicht',
@@ -160,16 +170,31 @@ async function openPage(dpr) {
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  page.on('console', (m) => (m.type() === 'error' || m.type() === 'warning') && errors.push(m.text()));
+  const models = {};
+  page.on('requestfinished', (r) => {
+    if (!r.url().endsWith('.glb')) return;
+    const t = r.timing();
+    models[r.url().split('/').pop()] = { ms: Math.round(t.responseEnd), ok: true };
+  });
+  page.on('requestfailed', (r) => {
+    if (r.url().endsWith('.glb')) models[r.url().split('/').pop()] = { ok: false, error: r.failure()?.errorText };
+  });
+  if (block) await page.route(`**/${block}`, (route) => route.abort());
+  if (corrupt) await page.route(`**/${corrupt}`, (route) => route.fulfill({ status: 200, contentType: 'model/gltf-binary', body: 'glTF-broken' }));
   await page.goto(`http://127.0.0.1:${port}/?debug`);
   await page.waitForFunction(() => window.__buedchen?.game, null, { timeout: 60000 });
-  return { context, page, errors };
+  return { context, page, errors, models };
 }
 
 async function setView(page, name) {
   const units = await page.evaluate(arrangeInPage, { view: VIEWS[name], some: SOME });
   // Let the follow camera, the cut-away transition and the stock view settle (render frames, game paused).
   await page.waitForTimeout(3500);
+  if (VIEWS[name].act === 'talk') {
+    await page.keyboard.press('e');
+    await page.waitForTimeout(3000);
+  }
   return units;
 }
 
@@ -197,6 +222,7 @@ try {
                 stats: w.getRenderStats(),
                 stock: w.getStockInfo?.().drawnInstances ?? null,
                 residentsVisible: (w.getResidentInfo?.() ?? []).filter((r) => r.visible).length,
+                residentModels: Object.fromEntries((w.getResidentInfo?.() ?? []).map((r) => [r.npcId, r.model])),
                 frames: times.length,
                 frameMsMedian: sorted[Math.floor(sorted.length / 2)],
                 frameMsP95: sorted[Math.floor(sorted.length * 0.95)],
@@ -210,6 +236,9 @@ try {
     console.log(name, JSON.stringify(metrics.views[name]));
   }
   if (m.errors.length) (metrics.errors ??= []).push(...m.errors);
+  metrics.models = m.models;
+  if (block) metrics.blocked = block;
+  if (corrupt) metrics.corrupted = corrupt;
   await m.context.close();
 
   // Screenshots at the requested deviceScaleFactor.

@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-14T13:13:32.581Z",
+  "renderer": "Headless Chromium 153.0.8010.12, SwiftShader (Software-Rendering)",
+  "views": {
+    "aussen": {
+      "note": "Außenansicht: Fassade, Schild, Markise, Fenster, Eingang, Gehweg; Günter am Fenster, Marlene und Jonas am Eck",
+      "stockedUnits": 203,
+      "stats": {
+        "calls": 367,
+        "triangles": 248134,
+        "geometries": 229,
+        "textures": 84,
+        "lights": 6
+      },
+      "stock": 203,
+      "residentsVisible": 3,
+      "residentModels": {
+        "npc.guenter": "glb",
+        "npc.derya": "glb",
+        "npc.jonas": "glb",
+        "npc.marlene": "glb"
+      },
+      "frames": 5,
+      "frameMsMedian": 465.29999999981374,
+      "frameMsP95": 1944
+    },
+    "bewohner": {
+      "note": "Bewohner im Viertel: Günter, Marlene und Derya an der Hofbank, Jonas auf dem Gehweg",
+      "stockedUnits": 203,
+      "stats": {
+        "calls": 399,
+        "triangles": 311756,
+        "geometries": 245,
+        "textures": 105,
+        "lights": 6
+      },
+      "stock": 203,
+      "residentsVisible": 4,
+      "residentModels": {
+        "npc.guenter": "glb",
+        "npc.derya": "glb",
+        "npc.jonas": "glb",
+        "npc.marlene": "glb"
+      },
+      "frames": 10,
+      "frameMsMedian": 458.5,
+      "frameMsP95": 949
+    },
+    "gespraech": {
+      "note": "Gespräch: der Spieler spricht Günter am Verkaufsfenster an (Taste E), Sprechgeste und Gesichtsausdruck nach 3 s",
+      "stockedUnits": 203,
+      "stats": {
+        "calls": 321,
+        "triangles": 121844,
+        "geometries": 245,
+        "textures": 105,
+        "lights": 6
+      },
+      "stock": 203,
+      "residentsVisible": 1,
+      "residentModels": {
+        "npc.guenter": "glb",
+        "npc.derya": "glb",
+        "npc.jonas": "glb",
+        "npc.marlene": "glb"
+      },
+      "frames": 9,
+      "frameMsMedian": 485,
+      "frameMsP95": 618.7000000001863
+    }
+  },
+  "models": {
+    "n-002.glb": {
+      "ms": 30,
+      "ok": true
+    },
+    "n-003.glb": {
+      "ms": 23,
+      "ok": true
+    },
+    "n-006.glb": {
+      "ms": 22,
+      "ok": true
+    },
+    "n-007.glb": {
+      "ms": 23,
+      "ok": true
+    }
+  }
+}
