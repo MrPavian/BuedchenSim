@@ -12,6 +12,9 @@ import type { ResidentAnimation, ResidentFigure } from './kit';
 export const RESIDENT_MODELS: Readonly<Record<string, { url: string; walkSpeed: number }>> = {
   // walkSpeed: the speed (m/s) at which the walk clip plays at its authored rate (stride length per second).
   'N-002': { url: 'models/residents/n-002.glb', walkSpeed: 0.9 },
+  'N-003': { url: 'models/residents/n-003.glb', walkSpeed: 1.1 },
+  'N-006': { url: 'models/residents/n-006.glb', walkSpeed: 1.3 },
+  'N-007': { url: 'models/residents/n-007.glb', walkSpeed: 0.8 },
 };
 
 const loads = new Map<string, Promise<GLTF>>();

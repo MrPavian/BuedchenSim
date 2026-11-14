@@ -69,31 +69,36 @@ RESIDENTS = {
     # N-003 Derya Aksoy, 38, carpenter: mustard work shirt, brown work trousers, tool belt, brown boots, dark ponytail.
     "derya": {
         "name": "N-003",
-        "macro": {"gender": 0.0, "age": 0.60, "muscle": 0.66, "weight": 0.52, "height": 0.62, "proportions": 0.6},
+        "macro": {"gender": 0.0, "age": 0.60, "muscle": 0.52, "weight": 0.55, "height": 0.62, "proportions": 0.5,
+                  "cupsize": 0.78, "firmness": 0.6},
         "details": {
             "torso/measure-shoulder-dist-incr": 0.35,
             "head/head-oval": 0.3,
-            "nose/nose-hump-incr": 0.25,
-            "nose/nose-scale-depth-incr": 0.15,
-            "chin/chin-width-incr": 0.25,
-            "chin/chin-prominent-incr": 0.2,
-            "eyebrows/eyebrows-angle-down": 0.15,
-            "cheek/l-cheek-bones-incr": 0.3,
-            "cheek/r-cheek-bones-incr": 0.3,
+            "head/head-age-incr": 0.35,
+            "nose/nose-hump-incr": 0.45,
+            "nose/nose-scale-depth-incr": 0.25,
+            "nose/nose-scale-vert-incr": 0.2,
+            "chin/chin-width-incr": 0.3,
+            "chin/chin-prominent-incr": 0.25,
+            "eyebrows/eyebrows-angle-down": 0.2,
+            "cheek/l-cheek-bones-incr": 0.4,
+            "cheek/r-cheek-bones-incr": 0.4,
+            "mouth/mouth-scale-horiz-incr": 0.2,
         },
         "skin": ("middleage_caucasian_female", "warm_skin"),
         "clothes": [
-            ("suit", "clothes/male_casualsuit01/male_casualsuit01.mhclo", 0.9, "derya_suit", 1024),
-            ("shoes", "clothes/shoes03/shoes03.mhclo", 0.6, "brown_boots", 512),
+            ("suit", "clothes/male_casualsuit01/male_casualsuit01.mhclo", 0.9, "derya_suit", 1024, 0.55),
+            ("shoes", "clothes/shoes03/shoes03.mhclo", 0.6, "brown_boots", 512, 0.6),
         ],
-        "hair": ("hair/ponytail01/ponytail01.mhclo", "dark_hair"),
+        "hair": ("hair/ponytail01/ponytail01.mhclo", "dark_hair", 0.65),
         "eyebrows": ("eyebrows/eyebrow004/eyebrow004.mhclo", "dark_brows"),
         "eyelashes": "eyelashes/eyelashes03/eyelashes03.mhclo",
-        "eyes": "brown",
+        "eyes": "brownlight",
+        "eyes_fix": "calm_iris",
         "headwear": None,
         "props": ["toolbelt"],
         "pose": {
-            "stoop": 0.02, "arm_down": 0.90, "fore_l": -0.18, "fore_r": -0.18, "hand_in": 0.1,
+            "stoop": 0.02, "arm_down": 0.84, "fore_l": -0.08, "fore_r": -0.08, "hand_in": 0.0, "hand_out": 0.25,
             "stride": 0.32, "swing_l": 0.34, "swing_r": 0.34, "knee": 0.55, "stance": 0.06, "bob": 0.016,
             "curl_l": 0.4, "curl_r": 0.4, "talk": "r",
         },
@@ -102,7 +107,7 @@ RESIDENTS = {
     # teal courier bag with a strap across the chest.
     "jonas": {
         "name": "N-006",
-        "macro": {"gender": 1.0, "age": 0.32, "muscle": 0.42, "weight": 0.36, "height": 0.78, "proportions": 0.55},
+        "macro": {"gender": 1.0, "age": 0.32, "muscle": 0.42, "weight": 0.36, "height": 0.73, "proportions": 0.55},
         "details": {
             "head/head-oval": 0.25,
             "nose/nose-scale-horiz-decr": 0.2,
@@ -114,17 +119,17 @@ RESIDENTS = {
         },
         "skin": ("young_caucasian_male", "calm_skin"),
         "clothes": [
-            ("suit", "clothes/male_casualsuit01/male_casualsuit01.mhclo", 0.85, "jonas_suit", 1024),
-            ("shoes", "clothes/shoes05/shoes05.mhclo", 0.6, None, 512),
+            ("suit", "clothes/male_casualsuit01/male_casualsuit01.mhclo", 0.85, "jonas_suit", 1024, 0.55),
+            ("shoes", "clothes/shoes05/shoes05.mhclo", 0.6, None, 512, 0.6),
         ],
-        "hair": ("hair/short04/short04.mhclo", "brown_hair"),
-        "eyebrows": ("eyebrows/eyebrow006/eyebrow006.mhclo", "brown_brows"),
+        "hair": ("hair/short02/short02.mhclo", "brown_hair", 0.8),
+        "eyebrows": ("eyebrows/eyebrow001/eyebrow001.mhclo", "brown_brows"),
         "eyelashes": "eyelashes/eyelashes01/eyelashes01.mhclo",
         "eyes": "bluegreen",
         "headwear": ("helmet", None, (0.70, 0.85, 0.20)),
         "props": ["courier_bag"],
         "pose": {
-            "stoop": 0.09, "arm_down": 0.92, "fore_l": -0.28, "fore_r": -0.28, "hand_in": 0.12,
+            "stoop": 0.09, "arm_down": 0.84, "fore_l": -0.15, "fore_r": -0.15, "hand_in": 0.0, "hand_out": 0.25,
             "stride": 0.36, "swing_l": 0.40, "swing_r": 0.40, "knee": 0.62, "stance": 0.0, "bob": 0.02,
             "curl_l": 0.45, "curl_r": 0.45, "talk": "both",
         },
@@ -133,7 +138,8 @@ RESIDENTS = {
     # red glasses, mint shopping bag in the left hand, upright posture.
     "marlene": {
         "name": "N-007",
-        "macro": {"gender": 0.0, "age": 0.75, "muscle": 0.38, "weight": 0.64, "height": 0.36, "proportions": 0.5},
+        "macro": {"gender": 0.0, "age": 0.75, "muscle": 0.38, "weight": 0.62, "height": 0.51, "proportions": 0.5,
+                  "cupsize": 0.62, "firmness": 0.4},
         "details": {
             "head/head-round": 0.35,
             "head/head-fat-incr": 0.2,
@@ -149,14 +155,15 @@ RESIDENTS = {
             ("suit", "clothes/female_elegantsuit01/female_elegantsuit01.mhclo", 0.9, "marlene_suit", 1024),
             ("shoes", "clothes/shoes04/shoes04.mhclo", 0.5, "plum_shoes", 512),
         ],
-        "hair": ("hair/bob02/bob02.mhclo", "silver_blonde"),
+        "hair": ("hair/short01/short01.mhclo", "silver_blonde"),
         "eyebrows": ("eyebrows/eyebrow011/eyebrow011.mhclo", "light_brows"),
         "eyelashes": "eyelashes/eyelashes04/eyelashes04.mhclo",
         "eyes": "blue",
         "headwear": None,
         "props": ["tights", "glasses", "shopping_bag"],
         "pose": {
-            "stoop": -0.03, "arm_down": 0.95, "fore_l": -0.55, "fore_r": -0.12, "hand_in": 0.15,
+            "stoop": -0.03, "arm_down": 0.86, "arm_down_l": 0.95, "fore_l": -0.55, "fore_r": -0.06, "hand_in": 0.0,
+            "hand_out": 0.25,
             "stride": 0.24, "swing_l": 0.06, "swing_r": 0.26, "knee": 0.45, "stance": 0.0, "bob": 0.01,
             "curl_l": 1.0, "curl_r": 0.4, "talk": "r",
         },
@@ -219,7 +226,8 @@ def load_target(path):
 
 
 def apply_target(verts, path, weight):
-    if abs(weight) < 1e-4:
+    if abs(weight) < 1e-4 or not os.path.exists(path):
+        # MakeHuman has no file for the neutral combination of a macro (e.g. average cup and average firmness).
         return
     for i, dx, dy, dz in load_target(path):
         v = verts[i]
@@ -257,7 +265,7 @@ def macro_factors(m):
     }
 
 
-def apply_macros(verts, data, m):
+def apply_macros(verts, data, m):  # noqa: C901 - mirrors MakeHuman's macro combinations
     f = macro_factors(m)
     base = os.path.join(data, "targets", "macrodetails")
     for race, wr in f["race"].items():
@@ -277,6 +285,11 @@ def apply_macros(verts, data, m):
                         apply_target(verts, os.path.join(base, "height", f"{stem}-{hn}.target.gz"), w * wh)
                     for pn, wp in f["proportions"].items():
                         apply_target(verts, os.path.join(base, "proportions", f"{stem}-{pn}.target.gz"), w * wp)
+                    if g == "female":
+                        for cn, wc in two_sided(m.get("cupsize", 0.5), "mincup", "averagecup", "maxcup").items():
+                            for fn, wf in two_sided(m.get("firmness", 0.5), "minfirmness", "averagefirmness", "maxfirmness").items():
+                                breast = os.path.join(data, "targets", "breast", f"{stem}-{cn}-{fn}.target.gz")
+                                apply_target(verts, breast, w * wc * wf)
 
 
 def apply_details(verts, data, details):
@@ -421,8 +434,8 @@ def load_mhclo(path):
                     )
             elif mode == "delete" and key[0].isdigit():
                 info["delete"].extend(parse_index_list(p))
-            elif key[0].isalpha():
-                mode = None
+            # Other keywords (material, vertexboneweights_file, ...) may sit between "verts 0" and the vertex lines;
+            # they do not end the current section.
     return info
 
 
@@ -468,7 +481,8 @@ def load_image(path, max_size=1024):
     return img
 
 
-def build_item(name, mhclo_path, verts, rig, weights_from, roughness=0.85, mhmat=None, fix=None, max_tex=1024):
+def build_item(name, mhclo_path, verts, rig, weights_from, roughness=0.85, mhmat=None, fix=None, max_tex=1024,
+               decimate=1.0):
     """Fits a MakeHuman clothes/proxy item to the shaped body, gives it the body's skin weights and its material.
 
     Returns (object, mhclo info, base-vertex-order -> mesh-vertex index), the last two for expression shape keys.
@@ -478,6 +492,14 @@ def build_item(name, mhclo_path, verts, rig, weights_from, roughness=0.85, mhmat
     _, iuvs, ifaces = load_obj(os.path.join(folder, info["obj"]))
     fitted = fit_mhclo(info, verts)
     obj, remap = build_mesh(name, fitted, iuvs, ifaces, {g for g, _ in ifaces})
+    if decimate < 1.0:
+        # Budget: collapse decimation keeps UVs; the vertex map is then no longer valid (no expression keys needed
+        # on clothes or hair).
+        mod = obj.modifiers.new("decimate", "DECIMATE")
+        mod.ratio = decimate
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        remap = {}
     mat_path = mhmat or (os.path.join(folder, info["material"]) if info["material"] else None)
     mat = load_mhmat(mat_path)
     mat_dir = os.path.dirname(mat_path) if mat_path else folder
@@ -588,8 +610,13 @@ def calm_skin(px):
         px[..., c] = (lum + (px[..., c] - lum) * 0.72) * 1.06
     h, w = px.shape[:2]
     px[: int(h * 0.26), int(w * 0.965):, :3] = px[int(h * 0.30), int(w * 0.95), :3]
+    # Only inside the two texture regions of the nostril and mouth interiors (left middle, lower right); the lips
+    # elsewhere in the face stay untouched.
     r, g = px[..., 0], px[..., 1]
-    red = (r - g > 0.30) & (r > 0.5)
+    region = np.zeros((h, w), dtype=bool)
+    region[int(h * 0.5): int(h * 0.7), : int(w * 0.2)] = True
+    region[: int(h * 0.2), int(w * 0.7):] = True
+    red = region & (r - g > 0.30) & (r > 0.5)
     for c, k in enumerate((0.40, 0.25, 0.21)):
         px[..., c] = np.where(red, k, px[..., c])
     return px
@@ -628,7 +655,18 @@ def dark_hair(px):
 
 
 def dark_brows(px):
-    return _hair(px, (0.24, 0.17, 0.14), 1.0, 0.02)
+    return _hair(px, (0.32, 0.23, 0.18), 1.2, 0.08)
+
+
+def calm_iris(px):
+    """Less saturated, slightly darker iris (the brown MakeHuman irises turn reddish under the game's light)."""
+    np = _np()
+    lum = _lum(px)
+    sat = np.maximum(np.maximum(px[..., 0], px[..., 1]), px[..., 2]) - np.minimum(np.minimum(px[..., 0], px[..., 1]), px[..., 2])
+    iris = sat > 0.12
+    for c in range(3):
+        px[..., c] = np.where(iris, (lum + (px[..., c] - lum) * 0.45) * 0.75, px[..., c])
+    return px
 
 
 def brown_hair(px):
@@ -636,11 +674,11 @@ def brown_hair(px):
 
 
 def brown_brows(px):
-    return _hair(px, (0.42, 0.31, 0.23), 1.1, 0.04)
+    return _hair(px, (0.36, 0.26, 0.19), 1.0, 0.03)
 
 
 def silver_blonde(px):
-    return _clear_rect(_hair(px, (0.86, 0.82, 0.70), 1.3, 0.42), (0.0, 0.07), (0.7, 1.0), alpha=True)
+    return _clear_rect(_hair(px, (0.90, 0.87, 0.80), 1.1, 0.58), (0.0, 0.07), (0.7, 1.0), alpha=True)
 
 
 def light_brows(px):
@@ -664,14 +702,14 @@ def guenter_suit(px):
     return _clear_rect(px, (0.95, 1.0), (0.8, 1.0))
 
 
-def _suit01(px, shirt, shirt_gain, trousers, trousers_gain, trousers_base):
+def _suit01(px, shirt, shirt_gain, trousers, trousers_gain, trousers_base, shirt_base=0.0):
     """Suit 01 (shirt + trousers): the trousers occupy the middle column of the texture, the shirt the sides."""
     np = _np()
     h, w = px.shape[:2]
     cols = np.zeros((h, w), dtype=bool)
     cols[:, int(w * 0.35): int(w * 0.71)] = True
     px = _paint(px, cols, trousers, trousers_gain, trousers_base)
-    px = _paint(px, ~cols, shirt, shirt_gain)
+    px = _paint(px, ~cols, shirt, shirt_gain, shirt_base)
     return _clear_rect(px, (0.965, 1.0), (0.0, 0.16))
 
 
@@ -680,19 +718,22 @@ def derya_suit(px):
 
 
 def jonas_suit(px):
-    return _suit01(px, (0.30, 0.32, 0.36), 1.5, (0.60, 0.62, 0.66), 1.5, 0.12)
+    return _suit01(px, (0.40, 0.42, 0.46), 1.6, (0.66, 0.68, 0.72), 1.2, 0.32, shirt_base=0.22)
 
 
 def marlene_suit(px):
     """Elegant suit: the skirt occupies the upper half of the texture (camel), the striped blouse becomes a plum knit."""
     np = _np()
     h, w = px.shape[:2]
-    skirt = np.zeros((h, w), dtype=bool)
-    skirt[int(h * 0.5): int(h * 0.96), : int(w * 0.86)] = True
+    # The skirt and the texture background are a plain grey-green; the blouse is striped (red, dark, light).
+    mx = np.maximum(np.maximum(px[..., 0], px[..., 1]), px[..., 2])
+    mn = np.minimum(np.minimum(px[..., 0], px[..., 1]), px[..., 2])
+    g_ge_r = px[..., 1] >= px[..., 0] - 0.005
+    skirt = (mx - mn < 0.10) & (_lum(px) > 0.16) & (_lum(px) < 0.5) & g_ge_r
     px = _paint(px, skirt, (0.69, 0.55, 0.37), 1.9, 0.1)
     # Soft plum knit: stripes reduced to a faint rib.
-    v = np.clip(0.55 + (_lum(px) - 0.25) * 0.45, 0, 1)
-    for c, k in enumerate((0.50, 0.23, 0.36)):
+    v = np.clip(0.78 + (_lum(px) - 0.25) * 0.4, 0, 1)
+    for c, k in enumerate((0.55, 0.28, 0.42)):
         px[..., c] = np.where(~skirt, v * k, px[..., c])
     return _clear_rect(px, (0.0, 0.035), (0.72, 0.9))
 
@@ -702,13 +743,16 @@ def brown_boots(px):
 
 
 def plum_shoes(px):
-    return _paint(px, _lum(px) >= 0, (0.32, 0.17, 0.22), 1.5, 0.04)
+    """Plum shoes; the white socks of the model take the colour of the dark tights."""
+    socks = _lum(px) > 0.5
+    px = _paint(px, ~socks, (0.32, 0.17, 0.22), 1.5, 0.04)
+    return _paint(px, socks, (0.20, 0.17, 0.23), 0.3, 0.75)
 
 
 FIXES = {
     f.__name__: f
     for f in (
-        calm_skin, warm_skin, grey_hair, grey_hair_clean, dark_hair, dark_brows, brown_hair, brown_brows,
+        calm_skin, warm_skin, calm_iris, grey_hair, grey_hair_clean, dark_hair, dark_brows, brown_hair, brown_brows,
         silver_blonde, light_brows, guenter_suit, derya_suit, jonas_suit, marlene_suit, brown_boots, plum_shoes,
     )
 }
@@ -772,7 +816,7 @@ def build_headwear(kind, rig, hair, body, brows, texture, colour):
         front = max(0.0, -math.sin(a))
         back = max(0.0, math.sin(a))
         if helmet:
-            return math.radians(14.0 + 14.0 * front - 4.0 * back)
+            return math.radians(6.0 + 16.0 * front - 4.0 * back)
         return math.radians(2.0 + 22.0 * front - 6.0 * back)
 
     def surface(d):
@@ -781,7 +825,7 @@ def build_headwear(kind, rig, hair, body, brows, texture, colour):
         rb = (hb - centre).length if hb else 0.09
         rh = (hh - centre).length if hh else rb
         if helmet:
-            return max(rb + 0.032, min(rh, rb + 0.03) + 0.012)
+            return max(rb + 0.020, min(rh, rb + 0.02) + 0.006)
         # On the skull, lying on flattened hair: never inside the head, never as far out as loose hair.
         return max(rb + 0.013, min(rh * 0.97, rb + 0.024))
 
@@ -799,7 +843,8 @@ def build_headwear(kind, rig, hair, body, brows, texture, colour):
             lift = t * t
             if helmet:
                 # Slightly elongated towards the back like a road helmet.
-                p.y += 0.018 * lift * max(0.0, math.sin(a))
+                p.y += 0.030 * lift * max(0.0, math.sin(a))
+                p.z -= 0.012 * lift
             else:
                 # Flat-cap profile: crown pulled forward and widened above the band, top flattened.
                 p.y -= 0.045 * lift
@@ -823,7 +868,7 @@ def build_headwear(kind, rig, hair, body, brows, texture, colour):
         bm.faces.new((vs[k][rings], vs[k2][rings], apex))
     # Brim / visor: from the front part of the band, out and slightly down; smooth (smoothstep) towards the ends so
     # the edge runs out cleanly instead of ending in steps.
-    length, drop, start = (0.030, 0.010, 0.55) if helmet else (0.052, 0.016, 0.30)
+    length, drop, start = (0.022, 0.006, 0.65) if helmet else (0.052, 0.016, 0.30)
     brim = []
     for k in range(seg):
         a = 2 * math.pi * k / seg
@@ -849,13 +894,14 @@ def build_headwear(kind, rig, hair, body, brows, texture, colour):
             c = mesh.vertices[mesh.loops[li].vertex_index].co
             a = math.atan2(c.y - cy, c.x - cx)
             uv.data[li].uv = (0.10 + 0.28 * (a + math.pi) / (2 * math.pi), 0.30 + 0.40 * (c.z - zmin) / 0.14)
-    solidify(obj, 0.012 if helmet else 0.004)
+    solidify(obj, 0.010 if helmet else 0.004)
 
     def under_shell(co):
         d = co - centre
         a = math.atan2(d.y, d.x)
         front = max(0.0, -math.sin(a))
-        return math.atan2(d.z, math.hypot(d.x, d.y)) > band_elevation(a) + math.radians(3.0 - 7.0 * front)
+        margin = 1.0 - 8.0 * front if helmet else 3.0 - 7.0 * front
+        return math.atan2(d.z, math.hypot(d.x, d.y)) > band_elevation(a) + math.radians(margin)
 
     hb = bmesh.new()
     hb.from_mesh(hair.data)
@@ -909,6 +955,25 @@ def cylinder_between(bm, a, b, radius, segments=8):
         @ Matrix.Diagonal((1, 1, axis.length, 1))
     )
     bmesh.ops.create_cone(bm, cap_ends=True, segments=segments, radius1=radius, radius2=radius, depth=1.0, matrix=m)
+
+
+def tube(bm, points, radius, closed=True, sides=6):
+    """A continuous round tube along a polyline (closed ring or open)."""
+    n = len(points)
+    rings = []
+    for i, p in enumerate(points):
+        prev = points[(i - 1) % n] if closed or i > 0 else p
+        nxt = points[(i + 1) % n] if closed or i < n - 1 else p
+        t = (nxt - prev).normalized()
+        a = t.orthogonal().normalized()
+        b = t.cross(a).normalized()
+        rings.append([bm.verts.new(p + (a * math.cos(2 * math.pi * k / sides) + b * math.sin(2 * math.pi * k / sides)) * radius)
+                      for k in range(sides)])
+    for i in range(n if closed else n - 1):
+        r1, r2 = rings[i], rings[(i + 1) % n]
+        for k in range(sides):
+            k2 = (k + 1) % sides
+            bm.faces.new((r1[k], r1[k2], r2[k2], r2[k]))
 
 
 def box(bm, centre, size, rot=None):
@@ -993,15 +1058,15 @@ def build_courier_bag(rig, suit, full):
     build_strap(rig, suit, full, front, 0.045, (0.93, 0.85, 0.30), "strap_front")
     build_strap(rig, suit, full, back, 0.045, (0.93, 0.85, 0.30), "strap_back")
     tree = bvh(suit)
-    centre_hip = Vector((hip.x * 0.6, chest_axis_y, hip.z + 0.06))
-    back_pt = surface_point(tree, centre_hip, centre_hip + Vector((0.0, 0.5, 0)), 0.07)
+    centre_hip = Vector((hip.x * 0.4, chest_axis_y, hip.z + 0.08))
+    back_pt = surface_point(tree, centre_hip, centre_hip + Vector((0.0, 0.5, 0)), 0.06)
     bm = bmesh.new()
-    box(bm, back_pt, (0.36, 0.13, 0.28))
+    box(bm, back_pt, (0.32, 0.11, 0.25))
     obj = new_object("courier_bag", bm, smooth=False)
     obj.data.materials.append(material("courier_bag", (0.08, 0.55, 0.56), 0.75))
     rigid_part(obj, rig, "pelvis")
     bm = bmesh.new()
-    box(bm, back_pt + Vector((0, 0.005, 0.09)), (0.37, 0.14, 0.11))
+    box(bm, back_pt + Vector((0, 0.005, 0.08)), (0.33, 0.12, 0.10))
     flap = new_object("courier_flap", bm, smooth=False)
     flap.data.materials.append(material("courier_flap", (0.05, 0.42, 0.43), 0.75))
     rigid_part(flap, rig, "pelvis")
@@ -1034,10 +1099,10 @@ def build_toolbelt(rig, suit, full):
     belt.data.materials.append(material("toolbelt", (0.45, 0.30, 0.17), 0.65))
     transfer_weights(full, belt, rig)
     # Pouch (right front hip) and hammer (left hip), rigid on the pelvis.
-    right = surface_point(tree, centre, centre + Vector((-0.8, -0.6, 0)).normalized(), 0.03)
+    right = surface_point(tree, centre, centre + Vector((-1.0, -0.3, 0)).normalized(), 0.025)
     left = surface_point(tree, centre, centre + Vector((1.0, 0.1, 0)).normalized(), 0.02)
     bm = bmesh.new()
-    box(bm, right + Vector((0, 0, -0.06)), (0.12, 0.05, 0.14))
+    box(bm, right + Vector((0, 0, -0.06)), (0.045, 0.11, 0.12))
     pouch = new_object("pouch", bm, smooth=False)
     pouch.data.materials.append(material("pouch", (0.34, 0.22, 0.12), 0.7))
     rigid_part(pouch, rig, "pelvis")
@@ -1068,15 +1133,14 @@ def build_glasses(rig, eyes):
         ex = sum(c.x for c in side) / len(side)
         ez = sum(c.z for c in side) / len(side)
         ring = []
-        for k in range(20):
-            a = 2 * math.pi * k / 20
+        for k in range(28):
+            a = 2 * math.pi * k / 28
             # Soft rectangle (superellipse) 50 x 34 mm.
             ca, sa = math.cos(a), math.sin(a)
-            x = math.copysign(abs(ca) ** 0.6, ca) * 0.026
-            z = math.copysign(abs(sa) ** 0.6, sa) * 0.017
+            x = math.copysign(abs(ca) ** 0.7, ca) * 0.024
+            z = math.copysign(abs(sa) ** 0.7, sa) * 0.016
             ring.append(Vector((ex + x, front_y + 0.002 * abs(x) / 0.026, ez + z - 0.002)))
-        for a, b in zip(ring, ring[1:] + ring[:1]):
-            cylinder_between(bm, a, b, 0.0022, 5)
+        tube(bm, ring, 0.0024)
         inner.append((ex, ez))
         outer_x = ex + math.copysign(0.026, ex)
         cylinder_between(bm, Vector((outer_x, front_y, ez + 0.006)), Vector((outer_x * 1.25, front_y + 0.10, ez)), 0.0022, 5)
@@ -1096,7 +1160,7 @@ def build_shopping_bag(rig):
     grip = posed @ Vector((0, pb.length * 0.6, 0))
     top = grip + Vector((0.0, 0.0, -0.13))
     bm = bmesh.new()
-    box(bm, top + Vector((0.01, 0, -0.15)), (0.08, 0.30, 0.30))
+    box(bm, top + Vector((0.01, 0, -0.13)), (0.07, 0.27, 0.25))
     for dy in (-0.07, 0.07):
         cylinder_between(bm, top + Vector((0.01, dy, 0)), grip + Vector((0, dy * 0.2, 0)), 0.006, 6)
     bag = new_object("shopping_bag", bm, smooth=False)
@@ -1104,7 +1168,7 @@ def build_shopping_bag(rig):
     bag.data.materials.append(material("shopping_bag", (0.60, 0.80, 0.68), 0.8))
     rigid_part(bag, rig, "hand_l")
     bm = bmesh.new()
-    box(bm, top + Vector((0.01, 0, -0.10)), (0.085, 0.305, 0.04))
+    box(bm, top + Vector((0.01, 0, -0.08)), (0.075, 0.275, 0.035))
     stripe = new_object("shopping_bag_stripe", bm, smooth=False)
     stripe.data.transform(rest @ posed.inverted())
     stripe.data.materials.append(material("shopping_bag_stripe", (0.30, 0.54, 0.40), 0.8))
@@ -1113,9 +1177,11 @@ def build_shopping_bag(rig):
     return bag
 
 
-def build_tights(rig, verts, faces, full):
-    """Dark tights: MakeHuman's helper-tights layer (a thin shell around the legs), visible below the skirt."""
-    obj, remap = build_mesh("tights", verts, [], faces, {"helper-tights"})
+def build_tights(rig, verts, faces, full, top_y):
+    """Dark tights: the leg part of MakeHuman's helper-tights layer (a thin shell over the body), below top_y
+    (MakeHuman space, under the skirt)."""
+    legs = [f for f in faces if f[0] == "helper-tights" and all(verts[vi][1] < top_y for vi, _ in f[1])]
+    obj, remap = build_mesh("tights", verts, [], legs, {"helper-tights"})
     obj.data.materials.append(material("tights", (0.20, 0.17, 0.23), 0.7))
     transfer_weights(full, obj, rig)
     return obj, remap
@@ -1314,19 +1380,27 @@ def main():
     apply_weights(body, args.mhdata, remap, rig)
 
     objects = {}
-    for key, path, rough, fix, max_tex in spec["clothes"]:
-        objects[key] = build_item(key, os.path.join(A, path), verts, rig, full, rough, fix=FIXES.get(fix), max_tex=max_tex)
-    hair_path, hair_fix = spec["hair"]
-    objects["hair"] = build_item("hair", os.path.join(A, hair_path), verts, rig, full, 0.8, fix=FIXES[hair_fix], max_tex=512)
+    for key, path, rough, fix, max_tex, *rest in spec["clothes"]:
+        objects[key] = build_item(
+            key, os.path.join(A, path), verts, rig, full, rough, fix=FIXES.get(fix), max_tex=max_tex,
+            decimate=rest[0] if rest else 1.0,
+        )
+    hair_path, hair_fix, *hair_rest = spec["hair"]
+    objects["hair"] = build_item(
+        "hair", os.path.join(A, hair_path), verts, rig, full, 0.8, fix=FIXES[hair_fix], max_tex=512,
+        decimate=hair_rest[0] if hair_rest else 1.0,
+    )
     objects["eyes"] = build_item(
         "eyes", os.path.join(A, "eyes", "low-poly", "low-poly.mhclo"), verts, rig, full, 0.3,
         mhmat=os.path.join(A, "eyes", "materials", spec["eyes"] + ".mhmat"), max_tex=256,
+        fix=FIXES.get(spec.get("eyes_fix")),
     )
     brow_path, brow_fix = spec["eyebrows"]
     objects["eyebrows"] = build_item("eyebrows", os.path.join(A, brow_path), verts, rig, full, 0.9, fix=FIXES[brow_fix], max_tex=256)
     objects["eyelashes"] = build_item("eyelashes", os.path.join(A, spec["eyelashes"]), verts, rig, full, 0.9, max_tex=256)
     if "tights" in spec["props"]:
-        build_tights(rig, verts, faces, full)
+        knee = (centres["joint-l-knee"][1] + centres["joint-l-upper-leg"][1]) / 2
+        build_tights(rig, verts, faces, full, knee)
 
     if not args.no_expressions:
         add_expressions(
