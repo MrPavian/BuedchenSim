@@ -52,8 +52,23 @@ new GLTFLoader().load(
   url,
   (gltf) => {
     const model = gltf.scene;
+    // expr=friendly:1,blink:0.5 sets morph target influences (facial expressions) by name.
+    const expr = new Map((params.get('expr') ?? '').split(',').filter(Boolean).map((p) => {
+      const [k, v] = p.split(':');
+      return [k, Number(v ?? '1')] as const;
+    }));
+    const morphs = new Set<string>();
     model.traverse((o) => {
-      if ((o as Mesh).isMesh) (o as Mesh).castShadow = true;
+      const m = o as Mesh;
+      if (!m.isMesh) return;
+      m.castShadow = true;
+      const dict = m.morphTargetDictionary;
+      if (dict && m.morphTargetInfluences) {
+        for (const [name, i] of Object.entries(dict)) {
+          morphs.add(name);
+          m.morphTargetInfluences[i] = expr.get(name) ?? 0;
+        }
+      }
     });
     scene.add(model);
     const mixer = new AnimationMixer(model);
@@ -81,7 +96,7 @@ new GLTFLoader().load(
     }
     renderer.render(scene, camera);
     result.ok = true;
-    result.info = { clips: gltf.animations.map((c) => `${c.name} ${c.duration.toFixed(2)}s`), size: size.toArray().map((v) => +v.toFixed(3)), triangles, calls: renderer.info.render.calls };
+    result.info = { morphs: [...morphs], clips: gltf.animations.map((c) => `${c.name} ${c.duration.toFixed(2)}s`), size: size.toArray().map((v) => +v.toFixed(3)), triangles, calls: renderer.info.render.calls };
   },
   undefined,
   (error) => {

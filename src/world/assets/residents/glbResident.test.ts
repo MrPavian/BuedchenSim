@@ -1,4 +1,4 @@
-import { AnimationClip, BoxGeometry, Group, Mesh, MeshBasicMaterial, NumberKeyframeTrack } from 'three';
+import { AnimationClip, BoxGeometry, Float32BufferAttribute, Group, Mesh, MeshBasicMaterial, NumberKeyframeTrack } from 'three';
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { describe, expect, it } from 'vitest';
 import { RESIDENT_MODELS, createGlbResident } from './glbResident';
@@ -43,4 +43,36 @@ describe('GLB resident figure', () => {
     f.update(0.1, 0, false);
     expect(f.animation()).toBe('idle');
   });
+
+  it('blinks now and then and shows expressions only while talking', () => {
+    const gltf = fakeGltf();
+    const body = gltf.scene.getObjectByName('body') as Mesh;
+    const n = body.geometry.getAttribute('position').count;
+    body.geometry.morphAttributes.position = ['friendly', 'thoughtful', 'blink'].map(
+      () => new Float32BufferAttribute(new Float32Array(n * 3), 3),
+    );
+    body.updateMorphTargets();
+    body.morphTargetDictionary = { friendly: 0, thoughtful: 1, blink: 2 };
+    const f = createGlbResident('N-002', gltf, 0.9);
+    let face: Mesh | undefined;
+    f.root.traverse((o) => {
+      if ((o as Mesh).isMesh) face = o as Mesh;
+    });
+    const w = face!.morphTargetInfluences!;
+    const at = (i: number): number => w[i] ?? 0;
+    let maxBlink = 0;
+    for (let i = 0; i < 400; i++) {
+      f.update(1 / 50, 0, false);
+      maxBlink = Math.max(maxBlink, at(2));
+      expect(at(0) + at(1)).toBeLessThan(0.01);
+    }
+    expect(maxBlink).toBeGreaterThan(0.5);
+    for (let i = 0; i < 100; i++) f.update(1 / 50, 0, true);
+    expect(at(0)).toBeGreaterThan(0.9);
+    for (let i = 0; i < 150; i++) f.update(1 / 50, 0, true);
+    expect(at(1)).toBeGreaterThan(0.5);
+    for (let i = 0; i < 200; i++) f.update(1 / 50, 0, false);
+    expect(at(0) + at(1)).toBeLessThan(0.05);
+  });
 });
+
