@@ -169,6 +169,68 @@ RESIDENTS = {
             "curl_l": 1.0, "curl_r": 0.4, "talk": "r",
         },
     },
+    # N-008 Ole Brinkmann, 34, fan of the fictional SV Grubenlicht 09: blue-gold striped jersey, jeans, club scarf.
+    "ole": {
+        "name": "N-008",
+        "macro": {"gender": 1.0, "age": 0.57, "muscle": 0.55, "weight": 0.64, "height": 0.6, "proportions": 0.5},
+        "details": {
+            "head/head-round": 0.3,
+            "head/head-fat-incr": 0.2,
+            "head/head-age-incr": 0.4,
+            "nose/nose-scale-horiz-incr": 0.2,
+            "chin/chin-width-incr": 0.2,
+            "stomach/stomach-pregnant-incr": 0.25,
+            "eyebrows/eyebrows-angle-up": 0.1,
+        },
+        "skin": ("young_caucasian_male", "calm_skin"),
+        "clothes": [
+            ("suit", "clothes/male_casualsuit03/male_casualsuit03.mhclo", 0.85, "ole_suit", 1024, 0.6),
+            ("shoes", "clothes/shoes02/shoes02.mhclo", 0.6, None, 512, 0.6),
+        ],
+        "hair": ("hair/short02/short02.mhclo", "dark_blond_hair", 0.8),
+        "eyebrows": ("eyebrows/eyebrow002/eyebrow002.mhclo", "brown_brows"),
+        "eyelashes": "eyelashes/eyelashes01/eyelashes01.mhclo",
+        "eyes": "blue",
+        "headwear": None,
+        "props": ["scarf"],
+        "pose": {
+            "stoop": 0.0, "arm_down": 0.82, "fore_l": -0.12, "fore_r": -0.12, "hand_in": 0.0, "hand_out": 0.3,
+            "stride": 0.3, "swing_l": 0.36, "swing_r": 0.36, "knee": 0.5, "stance": 0.05, "bob": 0.018,
+            "curl_l": 0.4, "curl_r": 0.4, "talk": "both",
+        },
+    },
+    # N-009 Hilde Kaczmarek, 66, flea-market trader: moss-green knit, grey-brown skirt, dark tights, grey bob.
+    "hilde": {
+        "name": "N-009",
+        "macro": {"gender": 0.0, "age": 0.82, "muscle": 0.35, "weight": 0.7, "height": 0.4, "proportions": 0.5,
+                  "cupsize": 0.6, "firmness": 0.3},
+        "details": {
+            "head/head-age-incr": 0.6,
+            "head/head-fat-incr": 0.3,
+            "nose/nose-scale-depth-incr": 0.2,
+            "nose/nose-point-width-incr": 0.3,
+            "cheek/l-cheek-volume-incr": 0.35,
+            "cheek/r-cheek-volume-incr": 0.35,
+            "chin/chin-jaw-drop-incr": 0.2,
+            "neck/neck-double-incr": 0.3,
+        },
+        "skin": ("old_caucasian_female", "calm_skin"),
+        "clothes": [
+            ("suit", "clothes/female_elegantsuit01/female_elegantsuit01.mhclo", 0.9, "hilde_suit", 1024),
+            ("shoes", "clothes/shoes04/shoes04.mhclo", 0.5, "black_shoes", 512),
+        ],
+        "hair": ("hair/ponytail01/ponytail01.mhclo", "grey_hair_clean", 0.65),
+        "eyebrows": ("eyebrows/eyebrow007/eyebrow007.mhclo", "light_brows"),
+        "eyelashes": "eyelashes/eyelashes04/eyelashes04.mhclo",
+        "eyes": "grey",
+        "headwear": None,
+        "props": ["tights"],
+        "pose": {
+            "stoop": 0.06, "arm_down": 0.88, "fore_l": -0.15, "fore_r": -0.15, "hand_in": 0.0, "hand_out": 0.25,
+            "stride": 0.22, "swing_l": 0.22, "swing_r": 0.22, "knee": 0.42, "stance": 0.02, "bob": 0.012,
+            "curl_l": 0.45, "curl_r": 0.45, "talk": "r",
+        },
+    },
 }
 
 # Dezent facial expressions as shape keys (MakeHuman expression units, value = weight). "blink" closes the eyes.
@@ -723,7 +785,17 @@ def jonas_suit(px):
 
 
 def marlene_suit(px):
-    """Elegant suit: the skirt occupies the upper half of the texture (camel), the striped blouse becomes a plum knit."""
+    """Elegant suit: camel skirt, the striped blouse becomes a plum knit."""
+    return _elegant(px, (0.69, 0.55, 0.37), (0.55, 0.28, 0.42))
+
+
+def hilde_suit(px):
+    """Elegant suit: grey-brown skirt, moss-green knit."""
+    return _elegant(px, (0.46, 0.42, 0.38), (0.33, 0.42, 0.30))
+
+
+def _elegant(px, skirt_colour, knit_colour):
+    """Elegant suit: the skirt (plain grey-green cloth) gets `skirt_colour`, the striped blouse a soft knit colour."""
     np = _np()
     h, w = px.shape[:2]
     # The skirt and the texture background are a plain grey-green; the blouse is striped (red, dark, light).
@@ -731,12 +803,33 @@ def marlene_suit(px):
     mn = np.minimum(np.minimum(px[..., 0], px[..., 1]), px[..., 2])
     g_ge_r = px[..., 1] >= px[..., 0] - 0.005
     skirt = (mx - mn < 0.10) & (_lum(px) > 0.16) & (_lum(px) < 0.5) & g_ge_r
-    px = _paint(px, skirt, (0.69, 0.55, 0.37), 1.9, 0.1)
+    px = _paint(px, skirt, skirt_colour, 1.9, 0.1)
     # Soft plum knit: stripes reduced to a faint rib.
     v = np.clip(0.78 + (_lum(px) - 0.25) * 0.4, 0, 1)
-    for c, k in enumerate((0.55, 0.28, 0.42)):
+    for c, k in enumerate(knit_colour):
         px[..., c] = np.where(~skirt, v * k, px[..., c])
     return _clear_rect(px, (0.0, 0.035), (0.72, 0.9))
+
+
+def ole_suit(px):
+    """Suit 03 as a club jersey: dark shirt cloth -> royal blue, red and light stripes -> gold; jeans stay."""
+    np = _np()
+    r, g, b = px[..., 0], px[..., 1], px[..., 2]
+    lum = _lum(px)
+    denim = (b > r + 0.06) & (b > g + 0.02)
+    stripe = (~denim) & ((r > g + 0.15) | (lum > 0.45))
+    cloth = (~denim) & (~stripe)
+    px = _paint(px, stripe, (0.95, 0.76, 0.19), 0.6, 0.55)
+    px = _paint(px, cloth, (0.12, 0.31, 0.66), 1.2, 0.45)
+    return _clear_rect(px, (0.0, 0.035), (0.8, 1.0))
+
+
+def black_shoes(px):
+    return _paint(px, _lum(px) >= 0, (0.12, 0.11, 0.11), 1.4, 0.03)
+
+
+def dark_blond_hair(px):
+    return _clear_rect(_hair(px, (0.62, 0.50, 0.33), 1.3, 0.1), (0.0, 0.07), (0.7, 1.0), alpha=True)
 
 
 def brown_boots(px):
@@ -755,6 +848,7 @@ FIXES = {
     for f in (
         calm_skin, warm_skin, calm_iris, grey_hair, grey_hair_clean, dark_hair, dark_brows, brown_hair, brown_brows,
         silver_blonde, light_brows, guenter_suit, derya_suit, jonas_suit, marlene_suit, brown_boots, plum_shoes,
+        hilde_suit, ole_suit, black_shoes, dark_blond_hair,
     )
 }
 
@@ -1120,6 +1214,41 @@ def build_toolbelt(rig, suit, full):
     return belt
 
 
+def build_scarf(rig, body, full):
+    """Club scarf (fictional SV Grubenlicht 09, blue and gold) around the neck with one hanging end."""
+    import bmesh
+
+    neck = joint(rig, "neck_01")
+    co = [v.co for v in body.data.vertices if abs(v.co.z - (neck.z - 0.01)) < 0.012]
+    radius = 0.06
+    if co:
+        radius = sum(math.hypot(c.x - neck.x, c.y - neck.y) for c in co) / len(co)
+    ring = []
+    for k in range(24):
+        a = 2 * math.pi * k / 24
+        ring.append(Vector((neck.x + math.cos(a) * (radius + 0.014), neck.y + math.sin(a) * (radius + 0.014), neck.z - 0.03 + 0.012 * math.sin(a))))
+    parts = []
+    for name, colour, pts, closed in (
+        ("scarf", (0.10, 0.22, 0.50), ring, True),
+    ):
+        bm = bmesh.new()
+        tube(bm, pts, 0.016, closed=closed, sides=8)
+        obj = new_object(name, bm)
+        obj.data.materials.append(material(name, colour, 0.9))
+        parts.append(obj)
+    # Hanging end on the chest, gold-blue blocks.
+    front = Vector((neck.x + 0.035, neck.y - radius - 0.03, neck.z - 0.03))
+    for i in range(5):
+        bm = bmesh.new()
+        box(bm, front + Vector((0.0, -0.004 * i, -0.05 - 0.07 * i)), (0.075, 0.012, 0.07))
+        obj = new_object(f"scarf_end_{i}", bm, smooth=False)
+        obj.data.materials.append(material(f"scarf_end_{i}", (0.95, 0.76, 0.19) if i % 2 else (0.12, 0.31, 0.66), 0.9))
+        parts.append(obj)
+    for obj in parts:
+        rigid_part(obj, rig, "spine_03")
+    return parts
+
+
 def build_glasses(rig, eyes):
     """Red-framed glasses: two rounded frames in front of the eyes, a bridge and temples back to the ears."""
     import bmesh
@@ -1424,6 +1553,8 @@ def main():
             build_courier_bag(rig, suit, full)
         elif prop == "toolbelt":
             build_toolbelt(rig, suit, full)
+        elif prop == "scarf":
+            build_scarf(rig, body, full)
         elif prop == "glasses":
             build_glasses(rig, objects["eyes"][0])
         elif prop == "shopping_bag":

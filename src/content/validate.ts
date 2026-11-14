@@ -1,3 +1,4 @@
+import { validateWorldContent } from './validateWorld';
 import { PLAYER_RADIUS } from '../game/constants';
 import {
   placementCollides,
@@ -278,6 +279,7 @@ export function validateContent(pack: ContentPack): string[] {
   }
 
   errors.push(...validateStock(pack));
+  errors.push(...validateWorldContent(pack));
 
   // Walkways: only meaningful when the geometry above is sound.
   if (errors.length === 0) checkReachability(pack, interior, errors);

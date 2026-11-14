@@ -1,5 +1,6 @@
 import { dateOfDay, type Season } from '../game/date';
 import type { Game } from '../game/game';
+import { formatClock } from './format';
 import { texts } from './texts';
 
 /** One day row of the calendar panel. */
@@ -11,6 +12,8 @@ export interface CalendarDayView {
   /** "Montag, 7. Juni 2027" */
   longLabel: string;
   season: Season;
+  /** Names of the events on this day (as the player can know them today). */
+  events: string[];
   weather: {
     symbol: string;
     /** "Sonnig" for the exact days, "eher nass" for the tendency days. */
@@ -32,6 +35,25 @@ export interface CalendarView {
   days: CalendarDayView[];
   /** "☂ Leichter Regen · 14 °C (10–19 °C)" */
   weatherNow: string;
+  /** Events relevant now: running, announced, planned (60 days), finished yesterday. */
+  events: CalendarEventView[];
+}
+
+export interface CalendarEventView {
+  id: string;
+  name: string;
+  description: string;
+  status: 'planned' | 'announced' | 'active' | 'completed';
+  statusLabel: string;
+  /** "Sa 12.6." or "Sa 14.8. – So 15.8.", plus hours when the event has them. */
+  when: string;
+  /** "Mehr Nachfrage: Bier, Kaltgetränke" */
+  demand: string;
+}
+
+function shortDate(day: number): string {
+  const d = dateOfDay(day);
+  return texts.calendar.dayLabel(texts.weekdayShort[d.weekday], texts.dateShort(d.dayOfMonth, d.month));
 }
 
 /** Short HUD text: "7. Juni 2027 · Sommer". */
@@ -52,7 +74,7 @@ function longLabel(day: number): string {
 }
 
 /** Pure: reads the state, changes nothing (opening the panel never changes the game). */
-export function buildCalendarView(game: Pick<Game, 'state' | 'content' | 'weather'>): CalendarView {
+export function buildCalendarView(game: Pick<Game, 'state' | 'content' | 'weather' | 'events'>): CalendarView {
   const today = game.state.calendar.day;
   const d = dateOfDay(today);
   const days: CalendarDayView[] = [];
@@ -77,9 +99,27 @@ export function buildCalendarView(game: Pick<Game, 'state' | 'content' | 'weathe
       label: texts.calendar.dayLabel(texts.weekdayShort[di.weekday], texts.dateShort(di.dayOfMonth, di.month)),
       longLabel: longLabel(day),
       season: di.season,
+      events: game.events.onDay(day).map((e) => e.name),
     });
   }
   const env = game.weather.environment();
   const weatherNow = `${texts.weather.symbols[env.weather.condition]} ${texts.weather.conditions[env.weather.condition]} · ${texts.weather.now(env.temperature)} (${texts.weather.range(env.weather.low, env.weather.high)})`;
-  return { todayLabel: longLabel(today), seasonLabel: texts.seasonNames[d.season], season: d.season, days, weatherNow };
+  const order = { active: 0, announced: 1, planned: 2, completed: 3 } as const;
+  const events: CalendarEventView[] = game.events
+    .current()
+    .slice()
+    .sort((a, b) => order[a.status] - order[b.status] || a.occurrence.startDay - b.occurrence.startDay)
+    .map((e) => {
+      const hours = e.def.hours ? ` · ${texts.calendar.hours(formatClock(e.def.hours.from), formatClock(e.def.hours.to))}` : '';
+      return {
+        id: e.def.id,
+        name: e.def.name,
+        description: e.def.description,
+        status: e.status,
+        statusLabel: texts.calendar.status[e.status],
+        when: texts.calendar.when(shortDate(e.occurrence.startDay), shortDate(e.occurrence.endDay)) + hours,
+        demand: texts.calendar.demand(e.def.productGroups.join(', ')),
+      };
+    });
+  return { todayLabel: longLabel(today), seasonLabel: texts.seasonNames[d.season], season: d.season, days, weatherNow, events };
 }

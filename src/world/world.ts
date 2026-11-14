@@ -31,6 +31,7 @@ import { createPlayerFigure } from './playerFigure';
 import { createRenderer } from './renderer';
 import { createAtmosphereView, type AtmosphereInfo } from './views/atmosphereView';
 import type { EffectsLevel } from './views/precipitation';
+import { createEventDecorView } from './views/eventDecorView';
 import { createKioskView } from './views/kioskView';
 import { createMarkerView } from './views/markerView';
 import { createResidentView, type ResidentInfo } from './views/residentView';
@@ -51,7 +52,7 @@ export interface World {
   /** Weather particles: full, reduced or off (lighting and wet ground stay; the simulation is unaffected). */
   setWeatherEffects(level: EffectsLevel): void;
   /** Debug accessor: season, weather and particles the atmosphere shows. */
-  getAtmosphere(): AtmosphereInfo;
+  getAtmosphere(): AtmosphereInfo & { decorations: string[] };
   /** Debug accessor: renderer statistics of the last frame (draw calls, triangles) and the scene's light count. */
   getRenderStats(): { calls: number; triangles: number; geometries: number; textures: number; lights: number };
   /** Debug accessor: pose of a placement read from the actual scene object (null for unknown ids). */
@@ -185,6 +186,8 @@ export function createWorld(game: Game, container: HTMLElement): World {
   });
   const atmosphere = createAtmosphereView(game, { scene, fog, sun, hemisphere, vegetation, paved });
   scene.add(atmosphere.root);
+  const decor = createEventDecorView(game, layout.kiosk);
+  scene.add(decor.root);
 
   const kioskView = createKioskView(game, kioskRoot);
   const occlusion = createOcclusion({ parts: kioskView.parts, kiosk: layout.kiosk });
@@ -299,6 +302,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
 
       kioskView.update(needsSnap ? 1e3 : dt);
       atmosphere.update(needsSnap ? 1e3 : dt, pose);
+      decor.update();
       markers.update(elapsed);
       scene.updateMatrixWorld(true);
       occlusion.update(dt, followCamera.camera, pose, needsSnap);
@@ -319,7 +323,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
       atmosphere.setEffects(level);
     },
 
-    getAtmosphere: () => atmosphere.info(),
+    getAtmosphere: () => ({ ...atmosphere.info(), decorations: decor.visible() }),
 
     getRenderStats() {
       let lights = 0;
@@ -384,6 +388,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
       offGatesReplaced();
       residents.dispose();
       atmosphere.dispose();
+      decor.dispose();
       input.dispose();
       kioskView.dispose();
       markers.dispose();

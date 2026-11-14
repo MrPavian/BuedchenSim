@@ -20,6 +20,8 @@ describe('evaluateCondition', () => {
       season: 'summer' as const,
       weather: { day: 1, condition: 'light-rain' as const, low: 12, high: 21, anomaly: 0 },
       temperature: 18.5,
+      eventsToday: ['event.a', 'event.b'],
+      activeEvents: ['event.a'],
     };
     const withEnv: ConditionContext = { ...base, env };
     expect(yes({ type: 'weather', conditions: ['light-rain', 'heavy-rain'] }, withEnv)).toBe(true);
@@ -29,6 +31,10 @@ describe('evaluateCondition', () => {
     expect(yes({ type: 'temperatureBelow', value: 19 }, withEnv)).toBe(true);
     expect(yes({ type: 'season', seasons: ['summer'] }, withEnv)).toBe(true);
     expect(yes({ type: 'season', seasons: ['winter'] }, withEnv)).toBe(false);
+    expect(yes({ type: 'eventActive', eventId: 'event.a' }, withEnv)).toBe(true);
+    expect(yes({ type: 'eventActive', eventId: 'event.b' }, withEnv)).toBe(false);
+    expect(yes({ type: 'eventToday', eventId: 'event.b' }, withEnv)).toBe(true);
+    expect(yes({ type: 'eventToday', eventId: 'event.c' }, withEnv)).toBe(false);
     expect(yes({ type: 'weather', conditions: ['light-rain'] }, base)).toBe(false);
     expect(yes({ type: 'temperatureBelow', value: 100 }, base)).toBe(false);
   });

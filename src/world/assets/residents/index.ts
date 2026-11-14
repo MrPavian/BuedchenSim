@@ -18,6 +18,9 @@ const residentFactories: Record<string, ResidentFactory> = {
   'N-003': createDeryaN003,
   'N-006': createJonasN006,
   'N-007': createMarleneN007,
+  // Event guests (Auftrag 05): their GLB figures replace this neutral fallback once loaded.
+  'N-008': createNeutralResident,
+  'N-009': createNeutralResident,
 };
 
 const warned = new Set<string>();

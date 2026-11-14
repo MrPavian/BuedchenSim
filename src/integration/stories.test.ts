@@ -594,12 +594,15 @@ describe('routines over a simulated week with the real pack', () => {
 
   it('every resident shows up, nobody overlaps or stands in a collider, everyone is gone at 22:00', () => {
     const { appeared } = simulateWeek({});
-    expect([...appeared].sort()).toEqual(['npc.derya', 'npc.guenter', 'npc.jonas', 'npc.marlene']);
+    const residents = ['npc.derya', 'npc.guenter', 'npc.jonas', 'npc.marlene'];
+    expect(residents.every((id) => appeared.has(id))).toBe(true);
+    // Besides the residents only the event guests (the first home game is on Saturday of the first week).
+    expect([...appeared].filter((id) => !residents.includes(id)).every((id) => id === 'npc.ole' || id === 'npc.hilde')).toBe(true);
   });
 
   it('with the bench built, residents use the bench place', () => {
     const { appeared, places } = simulateWeek({ 'yard.bench': true });
-    expect(appeared.size).toBe(4);
+    expect(['npc.derya', 'npc.guenter', 'npc.jonas', 'npc.marlene'].every((id) => appeared.has(id))).toBe(true);
     expect(places.has('place.yard-bench')).toBe(true);
     expect(places.has('place.kiosk-window')).toBe(true);
     expect(places.has('place.corner')).toBe(true);

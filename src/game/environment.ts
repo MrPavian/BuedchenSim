@@ -1,4 +1,5 @@
 import { dateOfDay, type Season } from './date';
+import { eventsTodayAt } from './eventCalendar';
 import type { DeepReadonly, GameState } from './state';
 import type { ContentPack } from './types';
 import { temperatureAt, weatherOfDay, type Climate, type DayWeather } from './weather';
@@ -14,6 +15,9 @@ export interface Environment {
   weather: DayWeather;
   /** °C at the current minute. */
   temperature: number;
+  /** Events taking place today (any status), and the ids active right now. */
+  eventsToday: readonly string[];
+  activeEvents: readonly string[];
 }
 
 /** A temperate fallback climate for content packs without one (tests, tools). */
@@ -27,8 +31,27 @@ export function climateOf(content: Pick<ContentPack, 'climate'>): Climate {
 }
 
 /** Pure; cheap after the first call per day (the weather chain is memoised). */
-export function environmentOf(content: Pick<ContentPack, 'climate'>, state: DeepReadonly<Pick<GameState, 'calendar' | 'world'>>): Environment {
+export function environmentOf(
+  content: Pick<ContentPack, 'climate' | 'events'>,
+  state: DeepReadonly<Pick<GameState, 'calendar' | 'world'>>,
+): Environment {
   const { day, minute } = state.calendar;
-  const weather = weatherOfDay(state.world.seed, climateOf(content), day);
-  return { day, season: dateOfDay(day).season, weather, temperature: temperatureAt(weather, minute) };
+  const climate = climateOf(content);
+  const seed = state.world.seed;
+  const weather = weatherOfDay(seed, climate, day);
+  // Cached per content, seed, day and whole minute: residents ask many times per frame.
+  const key = `${seed}|${day}|${Math.floor(minute)}`;
+  const cached = cache.get(content);
+  if (cached && cached.key === key) return cached.env;
+  const eventsToday: string[] = [];
+  const activeEvents: string[] = [];
+  for (const e of eventsTodayAt(content.events ?? [], day, minute, seed, climate)) {
+    eventsToday.push(e.def.id);
+    if (e.status === 'active') activeEvents.push(e.def.id);
+  }
+  const env: Environment = { day, season: dateOfDay(day).season, weather, temperature: temperatureAt(weather, minute), eventsToday, activeEvents };
+  cache.set(content, { key, env });
+  return env;
 }
+
+const cache = new WeakMap<object, { key: string; env: Environment }>();

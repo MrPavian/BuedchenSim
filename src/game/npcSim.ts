@@ -257,6 +257,12 @@ export function createNpcSim(ctx: DomainContext): NpcSim {
     if (spot) npc.heading = spot.heading;
     setStatus(id, npc, 'at_place');
     npc.lastVisit = { day: state.calendar.day, minute: Math.floor(state.calendar.minute) };
+    // Visiting while an event is on leaves a memory (once per event kind; Auftrag 05, 5.6).
+    const env = ctx.env();
+    for (const eventId of env.activeEvents) {
+      const memory = (content.events ?? []).find((e) => e.id === eventId)?.memory;
+      if (memory) addMemory(ctx, id, memory);
+    }
     const entry = entryOf(def, npc.routineId);
     if (entry?.activity === 'shop' && place.kind === 'kiosk-window') {
       npc.waitingSince = absoluteMinute(state.calendar.day, state.calendar.minute);

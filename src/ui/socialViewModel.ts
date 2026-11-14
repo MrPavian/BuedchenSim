@@ -204,5 +204,6 @@ export function tierChangeNotice(name: string, from: RelationshipTier, to: Relat
 
 /** Memories that are routine bookkeeping (a sale) and not worth a notice. */
 export function isMemorableMemory(memoryId: string): boolean {
-  return !memoryId.startsWith('served:');
+  // Engine memories (served wishes, event visits) are not announced as a notice.
+  return !memoryId.startsWith('served:') && !memoryId.startsWith('erlebt:');
 }

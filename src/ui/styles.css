@@ -976,3 +976,31 @@ body {
 .ui-calendar-settings [aria-pressed='true'] {
   outline: 1px solid var(--ui-accent);
 }
+
+.ui-calendar-events {
+  font-size: 13px;
+  color: var(--ui-accent);
+}
+
+.ui-calendar-event {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  margin-bottom: 6px;
+}
+
+.ui-calendar-event p {
+  margin: 4px 0 0;
+}
+
+.ui-calendar-status {
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ui-calendar-event[data-status='active'] .ui-calendar-status {
+  background: var(--ui-accent);
+  color: #1d1a16;
+}

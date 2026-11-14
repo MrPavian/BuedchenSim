@@ -3,6 +3,7 @@ import { createCalendarApi, tickClock, type CalendarApi } from './clock';
 import type { DomainContext } from './domain';
 import { climateOf, environmentOf, type Environment } from './environment';
 import { forecast, weatherOfDay, type DayWeather, type ForecastDay } from './weather';
+import { eventStates, eventsOnDay, type EventDef, type EventState } from './eventCalendar';
 import { createEconomyApi, type CloseDayResult, type EconomyApi, type SaleRequest, type SaleResult } from './economy';
 import type { GameEvents } from './events';
 import { createDialogueEngine, type DialogueApi } from './dialogue';
@@ -44,6 +45,13 @@ export interface WeatherApi {
   onDay(day: number): DayWeather;
 }
 
+export interface EventApi {
+  /** Events relevant today (active, announced, planned within 60 days, completed yesterday) with their status. */
+  current(): EventState[];
+  /** Events on a day as the player can know them today (a heat wave only within the exact forecast). */
+  onDay(day: number): EventDef[];
+}
+
 export interface Game {
   readonly state: DeepReadonly<GameState>;
   readonly content: ContentPack;
@@ -59,6 +67,8 @@ export interface Game {
   readonly dialogue: DialogueApi;
   /** Derived weather (never saved; pure functions of seed and day): today, the 7-day forecast, any day. */
   readonly weather: WeatherApi;
+  /** Neighbourhood events (derived, never saved). */
+  readonly events: EventApi;
   /**
    * Advances the day clock by real seconds (called from the fixed-step update of the loop) and the residents with it.
    * Ignores invalid dt; clock and residents stand still while paused; the clock also stands still outside phase 'open'.
@@ -193,6 +203,10 @@ export function createGame(content: ContentPack, initialState?: GameState, seed?
       environment: () => ctx.env(),
       forecast: () => forecast(state.world.seed, climateOf(content), state.calendar.day),
       onDay: (day) => weatherOfDay(state.world.seed, climateOf(content), day),
+    },
+    events: {
+      current: () => eventStates(content.events ?? [], state.calendar.day, state.calendar.minute, state.world.seed, climateOf(content)),
+      onDay: (day) => eventsOnDay(content.events ?? [], day, state.calendar.day, state.world.seed, climateOf(content)),
     },
     tick(dtSeconds) {
       tickClock(ctx, dtSeconds);

@@ -23,8 +23,8 @@ function stats(root: Object3D): { meshes: number; triangles: number; materials: 
 }
 
 describe('resident figures', () => {
-  it('registers the four residents', () => {
-    expect(residentAssetIds().sort()).toEqual(IDS);
+  it('registers the four residents and the two event guests', () => {
+    expect(residentAssetIds().sort()).toEqual([...IDS, 'N-008', 'N-009'].sort());
     for (const id of IDS) expect(hasResidentFactory(id)).toBe(true);
   });
 

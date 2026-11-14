@@ -60,6 +60,10 @@ export type Condition =
   | { type: 'temperatureAtLeast'; value: number }
   | { type: 'temperatureBelow'; value: number }
   | { type: 'season'; seasons: Season[] }
+  /** The event is active right now (within its hours). */
+  | { type: 'eventActive'; eventId: string }
+  /** The event takes place today (before, during or after its hours). */
+  | { type: 'eventToday'; eventId: string }
   | { type: 'not'; condition: Condition }
   | { type: 'any'; conditions: Condition[] };
 

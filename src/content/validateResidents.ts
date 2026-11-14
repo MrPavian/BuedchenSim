@@ -207,7 +207,9 @@ function validateCondition(c: Condition, where: string, refs: Refs, errors: stri
         return;
       }
       const engine = /^(served|declined|ignored):(.+)$/.exec(c.memoryId);
-      const engineOk = engine ? (npc.wishes ?? []).some((w) => w.id === engine[2]) : c.memoryId === 'kiosk-closed';
+      const engineOk = engine
+        ? (npc.wishes ?? []).some((w) => w.id === engine[2])
+        : c.memoryId === 'kiosk-closed' || (pack.events ?? []).some((e) => e.memory === c.memoryId);
       if (!engineOk && !refs.memoriesSet.has(`${c.npcId}|${c.memoryId}`)) {
         errors.push(`${where}: memory "${c.memoryId}" of "${c.npcId}" is never remembered`);
       }
@@ -224,6 +226,10 @@ function validateCondition(c: Condition, where: string, refs: Refs, errors: stri
     case 'temperatureAtLeast':
     case 'temperatureBelow':
       if (!Number.isFinite(c.value) || c.value < -30 || c.value > 50) errors.push(`${where}: ${c.type} needs a temperature in °C (-30..50)`);
+      return;
+    case 'eventActive':
+    case 'eventToday':
+      if (!(pack.events ?? []).some((e) => e.id === c.eventId)) errors.push(`${where}: unknown event "${c.eventId}"`);
       return;
     case 'season':
       if (c.seasons.length === 0 || c.seasons.some((x) => !['spring', 'summer', 'autumn', 'winter'].includes(x))) {

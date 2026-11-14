@@ -33,6 +33,12 @@ export const texts = {
     effects: 'Wettereffekte',
     effectsHint: 'Regen und Schnee in der 3D-Welt (wirkt nur auf die Darstellung)',
     effectsLevels: { full: 'Voll', reduced: 'Reduziert', off: 'Aus' },
+    events: 'Veranstaltungen',
+    noUpcoming: 'Keine Veranstaltungen in Sicht.',
+    status: { planned: 'Geplant', announced: 'Angekündigt', active: 'Läuft jetzt', completed: 'Vorbei' },
+    when: (from: string, to: string) => (from === to ? from : `${from} – ${to}`),
+    hours: (from: string, to: string) => `${from}–${to} Uhr`,
+    demand: (groups: string) => `Mehr Nachfrage: ${groups}`,
   },
   weather: {
     conditions: {

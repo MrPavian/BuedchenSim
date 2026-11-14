@@ -54,6 +54,10 @@ export function evaluateCondition(cond: DeepReadonly<Condition>, ctx: ConditionC
       return ctx.env !== undefined && ctx.env.temperature < cond.value;
     case 'season':
       return ctx.env !== undefined && cond.seasons.includes(ctx.env.season);
+    case 'eventActive':
+      return ctx.env !== undefined && ctx.env.activeEvents.includes(cond.eventId);
+    case 'eventToday':
+      return ctx.env !== undefined && ctx.env.eventsToday.includes(cond.eventId);
     case 'not':
       return !evaluateCondition(cond.condition, ctx);
     case 'any':

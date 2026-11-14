@@ -15,6 +15,9 @@ export const RESIDENT_MODELS: Readonly<Record<string, { url: string; walkSpeed: 
   'N-003': { url: 'models/residents/n-003.glb', walkSpeed: 1.1 },
   'N-006': { url: 'models/residents/n-006.glb', walkSpeed: 1.3 },
   'N-007': { url: 'models/residents/n-007.glb', walkSpeed: 0.8 },
+  // Event guests (Auftrag 05): Ole (N-008) and Hilde (N-009).
+  'N-008': { url: 'models/residents/n-008.glb', walkSpeed: 1.0 },
+  'N-009': { url: 'models/residents/n-009.glb', walkSpeed: 0.75 },
 };
 
 const loads = new Map<string, Promise<GLTF>>();

@@ -35,10 +35,23 @@ export function createCalendarPanel(ctx: PanelContext): Panel {
           el('span', 'ui-calendar-range', d.weather.range),
           el('span', 'ui-muted ui-small', d.weather.reliability),
         );
-        row.append(label, weather, el('span', 'ui-muted ui-small', texts.calendar.noEvents));
+        const events = testId(el('span', d.events.length > 0 ? 'ui-calendar-events' : 'ui-muted ui-small'), `calendar-events-${d.day}`);
+        events.textContent = d.events.length > 0 ? d.events.join(' · ') : texts.calendar.noEvents;
+        row.append(label, weather, events);
         list.append(row);
       }
       body.append(list);
+
+      body.append(el('h3', 'ui-subtitle', texts.calendar.events));
+      if (view.events.length === 0) body.append(testId(el('p', 'ui-muted', texts.calendar.noUpcoming), 'calendar-no-events'));
+      for (const e of view.events) {
+        const entry = testId(el('div', 'ui-calendar-event'), `calendar-event-${e.id}`);
+        entry.dataset['status'] = e.status;
+        const head = el('div', 'ui-dialogue-head');
+        head.append(el('strong', undefined, e.name), el('span', 'ui-calendar-status', e.statusLabel), el('span', 'ui-muted ui-small', e.when));
+        entry.append(head, el('p', 'ui-muted ui-small', e.description), el('p', 'ui-small', e.demand));
+        body.append(entry);
+      }
 
       // Device setting: weather particles (never changes the simulation).
       const settings = testId(el('div', 'ui-calendar-settings'), 'calendar-effects');

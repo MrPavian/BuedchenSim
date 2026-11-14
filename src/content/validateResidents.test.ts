@@ -19,8 +19,12 @@ describe('validateResidents on the real pack', () => {
     expect(validateContent(ruhrgebietPack)).toEqual([]);
   });
 
-  it('has four residents, two stories and the flag-gated placements', () => {
-    expect(Object.keys(ruhrgebietPack.npcs).sort()).toEqual(['npc.derya', 'npc.guenter', 'npc.jonas', 'npc.marlene']);
+  it('has four residents, two event guests, two stories and the flag-gated placements', () => {
+    expect(Object.keys(ruhrgebietPack.npcs).sort()).toEqual(['npc.derya', 'npc.guenter', 'npc.hilde', 'npc.jonas', 'npc.marlene', 'npc.ole']);
+    // Guests only come on event days: every routine entry of theirs requires an active event.
+    for (const id of ['npc.ole', 'npc.hilde']) {
+      for (const r of ruhrgebietPack.npcs[id]!.routine) expect(r.when?.some((c) => c.type === 'eventActive'), `${id} ${r.id}`).toBe(true);
+    }
     expect(Object.keys(ruhrgebietPack.quests).sort()).toEqual(['quest.hof', 'quest.paket']);
     const gated = ruhrgebietPack.layout.placements.filter((p) => p.requiresFlag).map((p) => [p.id, p.requiresFlag]);
     expect(gated).toEqual([['placement.yard-bench', 'yard.bench'], ['placement.kiosk-photo', 'kiosk.photo']]);
