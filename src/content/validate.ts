@@ -7,6 +7,7 @@ import {
 } from '../game/placement';
 import { anyReachableInRect, anyReachableWithin, computeReachability } from '../game/reachability';
 import { rectContainsRect, rectsOverlap } from '../game/rects';
+import { validateResidents } from './validateResidents';
 import { validateStock } from './validateStock';
 import type { ContentPack, PlacementDef, QuarterTurn, Rect, WallOpening } from '../game/types';
 
@@ -280,6 +281,8 @@ export function validateContent(pack: ContentPack): string[] {
 
   // Walkways: only meaningful when the geometry above is sound.
   if (errors.length === 0) checkReachability(pack, interior, errors);
+  // Residents (nav, dialogues, quests) only make sense on sound geometry.
+  if (errors.length === 0) errors.push(...validateResidents(pack));
 
   return errors;
 }

@@ -109,6 +109,26 @@ export const assetCatalog: Record<string, AssetDef> = {
     scalable: false,
     defaultRole: 'returns',
   },
+  // Story consequences, placed only with their flag (see layout placements): bench in the yard, photo on the counter.
+  'E-004': {
+    assetId: 'E-004',
+    name: 'Hofbank',
+    category: 'furniture',
+    size: { width: 1.6, depth: 0.5, height: 0.85 },
+    collides: true,
+    allowedRotations: ALL,
+    scalable: false,
+  },
+  'I-013': {
+    assetId: 'I-013',
+    name: 'Gerahmtes Kioskfoto',
+    category: 'furniture',
+    size: { width: 0.32, depth: 0.1, height: 0.4 },
+    collides: false,
+    allowedRotations: ALL,
+    scalable: false,
+    requiresSupport: true,
+  },
   // Product assets P-001 ... (one unit each); see productAssets.ts.
   ...productAssets,
   // Ground assets: size is informational (the ground areas carry their own rects).

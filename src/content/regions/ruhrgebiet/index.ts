@@ -1,8 +1,11 @@
 import type { ContentPack } from '../../../game/types';
 import { assetCatalog } from '../../assets/catalog';
 import { ruhrgebietCustomerLines } from './customerLines';
+import { ruhrgebietDialogues } from './dialogues';
 import { ruhrgebietLayout } from './layout';
 import { ruhrgebietProducts } from './products';
+import { ruhrgebietQuests } from './quests';
+import { ruhrgebietResidents } from './residents';
 import { ruhrgebietStockSlots } from './slots';
 
 export const ruhrgebietPack: ContentPack = {
@@ -12,9 +15,8 @@ export const ruhrgebietPack: ContentPack = {
   layout: ruhrgebietLayout,
   products: ruhrgebietProducts,
   stockSlots: ruhrgebietStockSlots,
-  // Residents, dialogues and quests: stage 2 of phase 4.
-  npcs: {},
-  dialogues: {},
-  quests: {},
+  npcs: ruhrgebietResidents,
+  dialogues: ruhrgebietDialogues,
+  quests: ruhrgebietQuests,
   customerLines: ruhrgebietCustomerLines,
 };

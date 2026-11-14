@@ -1,4 +1,5 @@
 import type { RegionLayout } from '../../../game/types';
+import { ruhrgebietNav } from './nav';
 
 /** Layout of the first kiosk (K-001): placement list for the interior and yard, plus sidewalk, curb, street and yard. */
 export const ruhrgebietLayout: RegionLayout = {
@@ -44,6 +45,19 @@ export const ruhrgebietLayout: RegionLayout = {
     // Returns: one crate area at the east end of the counter inside, one outside against the west wall (visible from the camera).
     { id: 'placement.returns-inside', assetId: 'I-012', position: { x: 0.95, z: 1.5 }, rotation: 180, role: 'returns' },
     { id: 'placement.returns-yard', assetId: 'I-012', position: { x: -3.45, z: 0.6 }, rotation: 270, role: 'returns' },
+    // Story consequences (exist only with their flag). Yard bench north of the yard place (x -6.4..-4.8, z -0.75..-0.25), front toward
+    // the street; residents stand 0.65 m in front of it. Validation treats gated placements as present.
+    { id: 'placement.yard-bench', assetId: 'E-004', position: { x: -5.6, z: -0.5 }, rotation: 0, requiresFlag: 'yard.bench' },
+    // Framed photo on the customer-side half of the counter at the west end of the window (x -2.16..-1.84, z 1.70..1.80):
+    // clear of the register (x -0.425..0.025) and the counter stock slots (z <= 1.525), visible through the window.
+    {
+      id: 'placement.kiosk-photo',
+      assetId: 'I-013',
+      position: { x: -2.0, z: 1.75 },
+      rotation: 0,
+      on: 'placement.counter',
+      requiresFlag: 'kiosk.photo',
+    },
   ],
   ground: [
     { id: 'ground.sidewalk', assetId: 'E-001', kind: 'sidewalk', rect: { minX: -12, maxX: 12, minZ: 2, maxZ: 5 } },
@@ -85,6 +99,5 @@ export const ruhrgebietLayout: RegionLayout = {
       marker: { position: { x: 1.75, z: -1.0 }, height: 0.03, radius: 0.35 },
     },
   ],
-  // Residents' walking graph: filled by the residents content (phase 4, stage 2).
-  nav: { waypoints: [], edges: [], places: [] },
+  nav: ruhrgebietNav,
 };

@@ -63,7 +63,7 @@ describe('content <-> world', () => {
 
   it('every placed asset has a dedicated factory (no placeholder fallback)', () => {
     const ids = [...new Set(layout.placements.map((p) => p.assetId))].sort();
-    expect(ids).toEqual(['I-001', 'I-002', 'I-003', 'I-004', 'I-005', 'I-006', 'I-007', 'I-011', 'I-012']);
+    expect(ids).toEqual(['E-004', 'I-001', 'I-002', 'I-003', 'I-004', 'I-005', 'I-006', 'I-007', 'I-011', 'I-012', 'I-013']);
     for (const id of ids) expect(hasFurnitureFactory(id), id).toBe(true);
   });
 
@@ -134,5 +134,21 @@ describe('content <-> world', () => {
     const placementRects = placementColliders(layout, assets).map((c) => c.rect);
     expect(world.open).toEqual([...kioskColliders(layout.kiosk, true), ...placementRects]);
     expect(world.closed).toEqual([...kioskColliders(layout.kiosk, false), ...placementRects]);
+  });
+});
+
+describe('flag-gated story props of the real pack', () => {
+  it('E-004 and I-013 build to their catalog sizes (+-2 cm) and are gated in the layout', () => {
+    const materials = createMaterials();
+    for (const placement of layout.placements.filter((p) => p.requiresFlag !== undefined)) {
+      const asset = assets[placement.assetId];
+      if (!asset) throw new Error(placement.assetId);
+      const object = createFurniture(asset, materials);
+      const size = new Box3().setFromObject(object).getSize(new Vector3());
+      expect(Math.abs(size.x - asset.size.width), placement.id).toBeLessThanOrEqual(0.02);
+      expect(Math.abs(size.y - asset.size.height), placement.id).toBeLessThanOrEqual(0.02);
+      expect(Math.abs(size.z - asset.size.depth), placement.id).toBeLessThanOrEqual(0.02);
+    }
+    expect(layout.placements.filter((p) => p.requiresFlag !== undefined).map((p) => p.assetId).sort()).toEqual(['E-004', 'I-013']);
   });
 });
