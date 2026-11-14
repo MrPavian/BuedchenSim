@@ -53,6 +53,15 @@ export const furniturePalette = {
   crateGreen: 0x4f7d5a,
   crateSand: 0xc58a3d,
   bottleGlass: 0x7a5a36,
+  benchOak: 0x9a7a52,
+  benchPine: 0xb39467,
+  benchBrown: 0x7d6444,
+  benchGrey: 0x8a7f70,
+  benchFrame: 0x4a4038,
+  photoFrame: 0x4a3626,
+  photoMat: 0xe9e0cc,
+  photoStand: 0x6a5039,
+  photoBlank: 0xb9a98a,
 } as const;
 
 /** Materials shared by all furniture factories (created once per `Materials` set, no textures). */
@@ -108,6 +117,16 @@ export interface FurnitureMaterials {
   crateGreen: MeshLambertMaterial;
   crateSand: MeshLambertMaterial;
   bottleGlass: MeshLambertMaterial;
+  benchOak: MeshLambertMaterial;
+  benchPine: MeshLambertMaterial;
+  benchBrown: MeshLambertMaterial;
+  benchGrey: MeshLambertMaterial;
+  benchFrame: MeshLambertMaterial;
+  photoFrame: MeshLambertMaterial;
+  photoMat: MeshLambertMaterial;
+  photoStand: MeshLambertMaterial;
+  /** Flat stand-in for the photo picture when no canvas exists (node tests). */
+  photoBlank: MeshLambertMaterial;
 }
 
 const cache = new WeakMap<Materials, FurnitureMaterials>();
@@ -170,6 +189,15 @@ export function getFurnitureMaterials(base: Materials): FurnitureMaterials {
     crateGreen: lambert(p.crateGreen),
     crateSand: lambert(p.crateSand),
     bottleGlass: lambert(p.bottleGlass),
+    benchOak: lambert(p.benchOak),
+    benchPine: lambert(p.benchPine),
+    benchBrown: lambert(p.benchBrown),
+    benchGrey: lambert(p.benchGrey),
+    benchFrame: lambert(p.benchFrame),
+    photoFrame: lambert(p.photoFrame),
+    photoMat: lambert(p.photoMat),
+    photoStand: lambert(p.photoStand),
+    photoBlank: lambert(p.photoBlank),
   };
   cache.set(base, out);
   return out;

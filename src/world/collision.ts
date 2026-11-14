@@ -60,9 +60,53 @@ export function resolvePosition(position: Vec2, radius: number, obstacles: reado
   return p;
 }
 
+/** A movable obstacle (a resident), centre and radius in metres. */
+export interface Circle {
+  x: number;
+  z: number;
+  r: number;
+}
+
+/**
+ * Keeps a circle that moves from `from` to `to` out of other circles (residents). The player is only ever
+ * stopped by a resident, never moved by one: the distance to a circle is kept at no less than
+ * min(radius + circle.r, the distance before the move). So a resident that walked into the player does not push
+ * him away (he may leave but not press deeper), and idle players (`to === from`) are never touched.
+ */
+export function constrainToCircles(from: Vec2, to: Vec2, radius: number, circles: readonly Circle[]): Vec2 {
+  if (circles.length === 0) return to;
+  let x = to.x;
+  let z = to.z;
+  let changed = false;
+  for (let pass = 0; pass < 3; pass += 1) {
+    let moved = false;
+    for (const c of circles) {
+      const before = Math.hypot(from.x - c.x, from.z - c.z);
+      const allowed = Math.min(radius + c.r, before);
+      let dx = x - c.x;
+      let dz = z - c.z;
+      const dist = Math.hypot(dx, dz);
+      if (dist >= allowed - EPSILON) continue;
+      if (dist < 1e-6) {
+        // Exactly on the centre: leave along the way we came from (or +X).
+        dx = from.x - c.x || 1;
+        dz = from.z - c.z;
+      }
+      const length = Math.hypot(dx, dz);
+      x = c.x + (dx / length) * allowed;
+      z = c.z + (dz / length) * allowed;
+      moved = true;
+      changed = true;
+    }
+    if (!moved) break;
+  }
+  return changed ? { x, z } : to;
+}
+
 /**
  * Moves a circle by `delta`, sliding along obstacles. The result always lies within
- * `bounds` (the circle centre, same convention as `walkBounds`).
+ * `bounds` (the circle centre, same convention as `walkBounds`). Optional `circles` (residents) block the
+ * movement and are slid around like walls; see `constrainToCircles`.
  */
 export function moveCircle(
   start: Vec2,
@@ -70,6 +114,7 @@ export function moveCircle(
   radius: number,
   obstacles: readonly Rect[],
   bounds: Rect,
+  circles: readonly Circle[] = [],
 ): Vec2 {
   const length = Math.hypot(delta.x, delta.z);
   const steps = Math.max(1, Math.ceil(length / (radius * 0.5)));
@@ -77,7 +122,13 @@ export function moveCircle(
   const sz = delta.z / steps;
   let p = resolvePosition(start, radius, obstacles, bounds);
   for (let i = 0; i < steps; i += 1) {
-    p = resolvePosition({ x: p.x + sx, z: p.z + sz }, radius, obstacles, bounds);
+    let next = resolvePosition({ x: p.x + sx, z: p.z + sz }, radius, obstacles, bounds);
+    if (circles.length > 0) {
+      const slid = constrainToCircles(p, next, radius, circles);
+      // The push-out may have shoved the circle into a wall: walls win.
+      next = slid === next ? next : resolvePosition(slid, radius, obstacles, bounds);
+    }
+    p = next;
   }
   return p;
 }

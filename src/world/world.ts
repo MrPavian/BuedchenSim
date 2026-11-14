@@ -24,14 +24,17 @@ import { createInput } from './input';
 import { buildWorldColliders } from './colliders';
 import { createMaterials, palette } from './materials';
 import { createOcclusion } from './occlusion';
+import { createPlacementGates } from './placementGates';
 import { shouldShowSilhouette } from './occlusionRules';
 import { createPlayerFigure } from './playerFigure';
 import { createRenderer } from './renderer';
 import { createKioskView } from './views/kioskView';
 import { createMarkerView } from './views/markerView';
+import { createResidentView, type ResidentInfo } from './views/residentView';
 import { createStockView, type StockInfo } from './views/stockView';
 
 export { WebGLUnavailableError } from './renderer';
+export type { ResidentInfo } from './views/residentView';
 
 export interface World {
   /** Fixed simulation step (input, movement, collision). */
@@ -64,6 +67,14 @@ export interface World {
    * the first unit read from the instanced mesh) plus totals. Lets a test verify that the 3D stock follows the data.
    */
   getStockInfo(): StockInfo;
+  /**
+   * Debug accessor: the residents as drawn. `position`/`heading` are the displayed (interpolated) pose,
+   * `animation` the current animation, `screen` the projected head (CSS pixels relative to the canvas; null while
+   * hidden or off screen).
+   */
+  getResidentInfo(): ResidentInfo[];
+  /** Debug accessor: every flag-gated placement (`requiresFlag`) and whether its object is currently drawn. */
+  getGatedPlacements(): Array<{ id: string; visible: boolean }>;
 }
 
 export interface KioskVisibility {
@@ -148,12 +159,23 @@ export function createWorld(game: Game, container: HTMLElement): World {
   scene.add(markers.root);
   const stock = createStockView(game, materials);
   scene.add(stock.root);
+  const residents = createResidentView(game, materials);
+  scene.add(residents.root);
 
   const figure = createPlayerFigure(materials);
   const silhouetteCamera = new Vector3();
   scene.add(figure.root);
 
-  const { closed: closedColliders, open: openColliders } = buildWorldColliders(layout, game.content.assets);
+  // Flag-gated placements (e.g. a bench that exists after a story decision) are drawn and collide only while
+  // their flag is set; the player's collider set is rebuilt whenever the story changes or a state is loaded.
+  let { closed: closedColliders, open: openColliders } = buildWorldColliders(layout, game.content.assets, game.state.story.flags);
+  const gates = createPlacementGates(layout, game.content.assets, placementObjects);
+  const applyGates = (): void => {
+    ({ closed: closedColliders, open: openColliders } = gates.apply(game.state.story.flags));
+  };
+  applyGates();
+  const offStory = game.signals.on('story.changed', applyGates);
+  const offGatesReplaced = game.signals.on('game.state.replaced', applyGates);
 
   const followCamera = createFollowCamera(1);
   const input = createInput(() => {
@@ -208,11 +230,12 @@ export function createWorld(game: Game, container: HTMLElement): World {
       simSteps += 1;
       simSeconds += dt;
       const colliders = game.state.kiosk.doorOpen ? openColliders : closedColliders;
+      residents.step(dt);
       const axis = input.axis();
       prev = cur;
       let next: Vec2;
       if (axis.x !== 0 || axis.z !== 0) {
-        next = moveCircle(cur, { x: axis.x * PLAYER_SPEED * dt, z: axis.z * PLAYER_SPEED * dt }, PLAYER_RADIUS, colliders, layout.walkBounds);
+        next = moveCircle(cur, { x: axis.x * PLAYER_SPEED * dt, z: axis.z * PLAYER_SPEED * dt }, PLAYER_RADIUS, colliders, layout.walkBounds, residents.circles());
         heading = Math.atan2(axis.x, axis.z);
       } else {
         // Idle: still resolve overlaps (e.g. the door was closed while standing in the doorway).
@@ -236,6 +259,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
       visualHeading += wrapAngle(heading - visualHeading) * (needsSnap ? 1 : 1 - Math.exp(-dt * 14));
       figure.root.rotation.y = visualHeading;
       figure.animate(dt, speed);
+      residents.update(needsSnap ? 0 : dt, alpha);
 
       if (needsSnap) followCamera.snapTo(pose);
       else followCamera.update(dt, pose);
@@ -301,6 +325,12 @@ export function createWorld(game: Game, container: HTMLElement): World {
       return toScreen({ x: p.x, y: p.y + 1.1, z: p.z });
     },
 
+    getResidentInfo: () => residents.getInfo(toScreen),
+
+    getGatedPlacements() {
+      return gates.list();
+    },
+
     getMarkerInfo(pointId) {
       const info = markers.getInfo(pointId);
       if (!info) return null;
@@ -310,6 +340,9 @@ export function createWorld(game: Game, container: HTMLElement): World {
     dispose() {
       window.removeEventListener('resize', resize);
       offReplaced();
+      offStory();
+      offGatesReplaced();
+      residents.dispose();
       input.dispose();
       kioskView.dispose();
       markers.dispose();

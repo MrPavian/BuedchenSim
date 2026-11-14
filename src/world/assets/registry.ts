@@ -3,6 +3,7 @@ import { log } from '../../core/log';
 import type { AssetDef, GroundAreaDef, KioskDef } from '../../game/types';
 import type { Materials } from '../materials';
 import {
+  createBenchE004,
   createCounterI001,
   createCratesI012,
   createFreezerI006,
@@ -10,6 +11,7 @@ import {
   createFurniturePlaceholder,
   createMagazineRackI007,
   createMiddleShelfI004,
+  createPhotoI013,
   createRegisterI002,
   createStorageRackI011,
   createWallShelfI003,
@@ -23,6 +25,7 @@ import {
 } from './ground';
 import { createKioskK001 } from './kiosk';
 
+export { createResident, hasResidentFactory, residentAssetIds, type ResidentAnimation, type ResidentFigure } from './residents';
 export { createProductModel, hasProductFactory, productFactories, type ProductFactory } from './products';
 
 /**
@@ -47,6 +50,9 @@ const furnitureFactories: Record<string, FurnitureFactory> = {
   'I-007': createMagazineRackI007,
   'I-011': createStorageRackI011,
   'I-012': createCratesI012,
+  'I-013': createPhotoI013,
+  // Yard furniture (E = environment) is built by the same furniture factories.
+  'E-004': createBenchE004,
 };
 
 const groundFactories: Record<string, (def: GroundAreaDef, m: Materials) => Object3D> = {

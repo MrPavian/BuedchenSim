@@ -9,3 +9,5 @@ export { createStorageRackI011 } from './storageRack';
 export { createCratesI012 } from './crates';
 export { createFurniturePlaceholder } from './placeholder';
 export { furnitureSurfaceTilt } from './surfaces';
+export { createBenchE004 } from './bench';
+export { createPhotoI013 } from './photo';
