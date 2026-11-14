@@ -67,8 +67,8 @@ Die Bildzeit liegt im Software-Rendering bei 240–560 ms (Median), mit 8–20 B
 |---|---|
 | `npm run typecheck` | fehlerfrei |
 | `npm run lint` | fehlerfrei |
-| `npm run test` | 37 Dateien, 605 Tests bestanden |
-| `npm run build` | erfolgreich (Spielcode 287 kB, Three.js 548 kB) |
+| `npm run test` | 38 Dateien, 608 Tests bestanden |
+| `npm run build` | erfolgreich (Spielcode 289 kB, Three.js-Teil 645 kB einschließlich GLTFLoader und SkeletonUtils, vorher 548 kB; Figurendatei 1,5 MB separat) |
 | `npm run check:browser` | [[BROWSERCHECK]] |
 
 Die Browserprüfung umfasst die geforderten Nachweise: Warenbestände und Regalplätze, Interaktionspunkte, Tür, Klappe und Kollisionen, Bewohner (Erscheinen, Bewegung, Ansprechbarkeit), Dialoge und Kundenkäufe, Sichtfreistellung, Savegame Version 3 mit Migrationen. Die visuellen Referenzansichten wurden vorher und nachher erzeugt und von mir angesehen.
