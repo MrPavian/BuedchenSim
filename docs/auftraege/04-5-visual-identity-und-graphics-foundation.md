@@ -20,14 +20,14 @@ Die bestehende Art Direction bleibt Grundlage und wird für die tatsächliche Sp
 
 - Stylized 3D mit kontrolliertem Low-/Mid-Poly-Einfluss.
 - Warmherzige, glaubwürdige Ruhrgebiets-Nachbarschaft statt generischer Asset-Store-Kulisse.
-- Leicht überzeichnete, klare Formen und Silhouetten; keine kindliche Comicoptik und kein fotorealistischer Anspruch.
+- Leicht stilisierte, klare Formen und Silhouetten; keine kindliche Comicoptik. Bei Figuren gilt ausdrücklich: so realistisch und glaubwürdig wie innerhalb der gewählten stilisierten Bildsprache technisch sinnvoll – keine fotorealistischen Fremdkörper, aber auch keine groben Low-Poly-Puppen.
 - Handwerkliche Materialwirkung: Backstein, Putz, Beton, Asphalt, Metall, Kunststoff, Glas und Holz müssen unterscheidbar sein.
 - Dezente Gebrauchsspuren und kleine Unregelmäßigkeiten; keine künstlich starke Verschmutzung.
 - Warme, einladende Innenbeleuchtung; außen nachvollziehbare Tageslichtstimmung und klare Lesbarkeit.
 - Satter, aber kontrollierter Farbkontrast. Farben stammen aus Material, Umgebung und fiktiven Produkten – keine Kopie realer Marken-Farbwelten.
 - Lesbarkeit und Orientierung aus der tatsächlichen Third-Person-Spielkamera haben Vorrang vor Details, die nur in Nahaufnahmen sichtbar wären.
 
-**Visuelles Zielgefühl:** ein liebevoll gebautes, leicht stilisiertes 3D-Diorama eines belebten Ruhrgebietsviertels, das sich wie ein glaubwürdiger Ort anfühlt. Der Kiosk ist der visuelle Anker und darf charaktervoller sein als seine Umgebung.
+**Visuelles Zielgefühl:** ein liebevoll gebautes, leicht stilisiertes 3D-Diorama eines belebten Ruhrgebietsviertels, das sich wie ein glaubwürdiger Ort anfühlt. Der Kiosk ist der visuelle Anker und darf charaktervoller sein als seine Umgebung. **Die Bewohner und späteren Figuren sollen dabei eine besonders hohe Qualitätsstufe erreichen:** glaubwürdige menschliche Proportionen, Gesichter, Kleidung, Materialien und Animationen, ohne den einheitlichen Stylized-3D-Look zu verlassen.
 
 Keine realen Marken, Logos, Produktverpackungen, Vereinswappen, Werbekampagnen oder geschützten Figuren. Alle Schilder, Grafiken, Produkte und Requisiten bleiben originär und fiktiv.
 
@@ -115,11 +115,44 @@ Nach Bestandsaufnahme und Style-Festlegung nur die Bereiche überarbeiten, die d
 3. Warenpräsentation und Lesbarkeit;
 4. Boden, Gehweg und unmittelbarer Außenbereich;
 5. Licht, Schatten und Materialabstimmung;
-6. Bewohnerdarstellung und visuelle Einbindung.
+6. Bewohnerdarstellung und visuelle Einbindung; mindestens eine Figur als hochwertiger Charakter-Prototyp.
 
 Die Überarbeitung muss die vorhandenen Asset-IDs, Platzierungsverträge, Interaktionspunkte, Kollisionen, Warenbestände und Savegames erhalten. Falls ein Vertrag angepasst werden muss, zuerst Auswirkungen dokumentieren und Tests ergänzen.
 
 **Keine Komplettneumodellierung des Kiosks**, wenn gezielte Verbesserungen ausreichen. Keine großflächige Nachbarschaft, keine neue Region und keine vollständige NPC-Überarbeitung in diesem Auftrag.
+
+## 6A. Figurenqualität – ausdrückliche Priorität
+
+Die Figuren sind ein zentraler Träger der emotionalen Bindung. Sie dürfen nicht dauerhaft auf dem aktuellen prozeduralen Platzhalter-/Blockfiguren-Niveau bleiben. Das Ziel ist eine hochwertige, glaubwürdige stilisierte Charakterdarstellung.
+
+**Gestalterisches Ziel:**
+- Menschliche Anatomie und Körperproportionen glaubwürdig und individuell; keine übergroßen Köpfe, Hände oder vereinfachten Gliedmaßen, sofern dies nicht bewusst und subtil zum Gesamtstil passt.
+- Gesichter mit erkennbarer Persönlichkeit: stimmige Augen, Nase, Mund, Ohren, Kiefer, Wangen und altersgerechte Merkmale. Keine austauschbaren Standardgesichter.
+- Haut, Haare, Bart, Augen, Kleidung und Schuhe mit differenzierten, aber stilistisch passenden Materialien.
+- Kleidung mit nachvollziehbarem Schnitt, Lagen, Faltenwurf, Nähten, Säumen und kleinen Gebrauchsspuren. Kleidung muss Beruf, Alter, Persönlichkeit und Alltag erkennen lassen.
+- Individuelle Silhouette, Farbkomposition und Details je Bewohner. Figuren müssen auch aus normaler Spielentfernung unterscheidbar sein.
+- Natürlich wirkende Idle-, Geh-, Dreh-, Gesprächs- und Interaktionsanimationen. Keine steifen T-Pose-Eindrücke, mechanischen Bewegungen oder sichtbaren Gelenkfehler.
+- Gesichtsausdrücke und kleine Gesten sollen Dialoge unterstützen; zunächst wenige gut ausgeführte Animationen statt vieler schlechter.
+- Figuren müssen in Licht, Schatten und Umgebung eingebettet sein und dürfen nicht wie separat importierte Assets wirken.
+
+**Technischer Weg:**
+1. Bestehende prozedurale Figuren und deren Verträge untersuchen.
+2. Qualitätslücke anhand von Referenzansichten und Zielkamera dokumentieren.
+3. Eine repräsentative Figur als hochwertigen Charakter-Prototyp ausarbeiten und im echten Spiel testen.
+4. Pipeline für Mesh/GLB, Material, Rig, Animation, LOD und Wiederverwendung anhand der tatsächlichen Infrastruktur festlegen.
+5. Erst nach Abnahme des Prototyps die übrigen Bewohner nach demselben Qualitätsstandard überarbeiten.
+
+GLB/glTF ist zu bevorzugen, sofern die vorhandene Ladepipeline es unterstützt; andernfalls zunächst eine begründete Erweiterung der vorhandenen Three.js-Pipeline prüfen. Keine Engine-Migration. Externe Assets müssen stilistisch und rechtlich geprüft werden; keine fremden Figuren oder erkennbaren realen Personen kopieren.
+
+**Qualitätsabnahme des Figuren-Prototyps:**
+- Nahansicht zeigt überzeugende Gesichts- und Kleidungsdetails.
+- Typische Spielkamera zeigt glaubwürdige Proportionen und eine klare individuelle Silhouette.
+- Geh- und Idle-Animation wirken natürlich und ohne offensichtliche Deformationen.
+- Figur passt sichtbar zur Beleuchtung und Materialwelt des Kiosks.
+- Identität bleibt über verschiedene Blickwinkel und Lichtverhältnisse stabil.
+- Performance und Speicherbedarf sind dokumentiert.
+
+Die Figurenqualität ist eine priorisierte Teilaufgabe und darf nicht mit dem Hinweis auf spätere finale Politur vollständig vertagt werden.
 
 ## 7. Warenlesbarkeit und visuelle Hierarchie
 
@@ -174,7 +207,7 @@ Nicht Teil dieses Auftrags:
 - vollständige finale Grafikpolitur;
 - vollständiger Neubau aller Produktmodelle;
 - neue große Stadtumgebung oder Nachbargebäude-Serie;
-- vollständige Animationen oder neue Charakter-Rigs;
+- vollständige Überarbeitung sämtlicher Figuren und eine komplette Charakterkampagne; ein hochwertiger Figuren-Prototyp samt belastbarer Pipeline ist ausdrücklich Teil dieses Auftrags.
 - Wetter-/Jahreszeiteneffekte aus Phase 5;
 - Audio;
 - neue Regionen;
@@ -213,6 +246,7 @@ Auftrag 04.5 ist abgeschlossen, wenn:
 - der visuelle Ist-Stand nachvollziehbar dokumentiert ist;
 - ein konsistentes, in der echten Szene überprüftes Style-Zielbild vorliegt;
 - Kiosk, Innenraum, Waren und Bewohner sichtbar aufeinander abgestimmt sind;
+- mindestens eine repräsentative Figur den definierten hohen Qualitätsstandard für glaubwürdig stilisierte Charaktere erreicht und als Referenz für weitere Bewohner dient;
 - die wichtigsten Materialien und Lichtstimmungen aus der Spielkamera überzeugend funktionieren;
 - Waren besser erkennbar sind oder konkrete, verbleibende Grenzen dokumentiert sind;
 - Performance nicht verschlechtert wurde, ohne dies zu begründen;
