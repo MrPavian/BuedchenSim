@@ -2,7 +2,7 @@ import type { Game } from '../game/game';
 import { button, el, testId } from './dom';
 import { texts } from './texts';
 
-export type PanelId = 'goods' | 'till' | 'report' | 'confirmClose' | 'dialogue' | 'journal';
+export type PanelId = 'goods' | 'till' | 'report' | 'confirmClose' | 'dialogue' | 'journal' | 'calendar';
 
 /** What panels get from the UI shell. */
 export interface PanelContext {

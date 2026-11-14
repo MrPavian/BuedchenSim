@@ -6,6 +6,7 @@ import { createModalHost, type PanelContext, type PanelId } from './modal';
 import { createConfirmClosePanel, createReportPanel } from './panels/dayClose';
 import { createDialoguePanel } from './panels/dialogue';
 import { createGoodsPanel } from './panels/goods';
+import { createCalendarPanel } from './panels/calendar';
 import { createJournalPanel } from './panels/journal';
 import { createTillPanel } from './panels/till';
 import { formatEuro } from './format';
@@ -183,6 +184,7 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
       confirmClose: createConfirmClosePanel(context),
       dialogue: createDialoguePanel(context),
       journal: createJournalPanel(context),
+      calendar: createCalendarPanel(context),
     },
     (open) => {
       modalOpen = open;
@@ -193,13 +195,14 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
   const openPanel = (id: PanelId): void => {
     if (id === 'report' && game.state.economy.lastReport === null) return;
     if (id === 'dialogue' && game.dialogue.current() === null) return;
-    // Dialogue and journal never replace an open panel.
-    if ((id === 'dialogue' || id === 'journal') && modal.current() !== null && modal.current() !== id) return;
+    // Dialogue, journal and calendar never replace an open panel.
+    if ((id === 'dialogue' || id === 'journal' || id === 'calendar') && modal.current() !== null && modal.current() !== id) return;
     modal.open(id);
   };
   const hud = createHud(game, overlay, {
     closeDay: () => openPanel(game.state.calendar.phase === 'closed' ? 'report' : 'confirmClose'),
     openJournal: () => openPanel('journal'),
+    openCalendar: () => openPanel('calendar'),
   });
   /** After a reload in phase 'closed' the report must be shown again. */
   const syncReport = (): void => {
@@ -216,14 +219,16 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
   syncTiers();
   let memoryNoticeFor: string | null = null;
 
-  /** J toggles the journal anywhere (not while another panel is open, not while typing). */
+  /** J toggles the journal, K the calendar, anywhere (not while another panel is open, not while typing). */
   const onKeyDown = (event: KeyboardEvent): void => {
-    if (event.key.toLowerCase() !== 'j' || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    const key = event.key.toLowerCase();
+    const panel: PanelId | null = key === 'j' ? 'journal' : key === 'k' ? 'calendar' : null;
+    if (panel === null || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
     const target = event.target;
     if (target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
     const open = modal.current();
-    if (open === 'journal') modal.close();
-    else if (open === null) openPanel('journal');
+    if (open === panel) modal.close();
+    else if (open === null) openPanel(panel);
     else return;
     event.preventDefault();
   };

@@ -5,6 +5,7 @@ import {
   Fog,
   HemisphereLight,
   Mesh,
+  type MeshLambertMaterial,
   PlaneGeometry,
   Scene,
   Vector3,
@@ -28,6 +29,7 @@ import { createPlacementGates } from './placementGates';
 import { shouldShowSilhouette } from './occlusionRules';
 import { createPlayerFigure } from './playerFigure';
 import { createRenderer } from './renderer';
+import { createAtmosphereView } from './views/atmosphereView';
 import { createKioskView } from './views/kioskView';
 import { createMarkerView } from './views/markerView';
 import { createResidentView, type ResidentInfo } from './views/residentView';
@@ -122,11 +124,13 @@ export function createWorld(game: Game, container: HTMLElement): World {
 
   const scene = new Scene();
   scene.background = new Color(palette.sky);
-  scene.fog = new Fog(palette.sky, 20, 62);
+  const fog = new Fog(palette.sky, 20, 62);
+  scene.fog = fog;
 
   // --- Lighting: soft sky/ground fill, one warm sun with shadows; the kiosk brings its own lamps (K-001-H).
   // Auftrag 04.5: less flat fill and a stronger, warm sun so forms read from the camera (VISUAL-BASELINE.md, Licht).
-  scene.add(new HemisphereLight(LIGHT.skyColor, LIGHT.groundColor, LIGHT.hemisphere));
+  const hemisphere = new HemisphereLight(LIGHT.skyColor, LIGHT.groundColor, LIGHT.hemisphere);
+  scene.add(hemisphere);
   scene.add(new AmbientLight(0xffffff, LIGHT.ambient));
   const sun = new DirectionalLight(LIGHT.sunColor, LIGHT.sun);
   sun.position.set(-9, 17, 11);
@@ -165,6 +169,13 @@ export function createWorld(game: Game, container: HTMLElement): World {
     scene.add(object);
     placementObjects.set(placement.id, object);
   }
+
+  const vegetation: MeshLambertMaterial[] = [materials.base];
+  scene.traverse((o) => {
+    const m = (o as Mesh).material as MeshLambertMaterial | undefined;
+    if (m && !Array.isArray(m) && m.name === 'yard' && !vegetation.includes(m)) vegetation.push(m);
+  });
+  const atmosphere = createAtmosphereView(game, { scene, fog, sun, hemisphere, vegetation });
 
   const kioskView = createKioskView(game, kioskRoot);
   const occlusion = createOcclusion({ parts: kioskView.parts, kiosk: layout.kiosk });
@@ -278,6 +289,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
       else followCamera.update(dt, pose);
 
       kioskView.update(needsSnap ? 1e3 : dt);
+      atmosphere.update(needsSnap ? 1e3 : dt);
       markers.update(elapsed);
       scene.updateMatrixWorld(true);
       occlusion.update(dt, followCamera.camera, pose, needsSnap);

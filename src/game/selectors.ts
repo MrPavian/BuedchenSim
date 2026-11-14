@@ -1,5 +1,6 @@
+import { dateOfDay } from './date';
 import { productMaxStack, slotCapacity } from './stockLayout';
-import { STORAGE_CAPACITY_UNITS, WEEK_LENGTH } from './balance';
+import { STORAGE_CAPACITY_UNITS } from './balance';
 import type { DeepReadonly, GameState, ProductLine } from './state';
 import type { ContentPack, ProductDef, StockSlotDef } from './types';
 
@@ -18,11 +19,12 @@ export function findSlot(content: ContentPack, slotId: string): StockSlotDef | u
 /** Weekday index: 0 = Monday ... 6 = Sunday. */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-/** Weekday of a game day. Day 1 is a Monday. Derived only; not part of the saved state. Invalid days fall back to Monday. */
+/**
+ * Weekday of a game day, derived from its calendar date (see `date.ts`; day 1 = START_DATE, a Monday). Not part of the
+ * saved state. Invalid days fall back to day 1.
+ */
 export function weekdayOf(day: number): Weekday {
-  if (!Number.isFinite(day)) return 0;
-  const offset = Math.trunc(day) - 1;
-  return (((offset % WEEK_LENGTH) + WEEK_LENGTH) % WEEK_LENGTH) as Weekday;
+  return dateOfDay(day).weekday;
 }
 
 /** Units of a product in the back storage. */

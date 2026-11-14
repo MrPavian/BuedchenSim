@@ -3,11 +3,30 @@ import type { Weekday } from '../game/selectors';
 
 const weekdayShort = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] as const;
 const weekdayLong = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'] as const;
+const monthNames = [
+  'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
+] as const;
+const seasonNames = { spring: 'Frühling', summer: 'Sommer', autumn: 'Herbst', winter: 'Winter' } as const;
 
 /** All player-visible strings live here (German). */
 export const texts = {
   weekdayShort,
   weekdayLong,
+  monthNames,
+  seasonNames,
+  /** "7. Juni 2027" */
+  date: (dayOfMonth: number, month: number, year: number) => `${dayOfMonth}. ${monthNames[month - 1] ?? ''} ${year}`,
+  /** "7.6." */
+  dateShort: (dayOfMonth: number, month: number) => `${dayOfMonth}.${month}.`,
+  calendar: {
+    title: 'Kalender und Wetter',
+    open: 'Kalender',
+    openTitle: 'Kalender, Wetter und Veranstaltungen (K)',
+    today: 'Heute',
+    nextDays: 'Die nächsten sieben Tage',
+    noEvents: 'Keine besonderen Termine',
+    dayLabel: (weekdayShort: string, date: string) => `${weekdayShort} ${date}`,
+  },
   controls: {
     move: { keys: 'WASD / Pfeiltasten', label: 'Bewegen' },
     interact: { keys: 'E', label: 'Interagieren' },

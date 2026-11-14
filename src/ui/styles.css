@@ -246,6 +246,57 @@ body {
   font-weight: bold;
 }
 
+.ui-hud-date {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--ui-muted);
+}
+
+.ui-hud-date:hover,
+.ui-hud-date:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+}
+
+.ui-calendar-today {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 18px;
+}
+
+.ui-calendar-season {
+  font-size: 13px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ui-calendar-days {
+  display: grid;
+  gap: 6px;
+}
+
+.ui-calendar-day {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ui-calendar-day[data-today='true'] {
+  outline: 1px solid var(--ui-accent);
+}
+
 .ui-hud-clock {
   min-width: 48px;
   font-size: 20px;

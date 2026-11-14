@@ -10,7 +10,7 @@ export const DAY_START_MINUTE = 360;
 /** Closing time, minutes since midnight (22:00). */
 export const DAY_END_MINUTE = 1320;
 
-/** Days per week. Day 1 is a Monday; the weekday is derived from the day counter (see `weekdayOf`), never saved. */
+/** Days per week. Day 1 is a Monday (START_DATE in date.ts); the weekday is derived from the date (see `weekdayOf`), never saved. */
 export const WEEK_LENGTH = 7;
 
 /** Game minutes that pass per real second at speed 1. */

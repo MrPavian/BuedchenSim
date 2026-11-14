@@ -1,6 +1,7 @@
 import { SPEEDS } from '../game/balance';
 import type { Game } from '../game/game';
 import { weekdayOf } from '../game/selectors';
+import { hudDateText } from './calendarViewModel';
 import { button, el, testId } from './dom';
 import { formatClock, formatEuro } from './format';
 import { texts } from './texts';
@@ -10,6 +11,8 @@ export interface HudActions {
   closeDay(): void;
   /** "Notizen" (journal); allowed anywhere. */
   openJournal(): void;
+  /** Calendar, weather and events; allowed anywhere. */
+  openCalendar(): void;
 }
 
 export interface Hud {
@@ -33,7 +36,12 @@ export function createHud(game: Game, parent: HTMLElement, actions: HudActions):
   cash.title = texts.hud.cash;
   const status = testId(el('span', 'ui-hud-status'), 'hud-status');
   const paused = testId(el('span', 'ui-hud-paused', texts.hud.paused), 'hud-paused');
-  stats.append(day, clock, paused, cash, status);
+  const date = button('', 'hud-date', () => {
+    date.blur();
+    actions.openCalendar();
+  }, 'ui-hud-date');
+  date.title = texts.calendar.openTitle;
+  stats.append(day, date, clock, paused, cash, status);
 
   const controls = el('div', 'ui-hud-controls');
   const pause = button(texts.hud.pause, 'hud-pause', () => {
@@ -78,6 +86,7 @@ export function createHud(game: Game, parent: HTMLElement, actions: HudActions):
     const { calendar, economy, kiosk } = game.state;
     lastMinute = Math.floor(calendar.minute);
     setText(day, texts.hud.day(calendar.day, weekdayOf(calendar.day)));
+    setText(date, hudDateText(calendar.day));
     setText(clock, formatClock(calendar.minute));
     setText(cash, formatEuro(economy.cashCents));
     setText(status, kiosk.shutterOpen ? texts.hud.open : texts.hud.closed);

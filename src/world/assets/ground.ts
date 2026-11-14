@@ -72,7 +72,9 @@ export function createYard(def: GroundAreaDef, m: Materials): Object3D {
   const texture = createNoiseTexture(palette.yard, 0.18, 9);
   texture.repeat.set(w / 4, d / 4);
   m.textures.push(texture);
-  return flatPlane(def, new MeshLambertMaterial({ map: texture }), 0);
+  // Named so the atmosphere view can tint the lawn by season and weather.
+  const material = new MeshLambertMaterial({ map: texture, name: 'yard' });
+  return flatPlane(def, material, 0);
 }
 
 export function createGroundPlaceholder(def: GroundAreaDef, m: Materials): Object3D {
