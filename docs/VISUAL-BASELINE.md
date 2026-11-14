@@ -234,7 +234,7 @@ Seit [Auftrag 04.6](auftraege/04-6-bewohnerfiguren-und-charakterpipeline.md) sin
 |---|---|---|---|
 | Günter (N-002), 71 | männlich, Alter 0,86, leicht gebeugt, 1,67 m | Jacke, Hemd, Stoffhose (`male_casualsuit05`), Lederschuhe (`shoes01`), graues Haar, Schiebermütze und Stock (Skript) | kurzer Schritt am Stock, rechte Hand am Griff |
 | Derya (N-003), 38 | weiblich, Alter 0,60, kräftig, breite Schultern, 1,78 m | senfgelbes Arbeitshemd und braune Arbeitshose (`male_casualsuit01`, umgefärbt), braune Stiefel (`shoes03`), dunkler Zopf (`ponytail01`), Werkzeuggürtel mit Tasche und Hammer (Skript) | aufrecht, fester Stand, zügiger Gang |
-| Jonas (N-006), 17 | männlich, Alter 0,32 (jugendliche MakeHuman-Proportionen), schlank, 1,82 m | dunkelgraue Jacke und hellgraue Hose (`male_casualsuit01`, umgefärbt), weiße Turnschuhe (`shoes05`), Fahrradhelm, petrolfarbene Kuriertasche mit gelbem Gurt (Skript) | leicht vorgebeugt, lange Schritte, Gesten mit beiden Händen |
+| Jonas (N-006), 17 | männlich, Alter 0,32 (jugendliche MakeHuman-Proportionen), schlank, 1,82 m | dunkelgraue Jacke und hellgraue Hose (`male_casualsuit01`, umgefärbt), weiße Turnschuhe (`shoes05`), braunes Kurzhaar (`short02`), petrolfarbene Kuriertasche mit gelbem Gurt (Skript); kein Helm (Nutzerentscheidung) | leicht vorgebeugt, lange Schritte, Gesten mit beiden Händen |
 | Marlene (N-007), 58 | weiblich, Alter 0,75, etwas fülliger, 1,61 m | pflaumenfarbenes Strickoberteil und kamelfarbener Rock (`female_elegantsuit01`, umgefärbt), dunkle Strumpfhose (MakeHuman-Hilfshülle), Halbschuhe (`shoes04`), silberblondes Kurzhaar (`short01`), rote Brille und mintgrüne Einkaufstasche (Skript) | aufrecht, linke Hand trägt die Tasche |
 
 **Mimik:** drei Morph Targets aus MakeHuman-Ausdruckseinheiten (`targets/expression/units`): `friendly` (Mundwinkel, Wangen, Augen leicht verengt), `thoughtful` (Brauen gesenkt und innen gehoben, Lippen gepresst), `blink`. Zur Laufzeit blinzelt jede Figur alle 2,5–6 s (deterministische Folge je Figur); beim Sprechen wechselt der Ausdruck weich zwischen freundlich und nachdenklich, sonst neutral. Kosten: rund 90 kB je Datei (dünn besetzte Accessoren, keine Morph-Normalen).
@@ -245,11 +245,11 @@ Seit [Auftrag 04.6](auftraege/04-6-bewohnerfiguren-und-charakterpipeline.md) sin
 |---|---|---|---|---|---|
 | `n-002.glb` Günter | 30.234 | 16.784 | 9 | 8 (267 kB) | 1,52 MB |
 | `n-003.glb` Derya | 31.607 | 18.548 | 11 | 7 (157 kB) | 1,50 MB |
-| `n-006.glb` Jonas | 31.593 | 17.345 | 12 | 7 (134 kB) | 1,43 MB |
+| `n-006.glb` Jonas | 29.985 | – | 11 | 7 (134 kB) | 1,41 MB |
 | `n-007.glb` Marlene | 31.552 | 18.514 | 11 | 7 (198 kB) | 1,54 MB |
 
 Alle Figuren liegen im Budget (≤ 32.000 Dreiecke, ≤ 12 Primitive, ≤ 2 MB). Kleidung, Haare und Schuhe von Derya, Jonas und Marlene sind dafür mit Decimate auf 55–80 % reduziert. Geometrie, Materialien und Texturen werden je Datei geteilt; Figuren teilen untereinander nichts, weil jede eigene Formen und Texturen hat (zusammen rund 4 MB Geometrie und rund 45–50 MB entpackte Texturen mit Mipmaps auf der GPU, geschätzt).
 
 **Szene** (`docs/screenshots/auftrag-04-6/spiel/metrics.json`, Software-Rendering): `bewohner` mit vier Figuren 399 Draw Calls und 311.756 Dreiecke (vorher mit prozeduralen Figuren 461 und 78.384), `aussen` mit drei Figuren 367 und 248.134. Die Dreiecke steigen deutlich, die Draw Calls sinken. Ladezeit der vier Dateien vom lokalen Entwicklungsserver 22–30 ms je Datei (kein Netzwerk; im Netz entscheidet die Bandbreite, zusammen 6 MB). Bis zum Laden und bei fehlender oder beschädigter Datei bleibt die prozedurale Figur (geprüft mit `visual-shots.mjs --block` und `--corrupt`, Warnung im Log).
 
-**Grenzen:** keine Gesichtsausdrücke auf Dialogzeilen abgestimmt (Wechsel nach Zeit); Hände greifen Stock und Tasche nur angedeutet; Requisiten aus dem Skript (Mütze, Helm, Taschen, Gürtel, Brille) sind schlichter als die MakeHuman-Teile; ein kleines Gürtelende der Hose ragt bei Derya an der Hüfte durch das Hemd; Jonas' Helm ohne Lüftungsschlitze.
+**Grenzen:** keine Gesichtsausdrücke auf Dialogzeilen abgestimmt (Wechsel nach Zeit); Hände greifen Stock und Tasche nur angedeutet; Requisiten aus dem Skript (Mütze, Taschen, Gürtel, Brille) sind schlichter als die MakeHuman-Teile; ein kleines Gürtelende der Hose ragt bei Derya an der Hüfte durch das Hemd.

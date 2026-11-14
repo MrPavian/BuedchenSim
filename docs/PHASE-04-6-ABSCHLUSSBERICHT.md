@@ -22,7 +22,7 @@ Abgeleitet aus `src/content/regions/ruhrgebiet/residents.ts` (Alter, Rolle, Besc
 | Figur | Körper und Gesicht | Kleidung, Frisur, Requisiten | Haltung, Gesten |
 |---|---|---|---|
 | **Derya (N-003)**, 38, Tischlerin | weiblich, kräftig, breitere Schultern, 1,78 m; markante Wangenknochen, kräftigeres Kinn, Nase mit leichtem Höcker | senfgelbes Arbeitshemd, braune Arbeitshose, braune Stiefel, dunkler Zopf, Werkzeuggürtel mit Tasche rechts und Hammer links | aufrecht, fester Stand, zügiger Gang, Geste mit der rechten Hand |
-| **Jonas (N-006)**, 17, Fahrradkurier | männlich, MakeHuman-Alter für etwa 17 Jahre (jugendliche Proportionen aus den Altersformen, keine Skalierung eines Erwachsenen), schlank, 1,82 m; schmaleres Gesicht | limettengrüner Fahrradhelm, dunkelgraue Jacke, hellgraue Hose, weiße Turnschuhe, petrolfarbene Kuriertasche hinten mit gelbem Gurt über die Brust | leicht vorgebeugt, lange schnelle Schritte, Gesten mit beiden Händen |
+| **Jonas (N-006)**, 17, Fahrradkurier | männlich, MakeHuman-Alter für etwa 17 Jahre (jugendliche Proportionen aus den Altersformen, keine Skalierung eines Erwachsenen), schlank, 1,82 m; schmaleres Gesicht | braunes Kurzhaar, dunkelgraue Jacke, hellgraue Hose, weiße Turnschuhe, petrolfarbene Kuriertasche hinten mit gelbem Gurt über die Brust | leicht vorgebeugt, lange schnelle Schritte, Gesten mit beiden Händen |
 | **Marlene (N-007)**, 58, Schulsekretärin | weiblich, etwas fülliger, 1,61 m; runderes Gesicht, vollere Wangen | pflaumenfarbenes Strickoberteil, kamelfarbener Rock, dunkle Strumpfhose, Halbschuhe, silberblondes Kurzhaar, rote Brille, mintgrüne Einkaufstasche links | aufrecht, linke Hand trägt die Tasche, Geste mit der rechten Hand |
 
 Alle drei unterscheiden sich schon in Silhouette und Farbe (Spielkamera: `docs/screenshots/auftrag-04-6/*-spielkamera.png`, `spiel/bewohner.png`). Die Kleidung stammt aus dem CC0-Asset-Pack und wurde im Skript umgefärbt; Kleidung mit Projektlogo wird nicht verwendet, Lizenzhinweise in Texturen werden entfernt. Die Altersprüfung im Spiel ist unverändert (Inhaltsdaten).
@@ -32,7 +32,7 @@ Alle drei unterscheiden sich schon in Silhouette und Farbe (Spielkamera: `docs/s
 |---|---|---|---|---|---|---|
 | N-002 | `public/models/residents/n-002.glb` | 30.234 | 9 | 8 WebP, 267 kB | 1,52 MB | 0,9 |
 | N-003 | `n-003.glb` | 31.607 | 11 | 7 WebP, 157 kB | 1,50 MB | 1,1 |
-| N-006 | `n-006.glb` | 31.593 | 12 | 7 WebP, 134 kB | 1,43 MB | 1,3 |
+| N-006 | `n-006.glb` | 29.985 | 11 | 7 WebP, 134 kB | 1,41 MB | 1,3 |
 | N-007 | `n-007.glb` | 31.552 | 11 | 7 WebP, 198 kB | 1,54 MB | 0,8 |
 
 Budget je Figur (≤ 32.000 Dreiecke, ≤ 12 Primitive, ≤ 2 MB, Texturen ≤ 1024²) eingehalten. Dafür sind Kleidung, Haare und Schuhe von Derya, Jonas und Marlene mit Decimate auf 55–80 % reduziert. `walkSpeed` ist die Schrittlänge je Sekunde des Gehclips; das Abspieltempo folgt der Geschwindigkeit aus den Inhaltsdaten.
@@ -74,7 +74,9 @@ Die Browserprüfung deckt Erscheinen und Tagesroutinen der Bewohner, Navigation 
 **Manuell gesichtet (Screenshots):** alle Bilder in Abschnitt 7. **Nicht geprüft:** echte Grafikhardware, Firefox und Safari, Laden über ein langsames Netz.
 
 **Offene Einschränkungen:**
-- Requisiten aus dem Skript (Mütze, Helm, Taschen, Gürtel, Brille) sind schlichter als die MakeHuman-Teile; Jonas' Helm hat keine Lüftungsschlitze.
+- Requisiten aus dem Skript (Mütze, Taschen, Gürtel, Brille) sind schlichter als die MakeHuman-Teile.
+- Jonas trägt nach Nutzerentscheidung keinen Helm (die Beschreibung in den Inhaltsdaten nennt einen Fahrradhelm; der Helm-Baustein bleibt im Skript verfügbar). Die prozedurale Rückfallfigur trägt ihn weiterhin.
+- Die vier Figuren gelten nach Sichtung durch den Nutzer als vorerst abgenommen; Feinschliff folgt zwischendurch.
 - Hände greifen Stock und Einkaufstasche nur angedeutet; die Tasche schwingt beim Gehen starr mit der Hand.
 - Bei Derya ragt ein kleines Gürtelende der Hose an der Hüfte durch das Hemd.
 - Mimik zeitgesteuert, nicht inhaltsbezogen; in der Spielkamera nicht sichtbar.

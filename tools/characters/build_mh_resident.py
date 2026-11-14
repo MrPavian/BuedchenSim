@@ -103,7 +103,7 @@ RESIDENTS = {
             "curl_l": 0.4, "curl_r": 0.4, "talk": "r",
         },
     },
-    # N-006 Jonas Pietrek, 17, bicycle courier: lime helmet, dark grey jacket, light grey trousers, white sneakers,
+    # N-006 Jonas Pietrek, 17, bicycle courier: no helmet, dark grey jacket, light grey trousers, white sneakers,
     # teal courier bag with a strap across the chest.
     "jonas": {
         "name": "N-006",
@@ -126,7 +126,8 @@ RESIDENTS = {
         "eyebrows": ("eyebrows/eyebrow001/eyebrow001.mhclo", "brown_brows"),
         "eyelashes": "eyelashes/eyelashes01/eyelashes01.mhclo",
         "eyes": "bluegreen",
-        "headwear": ("helmet", None, (0.70, 0.85, 0.20)),
+        # No helmet (user decision 2026-11-14); the helmet builder stays available via ("helmet", None, colour).
+        "headwear": None,
         "props": ["courier_bag"],
         "pose": {
             "stoop": 0.09, "arm_down": 0.84, "fore_l": -0.15, "fore_r": -0.15, "hand_in": 0.0, "hand_out": 0.25,

@@ -1,15 +1,15 @@
 {
-  "date": "2026-11-14T13:13:32.581Z",
+  "date": "2026-11-14T14:16:23.025Z",
   "renderer": "Headless Chromium 153.0.8010.12, SwiftShader (Software-Rendering)",
   "views": {
     "aussen": {
       "note": "Außenansicht: Fassade, Schild, Markise, Fenster, Eingang, Gehweg; Günter am Fenster, Marlene und Jonas am Eck",
       "stockedUnits": 203,
       "stats": {
-        "calls": 367,
-        "triangles": 248134,
-        "geometries": 229,
-        "textures": 84,
+        "calls": 365,
+        "triangles": 244918,
+        "geometries": 228,
+        "textures": 83,
         "lights": 6
       },
       "stock": 203,
@@ -20,18 +20,18 @@
         "npc.jonas": "glb",
         "npc.marlene": "glb"
       },
-      "frames": 5,
-      "frameMsMedian": 465.29999999981374,
-      "frameMsP95": 1944
+      "frames": 8,
+      "frameMsMedian": 432.0999999999767,
+      "frameMsP95": 1013.0999999999767
     },
     "bewohner": {
       "note": "Bewohner im Viertel: Günter, Marlene und Derya an der Hofbank, Jonas auf dem Gehweg",
       "stockedUnits": 203,
       "stats": {
-        "calls": 399,
-        "triangles": 311756,
-        "geometries": 245,
-        "textures": 105,
+        "calls": 397,
+        "triangles": 308540,
+        "geometries": 244,
+        "textures": 104,
         "lights": 6
       },
       "stock": 203,
@@ -42,9 +42,9 @@
         "npc.jonas": "glb",
         "npc.marlene": "glb"
       },
-      "frames": 10,
-      "frameMsMedian": 458.5,
-      "frameMsP95": 949
+      "frames": 9,
+      "frameMsMedian": 462.70000000001164,
+      "frameMsP95": 695
     },
     "gespraech": {
       "note": "Gespräch: der Spieler spricht Günter am Verkaufsfenster an (Taste E), Sprechgeste und Gesichtsausdruck nach 3 s",
@@ -52,8 +52,8 @@
       "stats": {
         "calls": 321,
         "triangles": 121844,
-        "geometries": 245,
-        "textures": 105,
+        "geometries": 244,
+        "textures": 104,
         "lights": 6
       },
       "stock": 203,
@@ -64,26 +64,26 @@
         "npc.jonas": "glb",
         "npc.marlene": "glb"
       },
-      "frames": 9,
-      "frameMsMedian": 485,
-      "frameMsP95": 618.7000000001863
+      "frames": 10,
+      "frameMsMedian": 471.8999999999651,
+      "frameMsP95": 549.4000000000233
     }
   },
   "models": {
-    "n-002.glb": {
-      "ms": 30,
-      "ok": true
-    },
-    "n-003.glb": {
-      "ms": 23,
-      "ok": true
-    },
     "n-006.glb": {
-      "ms": 22,
+      "ms": 26,
+      "ok": true
+    },
+    "n-002.glb": {
+      "ms": 33,
       "ok": true
     },
     "n-007.glb": {
-      "ms": 23,
+      "ms": 29,
+      "ok": true
+    },
+    "n-003.glb": {
+      "ms": 28,
       "ok": true
     }
   }
