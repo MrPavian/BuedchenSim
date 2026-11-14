@@ -45,8 +45,8 @@ Headless Chromium, SwiftShader, 1280 × 720, Gerätefaktor 1, Spiel angehalten, 
 
 | Ansicht | Draw Calls | Dreiecke |
 |---|---|---|
-| `bewohner`, vier Figuren | 399 (nach 04.5 mit prozeduralen Figuren 461) | 311.756 (78.384) |
-| `aussen`, drei Figuren | 367 (407) | 248.134 (74.268) |
+| `bewohner`, vier Figuren | 397 (nach 04.5 mit prozeduralen Figuren 461) | 308.540 (78.384) |
+| `aussen`, drei Figuren | 365 (407) | 244.918 (74.268) |
 
 Die Dreiecke steigen deutlich (jede Figur etwa 31.000, dazu der Schattenpass), die Draw Calls sinken. Speicher (geschätzt): je Datei rund 1 MB Geometrie und 11–13 MB entpackte Texturen mit Mipmaps; je Instanz zusätzlich nur das Skelett (53 Knochen). Ladezeit vom lokalen Entwicklungsserver 22–30 ms je Datei, zusammen rund 6 MB; über ein Netz entscheidet die Bandbreite. Bis zum Laden stehen die prozeduralen Figuren. Bildzeiten im Software-Rendering sind nicht aussagekräftig; keine FPS-Aussage.
 
