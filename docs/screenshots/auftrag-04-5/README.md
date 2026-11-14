@@ -16,7 +16,7 @@
 
 ## Figuren-Prototyp Günter (N-002), Ordner `figur/`
 
-GLB-Figur aus `tools/characters/build_resident.py`. `vorne`, `gesicht`, `seite`, `hinten`, `sprechen` stammen aus dem Figurenbetrachter (`tools/character-viewer/`, Renderer und Licht wie im Spiel, 900 × 1100 bzw. 900 × 900 Pixel, Gerätefaktor 1); `im-spiel-*` sind Ausschnitte aus `node scripts/visual-shots.mjs --only aussen,bewohner --scale 3` mit der normalen Spielkamera. Bewertung und Messwerte in [VISUAL-BASELINE.md, Abschnitt 8](../../VISUAL-BASELINE.md).
+GLB-Figur aus CC0-MakeHuman-Daten, erzeugt mit `tools/characters/build_mh_resident.py`. `vorne`, `gesicht`, `seite`, `hinten`, `sprechen` stammen aus dem Figurenbetrachter (`tools/character-viewer/`, Renderer und Licht wie im Spiel, 900 × 1100 bzw. 900 × 900 Pixel, Gerätefaktor 1); `im-spiel-*` sind Ausschnitte aus `node scripts/visual-shots.mjs --only aussen,bewohner --scale 3` mit der normalen Spielkamera. Bewertung und Messwerte in [VISUAL-BASELINE.md, Abschnitt 8](../../VISUAL-BASELINE.md).
 
 | Datei | Inhalt |
 |---|---|
@@ -24,6 +24,6 @@ GLB-Figur aus `tools/characters/build_resident.py`. `vorne`, `gesicht`, `seite`,
 | `gesicht.png` | Kopf und Schultern, Idle |
 | `seite.png` | Profil im Gehen (Clip `walk`, Zeit 0,25 s) |
 | `hinten.png` | Rückansicht, Idle |
-| `sprechen.png` | Clip `talk` (sichtbar: Körper dringt am rechten Oberarm durch den Ärmel) |
+| `sprechen.png` | Clip `talk` (Handgeste links, Stock rechts) |
 | `im-spiel-fenster.png` | Spielkamera, Günter am Verkaufsfenster (Rückansicht) |
 | `im-spiel-bank.png` | Spielkamera, Günter neben Marlene und Derya (prozedurale Figuren) an der Hofbank |
