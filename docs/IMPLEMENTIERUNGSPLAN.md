@@ -121,7 +121,40 @@ Umfang:
 
 **Abnahme:** Vier Bewohner erscheinen wiedererkennbar nach plausiblen Routinen. Gespräche und Entscheidungen verändern Beziehungen und gespeicherte Erinnerungen. Zwei Geschichten besitzen unterschiedliche Ausgänge. NPC-Käufe verändern Bestand und Geld genau einmal und respektieren Altersgrenzen. Bestehende Phase-3-Systeme und Spielstände bleiben intakt.
 
-**Status (2026-11-14): Auftrag erstellt; Umsetzung steht aus.** Die Phase-3-Vorabprüfung und alle dokumentierten Grenzen sind Teil des Auftrags.
+**Status (2026-11-14): umgesetzt mit Auftrag 04.** Einzelheiten und Prüfergebnisse: [TECHNISCHER-IST-STAND.md](TECHNISCHER-IST-STAND.md); Inhalte der Bewohner und Geschichten: [BEWOHNER-UND-GESCHICHTEN.md](BEWOHNER-UND-GESCHICHTEN.md); Verträge: [MODUL-UND-DATENVERTRAEGE.md, Abschnitt 16](MODUL-UND-DATENVERTRAEGE.md); Entscheidungen: ADR-017 bis ADR-022 in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md).
+
+Umgesetzt:
+- Vier Bewohner (`npc.guenter` N-002, `npc.derya` N-003, `npc.jonas` N-006, `npc.marlene` N-007) mit Profilen, prozeduralen Figuren und Tagesroutinen auf einem handgepflegten Wegpunktgraphen (39 Wegpunkte, zwei Gehweg-Bahnen, Hof, drei Ausgänge). Bewegung ohne Durchdringen von Wänden und Möbeln, Stehenbleiben vor dem Spieler, Ausweichroute, Rückfallebene bei Verklemmung.
+- Geseedeter, zustandsloser Zufall aus dem gespeicherten Weltseed (kein `Math.random()` in der Spiellogik); Neuladen trifft dieselben Entscheidungen.
+- Generisches, datengetriebenes Dialogsystem (Bedingungen und Effekte als geschlossene Datentypen), 56 Dialoge, Beziehung 0–100 mit vier Stufen, Erinnerungen, Story-Flags, einmalige Effekte, Journal „Notizen“.
+- Zwei verknüpfte Alltagsgeschichten: „Krach im Hinterhof“ (vier Ausgänge) und „Ein Paket für Günter“ (zwei Ausgänge); Folgen sind geänderte Routinen (Derya sägt später), eine Hofbank (E-004) und ein Kioskfoto (I-013) über flaggebundene Platzierungen.
+- Alle vier Bewohner als Kunden über `economy.completeSale` (Transaktion und Signal mit `npcId`, einmalige Buchung); Alterskontrolle aus den Inhaltsdaten (Jonas, 17, kann Tabak nie kaufen).
+- Savegame Version 3 mit Migration 2→3 (und 1→2→3), Verwerfen unbekannter IDs mit Warnung.
+- Automatisiert getestet: 604 Tests in 37 Dateien (eigener Lauf 2026-11-14; der Phase-3-Stand wurde mit 370 Tests in 23 Dateien bestätigt); Browserprüfung in Headless-Chromium: [[BROWSERCHECK]]. Screenshots: [[SCREENSHOTS]]. Manuell auf echter Grafikhardware: nicht geprüft (Prüfanleitung, Schritte 32 bis 47).
+
+**Phase-3-Grenzen: Bewertung durch Phase 4** (Auftrag 04, Abschnitt 1.1; der Phase-3-Vertrag oben bleibt unverändert, hier steht nur, was Phase 4 daraus abgeleitet hat und was bewusst so bleibt):
+
+| Bekannte Phase-3-Grenze | Bewertung in Phase 4 |
+|---|---|
+| Bestellung und Warenannahme sind in `awaiting_close` möglich | **Bleibt unverändert.** Bewohner brauchen die Regel nicht: Sie gehen bei jeder Phase außer „open“ heim, und Verkauf ist dort ohnehin gesperrt (`day_not_open`). |
+| Einräumen und Zurücknehmen ohne eigene Tagesphasen-Sperre | **Bleibt unverändert.** Ein wartender Kunde liest den Regalbestand beim Verkauf; der Spieler darf nachräumen, solange der Kunde noch wartet (er wartet bei offener Klappe bis zum Ende seines Fensters). Keine Sperre nötig. |
+| Verkauf auch in der Pause (Tag und Klappe offen) | **Bleibt unverändert.** Während der Pause steht die Bewohner-Simulation still; ein bereits wartender Kunde kann bedient werden, weil `completeSale` die Pause nicht prüft (wie die Kasse). |
+| Lieferung trifft sofort ein, muss aber angenommen werden | **Bleibt unverändert.** Das „Paket“ in Geschichte B ist ein Erzähl-Zustand und hängt nicht an der Lieferung der Wirtschaft. |
+| Keine Preisänderung durch den Spieler | **Bleibt unverändert.** Bewohner zahlen den vorgeschlagenen Verkaufspreis und feilschen nicht; eine Preisreaktion gäbe es erst mit einer Preisfunktion und der Nachfrage aus Phase 5. |
+| Wochentag aus Tag 1 = Montag abgeleitet, kein Datum | **Bleibt unverändert und wird genutzt.** Routinen und Bedingungen rechnen mit `weekdayOf`; ein Kalenderdatum ist Phase 5. |
+| Es gibt keinen geseedeten Zufall | **Geändert.** `src/game/random.ts` liefert zustandslose Würfe aus dem gespeicherten Weltseed (`state.world.seed`); `Math.random()` kommt in der Spiellogik nicht vor. Der Generator mit gespeichertem Zustand aus ADR-005 ist vorhanden (`createRng`), wird aber nicht gebraucht. |
+| Etiketten aus normaler Kameradistanz teilweise nicht lesbar | **Bleibt unverändert.** Das Kundengespräch nennt die Ware mit Namen, Menge und Preis als Text und ersetzt keine Etikettenlesbarkeit. |
+| Keine Prüfung auf echter Grafikhardware | **Bleibt offen** und betrifft jetzt auch die Bewohner; Schritte 32 bis 47 der Prüfanleitung. |
+
+Offene Restpunkte aus Phase 4:
+- Browserprüfung dieses Auftrags und Screenshots: [[BROWSERCHECK]], [[SCREENSHOTS]].
+- Vorzeitiges Schließen verbraucht einmalige Gespräche (Günters `paket-bitte` und die Fotoszenen): ein Geschichtsstrang kann dadurch unwiederbringlich enden (Rückfall zu klären).
+- Vorlieben (`likes`/`dislikes`) und die Beziehungen der Bewohner untereinander haben keine Spielwirkung; Beziehungen zum Spieler wirken nur auf Gespräche.
+- Kunden warten bei offener Klappe bis zum Ende ihres Routinefensters; Geschichtsgespräche entstehen nicht am Fenster, solange ein Wunsch offen ist.
+- Der Ständer in Geschichte B hat kein eigenes Modell; das Paket ist kein sichtbarer Gegenstand.
+- Nur vier Bewohner; N-004 und N-005 bleiben geplant. Bewohner betreten keine Gebäude (Phase 6).
+- Prüfung auf echter Grafikhardware und in Firefox/Safari steht aus.
+- Die Phase-3-Restpunkte (Preise, Kosten, Etiketten, Lager) bestehen unverändert fort.
 
 ## Phase 5 – Das lebendige Viertel
 **Ziel:** Kalender, Wettervorhersage, Veranstaltungen, dynamische Nachfrage, Bewohnerverhalten und eine eigene Kiosk-Spezialität zu einer zusammenhängenden Viertelsimulation verbinden.

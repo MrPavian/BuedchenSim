@@ -1,6 +1,6 @@
 # Architektur-Entscheidungen (ADRs)
 
-**Stand:** 2026-11-13 · Ergebnis von [Auftrag 00](auftraege/00-bestandsaufnahme-und-architektur.md)
+**Stand:** 2026-11-14 · Ergebnis von [Auftrag 00](auftraege/00-bestandsaufnahme-und-architektur.md), fortgeführt bis [Auftrag 04](auftraege/04-bewohner-und-soziale-bindung.md)
 
 Grundlage: Das Repository enthält keinen Code ([Ist-Stand](TECHNISCHER-IST-STAND.md)). Es gibt daher keine bestehende Architektur, die zu respektieren wäre; die folgenden Entscheidungen legen die erste fest.
 
@@ -55,7 +55,7 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 **Konsequenzen:** Tippfehler in Feldern fallen beim Kompilieren auf, kaputte Referenzen beim Test. Bedingungen und Effekte in Dialogen/Quests werden als kleine, feste Menge von Datentypen modelliert, nicht als freier Code in den Daten. Ein späterer Wechsel auf JSON bleibt möglich, weil die Definitionen reine Daten sind.
 
 ### ADR-005 – Versioniertes Savegame im Browser-Speicher
-**Status:** Entschieden (umgesetzt in Auftrag 01). Noch nicht umgesetzt, weil es noch keinen Zufall gibt: geseedeter Zufallsgenerator. Geldbeträge in ganzen Cent sind seit Auftrag 03 umgesetzt (Savegame Version 2).
+**Status:** Entschieden (umgesetzt in Auftrag 01). Geldbeträge in ganzen Cent sind seit Auftrag 03 umgesetzt (Savegame Version 2). Der Zufall ist seit Auftrag 04 umgesetzt, aber anders als unten entworfen: nicht als gespeicherter Generatorzustand, sondern als gespeicherter Weltseed mit zustandslosen Würfen (siehe ADR-017); das Savegame ist seit Auftrag 04 Version 3.
 
 **Kontext:** Geschichten und Beziehungen müssen über Spielstände hinweg bestehen; das Format muss sich weiterentwickeln können.
 
@@ -70,7 +70,7 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 
 **Entscheidung:** Jedes Asset aus dem Register wird durch eine Fabrikfunktion erzeugt, die unter seiner Asset-ID registriert ist und ein `Object3D` mit dokumentiertem Pivot und Maßen liefert. Zunächst bauen diese Funktionen Three.js-Geometrie mit geteilten Materialien; Beschriftungen entstehen als Canvas-Texturen. Eine Fabrik kann später ein GLB laden, ohne dass Aufrufer sich ändern.
 
-**Konsequenzen:** Keine Abhängigkeit von externen Werkzeugen, kleine Ladezeiten, einheitlicher Stil. Der Detailgrad ist begrenzt; für Figuren kann GLB früher nötig werden.
+**Konsequenzen:** Keine Abhängigkeit von externen Werkzeugen, kleine Ladezeiten, einheitlicher Stil. Der Detailgrad ist begrenzt; für Figuren kann GLB früher nötig werden (Auftrag 04 hat die Figuren dennoch prozedural gebaut, siehe ADR-021).
 
 ### ADR-007 – UI als HTML/CSS-Overlay ohne Framework
 **Status:** Entschieden (umgesetzt in Auftrag 01).
@@ -82,7 +82,7 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 **Konsequenzen:** Gute Lesbarkeit, Tastaturbedienung und Barrierefreiheit mit Bordmitteln. Sollte die UI in Phase 3–5 unhandlich werden, wird ein leichtgewichtiges Framework per neuem ADR geprüft; die Schichtentrennung macht das ohne Eingriff in `game` möglich.
 
 ### ADR-008 – Keine Physik-Engine; einfache Kollision und Wegpunkt-Navigation
-**Status:** Kollision entschieden (umgesetzt in Auftrag 01). Wegpunkt-Navigation für NPCs bleibt vorgeschlagen bis Phase 4.
+**Status:** Kollision entschieden (umgesetzt in Auftrag 01). Wegpunkt-Navigation für NPCs entschieden und umgesetzt in Auftrag 04 (siehe ADR-018).
 
 **Kontext:** Ein kleiner Kiosk mit Gehweg braucht keine Starrkörperphysik.
 
@@ -158,6 +158,62 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 
 **Konsequenzen:** Die Ortsregel ist eine reine UI-Regel und lässt sich ohne Änderung am Spielzustand ändern. NPC-Kunden in Phase 4 können dieselbe Verkaufsdomäne nutzen, ohne an der Spielerposition zu hängen. Die Test-IDs `hud-open-goods` und `hud-open-till` entfallen. Der Tag-abschließen-Knopf bleibt im HUD.
 
+### ADR-017 – Entscheidungen aus einem gespeicherten Weltseed, zustandslos gewürfelt
+**Status:** Entschieden (umgesetzt in Auftrag 04). Ersetzt den „gespeicherten Generatorzustand“ aus ADR-005.
+
+**Kontext:** Routinen, Besuche und Wünsche brauchen Zufall; ein Neuladen desselben Spielstands darf aber keine Entscheidung ändern, und die Spiellogik darf kein `Math.random()` benutzen. Ein Generator mit gespeichertem Zustand liefert die Zahlen in der Reihenfolge der Aufrufe; wer vor dem Speichern mehr oder weniger Würfe verbraucht hat, bekommt nach dem Laden andere Ergebnisse.
+
+**Entscheidung:** `roll(seed, …Teile)` in `src/game/random.ts` ist eine reine Funktion: `hashParts(seed, …Teile) / 2³²` (FNV-1a mit Trennzeichen und murmur3-Endmischung, Wert in [0, 1)). Der Seed (`state.world.seed`, 32 Bit) wird gespeichert. Die Teile benennen die Entscheidung: Routinechance `(Tag, npcId, 'routine', eintragId)`, Wunschwahl `(Tag, npcId, 'wish', routineId)`. Ein neues Spiel bekommt seinen Seed aus der Uhrzeit (nur in `main.ts`, auch bei „Neues Spiel“), Tests nutzen den festen Seed 1, die Migration 2→3 leitet ihn aus Region und Speicherzeit ab. Ein kleiner Generator mit Zustand (`createRng`, mulberry32) liegt getestet bereit, wird aber nicht benutzt.
+
+**Konsequenzen:** Entscheidungen hängen nur von Seed, Tag und IDs ab, nicht von Reihenfolge, Bildrate oder Spieltempo; ein Neuladen ändert nichts (getestet, auch mitten am Tag). Die IDs der Einträge sind Teil der Entscheidung: Wer einen Routineeintrag umbenennt, verändert sein Würfelergebnis; Inhalts-IDs bleiben ohnehin stabil. Jede neue Art von Entscheidung braucht einen eigenen Zweck-Text. Der Seed ist im Spielstand lesbar und änderbar; das ist hier unbedenklich.
+
+### ADR-018 – Bewohner bewegen sich nur auf einem validierten Wegpunktgraphen
+**Status:** Entschieden (umgesetzt in Auftrag 04). Konkretisiert ADR-008.
+
+**Kontext:** Bewohner dürfen nicht durch Wände, Theke oder Möbel laufen, nicht teleportieren und nicht dauerhaft im Weg des Spielers hängen. Eine Physik- oder Navigationsmesh-Lösung wäre für vier Figuren und einen Gehweg unverhältnismäßig.
+
+**Entscheidung:** Der Graph (`NavDef`: Wegpunkte mit stabilen IDs, ungerichtete Kanten, Orte mit mehreren Standplätzen, Ausgänge) ist Inhalt (`nav.ts`) und von Hand gepflegt. Die Wegsuche (Dijkstra, deterministisch) liegt in `src/game/nav.ts`. Bewohner bewegen sich nur auf Kanten, in festen Teilschritten innerhalb von `game.tick`; Position, Ziel und Rest der Route stehen im Spielstand. Die Kollisionsfreiheit wird **beim Inhalt** bewiesen, nicht zur Laufzeit: `validateResidents` prüft jede Kante gegen alle Kollisionsrechtecke (Kreis mit Radius 0,3 m, auch gebundene Platzierungen wie die Bank), Abstände der Standplätze, Reichweite des Verkaufsfensters, freie Türzufahrt und Erreichbarkeit von jedem Ausgang. Zur Laufzeit halten Bewohner nur Abstand zum Spieler und zueinander (0,65 m). Bei Blockade warten sie, suchen nach 4 s eine Route um die blockierte Kante (zwei Gehweg-Bahnen), der Bewohner mit der höheren ID weicht aus, und als letzte Rückfallebene gehen sich zwei Bewohner nach 20 s durch (nie den Spieler, nie Wände).
+
+**Konsequenzen:** Kein Physikbedarf, deterministisch und leicht zu testen. Der Graph ist Handarbeit; wer ein Möbel verschiebt, muss die Validierung bestehen. Es gibt keine freie Navigation. Die Rückfallebene ist eine bewusste Abweichung vom Grundsatz „nicht durcheinander laufen“, um eine dauerhafte Verklemmung auszuschließen.
+
+### ADR-019 – Bewohnerkäufe über die bestehende Verkaufsdomäne, Alter aus den Inhaltsdaten
+**Status:** Entschieden (umgesetzt in Auftrag 04). Beantwortet die offene Frage aus O-4.
+
+**Kontext:** Bewohner sollen wirklich Ware kaufen, ohne eine zweite Bestands- und Geldlogik und ohne Umgehung der Altersschranke; ein Kauf darf nicht durch doppeltes E oder mehrere Bilder mehrfach bezahlt werden.
+
+**Entscheidung:** `economy.completeSale` bleibt die einzige Buchung. `SaleRequest` bekommt das optionale Feld `customer: { npcId }`; die Domäne ergänzt `unknown_customer` und `customer_underage` (Alter aus `NpcDef.age`, auch bei bestätigter Ausweisprüfung) und schreibt `npcId` in die Transaktion und in `sale.completed`. `ageCheckConfirmed` bleibt eine ausdrückliche Bestätigung des Aufrufs; im Kundengespräch ist sie die Antwort „Ausweis, bitte.“, die das Alter aus den Inhaltsdaten zeigt. Der offene Wunsch ist Teil des Bewohnerzustands (`NpcState.wish`); Verkauf, Auflösung (`resolved`), Erinnerung, Wunsch-Effekte und Heimgehen geschehen in einem Schritt, ein aufgelöster Wunsch lässt sich nicht wieder verkaufen. Bewohner kaufen nur, wenn der Spieler sie bedient (keine Hintergrundverkäufe), zum vorgeschlagenen Verkaufspreis.
+
+**Konsequenzen:** Die Kassenverkäufe des Spielers sind unverändert (getestet). Ein Bewohner unter dem Mindestalter kann die Ware nie kaufen, egal was der Spieler bestätigt. Die Wirtschaft kennt weiter keine Nachfrage; die Wünsche sind Inhalt mit Bedingungen und Gewichten.
+
+### ADR-020 – Dialoge, Bedingungen und Effekte als geschlossene Datentypen ohne Code
+**Status:** Entschieden (umgesetzt in Auftrag 04). Konkretisiert ADR-004.
+
+**Kontext:** Gespräche und Geschichten sollen ohne Änderung der Kernlogik ergänzbar sein; der Auftrag verbietet `eval`, ausführbaren Code und eine freie Skriptsprache.
+
+**Entscheidung:** `Condition` (13 Fälle) und `Effect` (8 Fälle) sind diskriminierte Unions in `src/game/npcTypes.ts`; ausgewertet werden sie an je einer Stelle (`conditions.ts`, `story.ts`, `dialogue.ts`). Ein Gespräch wird nach Priorität unter denen gewählt, deren Bedingungen gelten (`once` entfällt nach dem Sehen); ein einziges generisches Panel zeigt es. Relationseffekte tragen einen Schlüssel und wirken höchstens einmal (`story.effectKeys`); die einzige wiederholbare Beziehungsänderung ist der Tagesgruß. Quest-Schritte gehen nur vorwärts, ein Ausgang ist endgültig. Das Kundengespräch ist eingebaut (nicht Inhalt) und nutzt die Kundeneffekte `sellWish`, `declineWish`, `checkId`, die die Inhaltsvalidierung in Inhalten verbietet. `validateResidents` prüft Verweise, Wertebereiche, erreichbare Knoten, Widersprüche und Schlüssel.
+
+**Konsequenzen:** Eine neue Bedingung ist ein Fall im Typ plus je eine Auswertung und Validierung. Gesprächsverläufe entstehen aus Priorität und Bedingungen, nicht aus einem Skript; ob alle Bedingungen je zusammen erfüllbar sind, prüft die Validierung nicht. Einmalige Gespräche gelten auch beim vorzeitigen Schließen als gesehen; das kann eine Geschichte beenden (bekannte Einschränkung). Erinnerungen sind einfache Kennungen ohne Typ.
+
+### ADR-021 – Bewohnerfiguren prozedural mit einem leichten gemeinsamen Animations-Kit
+**Status:** Entschieden (umgesetzt in Auftrag 04). Bestätigt ADR-006 für Figuren.
+
+**Kontext:** Der Auftrag verlangt vier unterscheidbare Figuren mit lesbaren Körperteilen und einfachen Geh-, Idle- und Gesprächsanimationen und verlangt, die Wahl „prozedural oder GLB“ zu begründen.
+
+**Entscheidung:** Prozedural. Ein `PartKit` baut jede Figur aus sieben gemeinsamen Grundgeometrien und einem Material je Farbe auf einem Gerüst aus Gruppen (Rumpf, Kopf, Arme, Beine); die Animation (Schrittphase aus der zurückgelegten Strecke, Atmen, Gewichtsverlagerung, Gesten beim Sprechen) ist reine Skalarrechnung je Bild ohne neue Objekte, ein `GaitStyle` je Figur macht den Gang erkennbar. Eine Fabrik je Asset-ID (`N-002`, `N-003`, `N-006`, `N-007`) wird in `src/world/assets/residents/index.ts` registriert; unbekannte IDs bekommen eine neutrale Fallback-Figur und eine Warnung. Kein `AnimationMixer`, kein `InstancedMesh`.
+
+**Gründe:** Es gibt keine Modelldateien, keine Modellierpipeline und in der Umgebung kein Werkzeug dafür; Maße, Pivot und Unterscheidbarkeit lassen sich im Code exakt kontrollieren und testen; für vier Figuren genügt ein kleines Kit.
+
+**Konsequenzen:** Die Details sind begrenzt (stilisierte Gesichter, kleine Merkmale aus der Spielkamera kaum lesbar). Vier Figuren kosten 123 Meshes, also 123 Draw Calls; bei deutlich mehr Bewohnern müsste zusammengefasst oder instanziiert werden. Ein späterer Wechsel auf GLB ersetzt nur die Fabrik, weil Aufrufer nur `ResidentFigure` kennen.
+
+### ADR-022 – Flaggebundene Platzierungen für sichtbare Folgen von Entscheidungen
+**Status:** Entschieden (umgesetzt in Auftrag 04).
+
+**Kontext:** Entscheidungen sollen die Welt sichtbar verändern (eine Bank im Hof, ein Foto auf der Theke). Platzierungen sind Inhalt, nicht Spielstand (Abschnitt 14.3 der Datenverträge); der Spielstand kennt aber die Story-Flags.
+
+**Entscheidung:** `PlacementDef.requiresFlag` benennt ein Story-Flag; `placementPresent(placement, flags)` entscheidet, ob die Platzierung existiert. Zur Laufzeit zeichnet die Welt das Objekt und seine Kollision nur, solange das Flag gesetzt ist, und baut die Kollisionslisten bei `story.changed` und `game.state.replaced` neu (`placementGates.ts`); Objekte, die darauf stehen (das Foto auf der Theke), verschwinden mit ihm. Die Inhaltsvalidierung übergibt keine Flags und behandelt gebundene Platzierungen als vorhanden, damit eine spätere Bank keinen Weg versperrt; ein gelesenes Flag muss von einem Effekt gesetzt werden. Der Spielstand speichert weiter nur das Flag, nicht die Platzierung.
+
+**Konsequenzen:** Das Layout bleibt Inhalt und nahezu unverändert; ein Objekt lässt sich nur zu- und abschalten, nicht verschieben. Wird ein Flag zurückgesetzt, verschwindet das Objekt wieder (das nutzt derzeit keine Geschichte für Platzierungen).
+
 ---
 
 ## Teil B – Offene Produktentscheidungen
@@ -208,7 +264,7 @@ Diese Punkte kann die Analyse nicht entscheiden. Bis zur Antwort gilt jeweils di
 - `economy.completeSale` lehnt einen Verkauf mit mindestens einer altersbeschränkten Zeile ohne `ageCheckConfirmed: true` mit `age_check_required` ab; ein gemischter Warenkorb wird als Ganzes abgelehnt. Die Prüfung gilt je Verkauf, die Bestätigung wird nirgends gespeichert und steht nicht im Spielstand.
 - Die Kasse fragt mit einem standardmäßig nicht gesetzten Kontrollkästchen „Ausweis geprüft – Mindestalter (n) erreicht“, nennt bei Bedarf das höchste Mindestalter im Warenkorb und setzt die Bestätigung nach dem Verkauf und beim Schließen zurück.
 - Darstellung: fiktive Marken, schlichte Etiketten (ein Band und der Name, ohne Zierformen), Tabak hinter der Theke, keine verherrlichende Inszenierung. Die Namen sind Arbeitstitel und rechtlich nicht geprüft.
-- Offen für Phase 4: Wer die Prüfung für NPC-Kunden bestätigt.
+- Die offene Frage für Phase 4, wer die Prüfung für NPC-Kunden bestätigt, ist in ADR-019 entschieden: Das Alter eines Bewohners kommt aus den Inhaltsdaten, die Bestätigung des Spielers ist nie ein Altersnachweis.
 
 **Auswirkung:** Produktdatenmodell, Zielgruppe, eventuelle Altersfreigabe bei einer Veröffentlichung.
 
@@ -218,4 +274,4 @@ Diese Punkte kann die Analyse nicht entscheiden. Bis zur Antwort gilt jeweils di
 ---
 
 ## Teil C – Bewusst nicht entschieden
-Diese Themen werden erst geplant, wenn ihre Phase ansteht: Audio-Technik (Phase 6), Animationssystem für Figuren (Phase 4), LOD und Instancing-Strategie (bei nachgewiesenem Bedarf), Aufbau regionaler Pakete jenseits der Ordnerstruktur (nach dem Ruhrgebiets-Slice), Mehrsprachigkeit.
+Diese Themen werden erst geplant, wenn ihre Phase ansteht: Audio-Technik (Phase 6), ein eigenes Animationssystem für Figuren (für Phase 4 entschieden: leichtes Kit statt Framework, siehe ADR-021), LOD und Instancing-Strategie (bei nachgewiesenem Bedarf), Aufbau regionaler Pakete jenseits der Ordnerstruktur (nach dem Ruhrgebiets-Slice), Mehrsprachigkeit.
