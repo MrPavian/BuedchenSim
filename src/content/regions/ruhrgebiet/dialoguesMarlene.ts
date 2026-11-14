@@ -147,7 +147,7 @@ export const marleneDialogues: DialogueDef[] = [
     start: 'a',
     nodes: {
       a: {
-        text: 'Ich muss das loswerden. Seit Wochen sägt es ab halb sieben im Hof. Ich brauche meine Stunde Ruhe, bevor im Sekretariat das Telefon klingelt. Und der Hof wäre der einzige Platz, wo die Hausgemeinschaft sitzen könnte, wenn nicht überall Bretter lägen.',
+        text: 'Ich muss das loswerden. Seit Wochen sägt es ab halb acht im Hof. Ich brauche meine Stunde Ruhe, bevor im Sekretariat das Telefon klingelt. Und der Hof wäre der einzige Platz, wo die Hausgemeinschaft sitzen könnte, wenn nicht überall Bretter lägen.',
         options: [
           opt('verstehen', 'Das klingt anstrengend.', {
             effects: [step(HOF, 'beschwerde'), mem(M, 'marlene:hof-beschwerde'), rel(M, 3, 'k.marlene.hof-zuhoeren')],
@@ -184,7 +184,7 @@ export const marleneDialogues: DialogueDef[] = [
         ],
       },
       kompromiss: {
-        text: 'Eine Bank. Und ab neun. Das hätte ich Ihnen gar nicht zugetraut. Wenn die Säge um neun statt um halb sieben anfängt, sitze ich als Erste drauf.',
+        text: 'Eine Bank. Und ab neun. Das hätte ich Ihnen gar nicht zugetraut. Wenn die Säge um neun statt um halb acht anfängt, sitze ich als Erste drauf.',
         options: [bye('Dann bis auf der Bank.')],
       },
       derya: { text: 'Ach so. Dann weiß ich ja, woran ich bin.', options: [bye('Es tut mir leid.')] },

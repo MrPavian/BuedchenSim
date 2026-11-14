@@ -254,18 +254,22 @@ export function createDialogueEngine(ctx: DomainContext, economy: EconomyApi, si
       s.nodeId = option.next;
       return transaction ? { ok: true, ended: false, transaction } : { ok: true, ended: false };
     }
-    endSession();
+    endSession(true);
     return transaction ? { ok: true, ended: true, transaction } : { ok: true, ended: true };
   };
 
   // --- Session ----------------------------------------------------------------------------------------------------
 
-  function endSession(): void {
+  /**
+   * `completed`: the conversation reached a terminal option. Only then does it count as seen – a conversation closed
+   * early (Escape) is offered again, so a once-dialogue that starts a story can never be lost by closing it.
+   */
+  function endSession(completed = false): void {
     const s = session;
     if (!s) return;
     session = null;
     const seen = ctx.state().story.seenDialogues;
-    if (s.dialogueId !== null && !seen.includes(s.dialogueId) && seen.length < SAVE_LIMITS.seenDialogues) {
+    if (completed && s.dialogueId !== null && !seen.includes(s.dialogueId) && seen.length < SAVE_LIMITS.seenDialogues) {
       seen.push(s.dialogueId);
     }
     sim.endTalk(s.npcId);

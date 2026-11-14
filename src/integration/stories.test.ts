@@ -37,7 +37,7 @@ function say(game: Game, npcId: string, expectedDialogue: string, options: strin
   expect(game.dialogue.current()).toBeNull();
 }
 
-/** Opens a conversation only to read which dialogue is picked, then closes it (once-dialogues count as seen). */
+/** Opens a conversation only to read which dialogue is picked, then closes it early (which does not consume it). */
 function peek(game: Game, npcId: string, day: number, minute = 600): string | undefined {
   setTime(game, minute, day);
   summon(game, npcId);
@@ -49,7 +49,7 @@ function peek(game: Game, npcId: string, day: number, minute = 600): string | un
 
 /** Story A up to the decision: both sides are heard (days 2 and 3). */
 function hearBothSides(game: Game): void {
-  say(game, M, 'dialogue.marlene.erstes-mal', ['aushang', 'bye'].slice(0, 1), 2);
+  say(game, M, 'dialogue.marlene.erstes-mal', ['aushang', 'bye'], 2);
   say(game, M, 'dialogue.marlene.hof-beschwerde', ['verstehen', 'bye'], 2);
   expect(quest(game, 'quest.hof')).toEqual({ step: 'beschwerde', outcome: null });
   say(game, D, 'dialogue.derya.erstes-mal', ['werkstatt', 'bye'], 3);
@@ -239,6 +239,8 @@ describe('story B: a parcel for Günter', () => {
     expect(rel(other, G)).toBe(r - 3);
     // Jonas has nothing to hand over, the story cannot continue, Günter reacts once.
     expect(peek(other, J, 3)).toBe('dialogue.jonas.erstes-mal');
+    expect(peek(other, J, 3)).toBe('dialogue.jonas.erstes-mal'); // closing early does not consume it
+    say(other, J, 'dialogue.jonas.erstes-mal', ['bye'], 3);
     expect(peek(other, J, 3)).toBe('dialogue.jonas.moin');
     say(other, G, 'dialogue.guenter.paket-abgelehnt', ['leid', 'bye'], 4);
     expect(flagOf(other, 'kiosk.photo')).toBe(false);

@@ -3,6 +3,7 @@ import {
   NPC_CLEARANCE_MARGIN,
   NPC_DEADLOCK_SECONDS,
   NPC_MAX_STEP_SECONDS,
+  NPC_MAX_TICK_SECONDS,
   NPC_RADIUS,
   SHUTTER_PATIENCE_MINUTES,
 } from './balance';
@@ -496,7 +497,9 @@ export function createNpcSim(ctx: DomainContext): NpcSim {
       if (!Number.isFinite(dtSeconds) || dtSeconds <= 0 || ids.length === 0) return;
       const { calendar } = ctx.state();
       if (calendar.paused) return;
-      const total = dtSeconds * calendar.speed;
+      // A single tick never simulates more than NPC_MAX_TICK_SECONDS of walking: the game loop sends 1/60 s, and a
+      // huge dt (tests, a stalled tab) must not freeze the game in millions of sub-steps. Routines catch up by time.
+      const total = Math.min(dtSeconds, NPC_MAX_TICK_SECONDS) * calendar.speed;
       const steps = Math.max(1, Math.ceil(total / (NPC_MAX_STEP_SECONDS * calendar.speed)));
       const each = total / steps;
       for (let i = 0; i < steps; i += 1) simStep(each);

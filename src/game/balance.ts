@@ -59,6 +59,8 @@ export const NPC_BLOCKED_WAIT_SECONDS = 4;
 export const NPC_DEADLOCK_SECONDS = 20;
 /** The simulation step is split so that no single movement step is longer than this (seconds). */
 export const NPC_MAX_STEP_SECONDS = 1 / 30;
+/** Upper bound of real seconds one game.tick simulates for residents (the loop sends 1/60 s; larger dt is clipped). */
+export const NPC_MAX_TICK_SECONDS = 5;
 
 /** Distance within which the player can talk to a resident (works across the counter from behind it). */
 export const NPC_TALK_RADIUS = 1.8;

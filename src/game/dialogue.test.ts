@@ -164,15 +164,32 @@ describe('dialogue content: options, conditions, effects', () => {
     expect(game.state.story.quests['quest.dispute']?.outcome).toBe('outcome.neutral');
   });
 
-  it('seen is updated when the conversation ends, also when it is closed early', () => {
+  it('seen is updated only when the conversation reaches its end, not when it is closed early', () => {
     const game = talkTo(STAMM);
     game.npcs.talk(STAMM);
     expect(game.state.story.seenDialogues).toEqual([]);
-    game.dialogue.close();
-    expect(game.state.story.seenDialogues).toEqual(['dialogue.stammkunde.dispute']);
+    game.dialogue.close(); // Escape: not seen, offered again
+    expect(game.state.story.seenDialogues).toEqual([]);
     game.npcs.talk(STAMM);
-    game.dialogue.close();
-    expect(game.state.story.seenDialogues).toEqual(['dialogue.stammkunde.dispute']); // no duplicate
+    expect(game.dialogue.current()?.dialogueId).toBe('dialogue.stammkunde.dispute');
+    game.dialogue.choose('listen');
+    game.dialogue.choose('neutral'); // terminal option
+    expect(game.state.story.seenDialogues).toEqual(['dialogue.stammkunde.dispute']);
+  });
+
+  it('closing a once-dialogue early does not consume it (regression: a story could never start)', () => {
+    const game = talkTo(STAMM);
+    mutable(game).story.quests['quest.dispute'] = { step: 'step.decided', outcome: 'outcome.mediated' };
+    for (let i = 0; i < 3; i += 1) {
+      game.npcs.talk(STAMM);
+      expect(game.dialogue.current()?.dialogueId).toBe('dialogue.stammkunde.followup');
+      game.dialogue.close();
+    }
+    game.npcs.talk(STAMM);
+    game.dialogue.choose('thanks');
+    expect(game.state.story.seenDialogues).toContain('dialogue.stammkunde.followup');
+    game.npcs.talk(STAMM);
+    expect(game.dialogue.current()?.dialogueId).not.toBe('dialogue.stammkunde.followup');
   });
 
   it('a dialogue whose next node does not exist ends instead of crashing', () => {
