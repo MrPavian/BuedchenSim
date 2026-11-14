@@ -225,6 +225,8 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 
 **Konsequenzen:** Je Figur rund 30.000 Dreiecke und 1,5 MB statt rund 2.000 Dreiecken; Draw Calls etwa gleich oder geringer. Die Datenordner (MPFB-`data`, `makehuman_system_assets`) liegen nicht im Repository und müssen zum Erzeugen heruntergeladen werden; Python 3.13 und `bpy` 5.3 werden nur zum Erzeugen gebraucht, nicht für Build oder Tests. Lizenz- und Projekthinweise in Texturen entfernt das Skript; Kleidung mit Projektlogo wird nicht verwendet. PBR-Materialien der Figuren und Lambert-Welt sind abzustimmen, wenn mehr Figuren umgestellt sind.
 
+**Ergänzung (Auftrag 04.6):** Alle vier Bewohner nutzen diesen Weg; jede Figur ist eine Spezifikation im Skript. Gesichtsausdrücke kommen als optionale Morph Targets `friendly`, `thoughtful`, `blink` (aus MakeHuman-Ausdruckseinheiten, dünn besetzt) in dieselbe Datei; die Laufzeit blinzelt und blendet beim Sprechen weich zwischen den Ausdrücken. Dateien ohne Morph Targets bleiben gültig.
+
 ---
 
 ## Teil B – Offene Produktentscheidungen
