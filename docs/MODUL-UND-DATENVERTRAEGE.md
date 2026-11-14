@@ -246,7 +246,7 @@ Aufruf: beim Start im Entwicklungsmodus (Fehler werden sichtbar angezeigt, das S
 
 ## 9. Spielzustand und Savegame
 
-*Überholt für Phase 3 und 4:* Das umgesetzte `GameState` (Version 2, mit `calendar` und `economy`) steht in Abschnitt 15.2, das Savegame in 15.8; die Version 3 mit `world`, `npcs` und `story` (statt `rngState`, `people`) steht in Abschnitt 16.3, das Savegame in 16.7. Die Skizze zeigt den langfristigen Plan.
+*Überholt für Phase 3 und 4:* Das umgesetzte `GameState` (Version 2, mit `calendar` und `economy`) steht in Abschnitt 15.2, das Savegame in 15.8; die Version 3 mit `world`, `npcs` und `story` (statt `rngState`, `people`) steht in Abschnitt 16.3, das Savegame in 16.7; Version 4 (Spezialitäten, Haushalte) in 17.5. Die Skizze zeigt den langfristigen Plan.
 
 ```ts
 interface GameState {
@@ -894,3 +894,71 @@ Alle anderen Signale aus 15.5 bleiben. Nutzlasten enthalten nur IDs und einfache
 
 ### 16.11 Offene Punkte für Phase 5
 Wetter, Events und dynamische Nachfrage können an die Routinenbedingungen (neue `Condition`-Fälle), die Wunschgewichte und `sale.completed` anknüpfen. Dafür fehlen noch ein Kalenderdatum (bisher nur `weekdayOf(day)`), Bedingungen auf Wetter und Events und die Möglichkeit, dass ein Bewohner einen Wunsch anders gewichtet (`likes`/`dislikes` haben bisher keine Wirkung). Neue Bedingungen und Effekte sind je ein Fall im Typ mit Auswertung und Validierung.
+
+## 17. Stand nach Auftrag 05: Kalender, Wetter, Veranstaltungen, Nachfrage, Spezialität, Haushalte, Savegame 4
+
+Entscheidungen dazu: ADR-024 bis ADR-029 in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md). Die offenen Punkte aus 16.11 sind damit umgesetzt (Kalenderdatum, Wetter- und Eventbedingungen, Nachfrage als Wunschgewicht).
+
+### 17.1 Neue Module in `game`
+| Modul | Inhalt |
+|---|---|
+| `date.ts` | `START_DATE` (Mo 7. Juni 2027 = Tag 0), `dateOfDay(day)` → Jahr, Monat, Tag, Wochentag (0 = Montag), Tag im Jahr, Jahreszeit; `dayOfDate`, `isLeapYear`, `seasonOf` (März–Mai Frühling …). Nur `calendar.day` wird gespeichert. |
+| `weather.ts` | `WeatherCondition` (`sunny`, `cloudy`, `light-rain`, `heavy-rain`, `fog`, `snow`, `frost`), `Climate` (12 Monate: Hoch, Tief, Gewichte je Zustand), `weatherOfDay(seed, climate, day)` (memoisiert, rein), `temperatureAt(dayWeather, minute)`, `forecastFor(seed, climate, today)` (3 sichere Tage, 4 Tendenztage mit `confidence`). |
+| `environment.ts` | `environmentOf(content, state)` → `{ day, season, weather, temperature, eventsToday, activeEvents }`, zwischengespeichert je Inhalt, Seed, Tag, Minute und Zahl der freigeschalteten Veranstaltungen; `climateOf`, `DEFAULT_CLIMATE`. `DomainContext.env()` liefert ihn den Domänen. |
+| `eventCalendar.ts` | `EventDef` (Termine, Uhrzeiten, Ankündigung, Produktgruppen, Nachfrage, `visitorBonus`, `decoration`, `memory`, `requiresFlag`), `isEventDay`, `occurrenceOn`, `eventsTodayAt`, `eventStates`, `eventsOnDay`, `unlockedEvents(defs, flags)`. |
+| `demand.ts` | `DemandConfig`, `demandFor` (Aufschlüsselung B/W/E/S/T, begrenzt), `wishDemandFactor`, `routineChance`, `groupDeltas`, `NEUTRAL_DEMAND`, `NEUTRAL_WEATHER`, `HOT_DAY_CELSIUS` (28 °C). |
+| `specialty.ts` | `RecipeDef`, `SpecialtyDef`, `SpecialtyState`, `batchQuality`, `createSpecialtyApi` (`list`, `startProduction`, `tick`, `onSale`). |
+| `wishes.ts` (erweitert) | `pickWish(…, factor)`, `wishCostCents(content, wish)`. |
+| `story.ts` (erweitert) | `addHouseholdMemory`. |
+
+### 17.2 `Game`-Fassade (Ergänzungen)
+- `game.weather`: `environment()`, `forecast()`, `onDay(day)` – abgeleitet, nie gespeichert.
+- `game.events`: `current()` (laufend, angekündigt, geplant in 60 Tagen, gestern beendet), `onDay(day)` (was der Spieler heute über diesen Tag wissen kann; Hitzewellen nur innerhalb der Ankündigungsfrist).
+- `game.demand`: `forProduct(id)`, `outlook()` (Gruppenabweichungen heute + 6 Tage gegenüber einem üblichen Tag).
+- `game.specialty`: `list()`, `startProduction(id, batches, useOptional)` mit Ablehnungen `unknown_specialty`, `day_not_open`, `invalid_batches`, `production_running`, `missing_ingredients`, `missing_optional`, `storage_full`.
+- Neue Signale: `specialty.changed`, `specialty.produced`, `specialty.feedback`, `specialty.stage`; Stufen setzen Flags über `story.changed`.
+
+### 17.3 Inhaltsverträge (Ergänzungen zu `ContentPack`)
+- `climate?: Climate`, `events?: EventDef[]`, `demand?: DemandConfig`, `recipes?: RecipeDef[]`, `specialties?: SpecialtyDef[]`, `households?: HouseholdDef[]` – alle optional; ohne sie verhält sich ein Paket wie in Phase 4 (gemäßigtes Standardklima, keine Veranstaltungen, neutrale Nachfrage).
+- `ProductDef.storage` kennt zusätzlich `ingredient` (nur Lager, kein Warenplatz, Richtpreis = Einkaufspreis).
+- `NpcDef`: `weatherResponse?` (Prozentpunkte je Wetterzustand und `hot`), `householdId?`, `purseCents?`.
+- `SpecialtyDef`: `firstFlag?`, Stufen 2 und 3 mit Mindestwerten und `flag`, `recipeLevel`; `feedback` je Bewertung (`great`, `good`, `meh`, `bad`, Platzhalter `{name}`); `recommendMemory`, `tasteMemory?`.
+- `HouseholdDef`: `id` (`household.`), `name`, `kind` (`single`, `couple`, `family`, `shared-flat`), `home`, `memberIds`.
+- Neue Bedingungen: `weather`, `temperatureAtLeast`, `temperatureBelow`, `season`, `eventActive`, `eventToday`, `householdMemory`. `ConditionContext` hat optional `env` und `households`; ohne `env` treffen Umweltbedingungen nie zu.
+
+### 17.4 Validierung (Ergänzungen)
+- **Klima:** 12 Monate, Hoch über Tief, bekannte Zustände mit nicht negativen Gewichten.
+- **Veranstaltungen:** Präfix `event.`, eindeutig, Name und Beschreibung, Ankündigung ≥ 0, Uhrzeiten innerhalb des Öffnungstages, Nachfrageschlüssel treffen ein Produkt und liegen in −60…60, `visitorBonus` 0…40, gültige Terminparameter; `requiresFlag` zählt als gelesenes Flag.
+- **Nachfrage:** Schlüssel treffen Produkte; Gruppen mit Bezeichnung.
+- **Rezepte und Spezialitäten:** Präfixe, eindeutige IDs, Endprodukt verkäuflich (keine Zutat), Zutaten bekannt und ≠ Endprodukt, positive Mengen und Zeiten, Qualitätsparameter ≥ 0; genau die Stufen 2 und 3, Stufe 3 nicht leichter als 2, jede Stufe mit Mindestzufriedenheit, Rückmeldungen für alle vier Bewertungen. Stufen- und Erstflags zählen als gesetzte Flags.
+- **Zutaten:** Richtpreis = Einkaufspreis; sie brauchen keinen Warenplatz, kein Warenplatz darf `ingredient` annehmen.
+- **Haushalte:** Präfix `household.`, Name und Wohnort, bekannte Art, Mitglieder bekannt und genau einmal zugeordnet, `householdId` passt, `single` genau ein Mitglied, andere Arten mindestens zwei; `purseCents` ganzzahlig ≥ 0.
+
+### 17.5 Spielzustand und Savegame 4
+```ts
+GameState += {
+  specialties: Record<SpecialtyId, {
+    stage: 0 | 1 | 2 | 3; fame: number; recipeLevel: number; batchesProduced: number;
+    stockQuality: number | null;
+    production: { recipeId; batches; units; quality; startedAt; readyAt } | null; // absolute Spielminuten
+    sold: number; satisfactionSum: number; ratings: number;
+    buyers: Record<NpcId, number>; recommendations: number;
+    feedback: { day; minute; npcId; rating; satisfaction; text }[]; // neueste zuerst, höchstens 12
+  }>;
+  households: Record<HouseholdId, { memories: string[] }>;
+}
+```
+`CURRENT_SCHEMA_VERSION = 4`; Migration 3 → 4 ergänzt beide Abschnitte leer; Kette 1 → 2 → 3 → 4. Nicht gespeichert: Datum (aus `calendar.day`), Wetter, Vorhersage, Veranstaltungsstatus, Nachfrage, Wettereffekt-Einstellung (Geräteeinstellung in `localStorage`, `buedchensim.settings.weatherEffects`).
+
+### 17.6 Welt und UI
+- `world/views/atmosphereView.ts`: Himmel, Nebel, Sonne, Halbkugellicht, Rasenfarbe (Jahreszeit, Schnee) und nasse Pflasterflächen je Jahreszeit und Wetter; `precipitation.ts` (Regenlinien bis 1.600, Schneeflocken bis 1.200, Stufen `full`/`reduced`/`off`, ändert nie die Simulation); `eventDecorView.ts` (`decor.football`, `decor.streetfest`, `decor.fleamarket`, `decor.christmas`, `decor.heatwave`). Debug: `world.getAtmosphere()`, `world.setWeatherEffects(level)`.
+- Neue Möbel I-014 (Kundenstopper) und I-015 (Kult-Tafel) als flaggebundene Platzierungen (ADR-022).
+- UI: Datumsknopf im HUD (`hud-date`) öffnet das Kalenderpanel (Taste K) mit Vorhersage, Veranstaltungen, Nachfragepfeilen und der Wettereffekt-Einstellung; die Warenverwaltung hat den Reiter „Spezialität“ (`specialtyViewModel.ts`, `panels/specialtyTab.ts`); Hinweise bei fertiger Herstellung, Kundenstimme und neuer Stufe.
+
+### 17.7 Wer darf was ändern (Ergänzung zu 16.10)
+| Schicht | Darf | Darf nicht |
+|---|---|---|
+| `game` (`specialty`) | Zutaten verbrauchen, fertige Ware ins Lager legen, Bewertung/Bekanntheit/Stufe fortschreiben, Stufenflags setzen | selbst verkaufen; Wetter oder Veranstaltungen speichern |
+| `game` (`demand`, `weather`, `eventCalendar`, `environment`) | rein rechnen | Zustand verändern |
+| `world` | Atmosphäre, Niederschlag und Dekoration aus `environmentOf` zeichnen | Wetter würfeln, Zustand ändern |
+| `ui` | Kalender, Vorhersage und Spezialität aus dem Zustand anzeigen; `startProduction` aufrufen | Qualität, Bekanntheit oder Termine selbst berechnen |

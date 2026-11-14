@@ -99,6 +99,8 @@ export function createEconomyApi(ctx: DomainContext): EconomyApi {
       if (state.calendar.phase === 'closed') return { ok: false, reason: 'day_closed' };
       const merged = mergeLines(ctx, lines, 'empty_order');
       if (!merged.ok) return merged;
+      // Specialties are made in the kiosk from ingredients, never bought from the supplier (Auftrag 05).
+      if (merged.lines.some((l) => (ctx.content.recipes ?? []).some((r) => r.productId === l.productId))) return { ok: false, reason: 'not_orderable' };
       if (economy.pendingDelivery) return { ok: false, reason: 'order_pending' };
       let totalCents = 0;
       let units = 0;

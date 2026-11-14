@@ -29,6 +29,15 @@ Danach die angezeigte Adresse im Desktop-Browser öffnen. Steuerung: **WASD** od
 | `npm run check:browser` | Prüfung der laufenden Szene in Chromium mit Screenshots (mehrere Minuten); benötigt einmalig `npx playwright install chromium` |
 
 ## Projektstand
+Phase 5 ist umgesetzt ([Auftrag 05](docs/auftraege/05-das-lebendige-viertel.md), [Abschlussbericht](docs/PHASE-05-ABSCHLUSSBERICHT.md)): **Das Viertel lebt.**
+- **Kalender und Jahreszeiten:** Das Spiel beginnt am Montag, 7. Juni 2027; Datum, Wochentag und Jahreszeit (mit Schaltjahren) stehen im HUD. Ein Klick auf das Datum (oder Taste K) öffnet den Kalender.
+- **Wetter mit Vorhersage:** sonnig, bewölkt, leichter und starker Regen, Nebel, Schnee, Frost, mit Tagesgang der Temperatur; drei Tage sichere Vorhersage, vier Tage Tendenz. Regen, Schnee, nasses Pflaster, Nebel und die Jahreszeiten sind in der 3D-Welt zu sehen (Partikel in drei Stufen abschaltbar).
+- **Veranstaltungen:** Heimspiel des erfundenen SV Grubenlicht 09 (jeden zweiten Samstag), Straßenfest, Flohmarkt, Weihnachtszeit und Hitzewelle – angekündigt im Kalender, mit Dekoration am Büdchen, mehr Besuch, anderer Nachfrage, eigenen Gesprächen und zwei Gästen (Ole, Fan; Hilde, Trödelhändlerin).
+- **Nachfrage:** Wetter, Temperatur, Jahreszeit, Wochentag, Uhrzeit und Veranstaltungen verändern, was die Bewohner sich wünschen und wie oft sie kommen; der Kalender zeigt die erwartete Nachfrage als Pfeile. Verkauft wird weiterhin nur, was der Spieler verkauft.
+- **Spezialität „Frikadelle im Brötchen“:** Zutaten bestellen, im Reiter „Spezialität“ der Warenverwaltung herstellen (40 Spielminuten je Durchgang), einräumen und verkaufen; Qualität, Kundenstimmen und Bekanntheit führen zum **Geheimtipp** (Kundenstopper vor dem Büdchen) und zum **Kultstatus** (Kult-Tafel, Tradition „Frikadellen-Freitag“, zusätzliche Stammkunden). Ein schlechtes Produkt wird nie Kult.
+- **Bewohner und Haushalte:** jede Figur reagiert anders auf Wetter (Günter bleibt bei Regen eher zu Hause, Jonas kommt bei Hitze öfter) und hat eine eigene Geldbörse; Haushalte als soziale Gruppe mit gemeinsamen Erinnerungen sind angelegt (bisher nur Ein-Personen-Haushalte).
+- **Spielstand Version 4** (Spezialität, Haushalte); Versionen 1 bis 3 werden migriert. Wetter und Termine werden nicht gespeichert, sondern aus Seed und Datum abgeleitet.
+
 Phase 4 ist umgesetzt ([Auftrag 04](docs/auftraege/04-bewohner-und-soziale-bindung.md)): Das Viertel hat **vier wiederkehrende Bewohner**. Vor Phase 5 hat [Auftrag 04.5](docs/auftraege/04-5-visual-identity-und-graphics-foundation.md) die visuelle Basis festgelegt: wärmeres, plastischeres Licht mit Tone Mapping, schlankere Waren- und Figurenmodelle, einen ersten Figuren-Prototyp (Günter als GLB aus frei lizenzierten MakeHuman-Daten) und eine verbindliche Style-Spezifikation ([VISUAL-BASELINE.md](docs/VISUAL-BASELINE.md), Vorher/Nachher-Bilder unter [docs/screenshots/auftrag-04-5/](docs/screenshots/auftrag-04-5/README.md)). Phase 3 ([Auftrag 03](docs/auftraege/03-waren-wirtschaftskreislauf-und-spieltag.md)) lieferte darunter den Wirtschaftskreislauf.
 
 **Bewohner und soziale Bindung (Auftrag 04):**
@@ -48,7 +57,7 @@ Inhalte und Regeln im Detail: [Bewohner, Dialoge und Geschichten](docs/BEWOHNER-
 - **Spielzeit**: 1 Spielminute = 1 Sekunde, Tag von 06:00 bis 22:00 Uhr, Pause und 1×/2×/4×. Um 22:00 Uhr wartet die Uhr auf den ausdrücklichen **Tagesabschluss** (auch vorher möglich) mit Abrechnung; danach beginnt der nächste Tag.
 - Der Spielstand (seit Auftrag 03 Version 2) enthält Zeit, Kasse, Bestände und Tagesabrechnung; Spielstände aus Phase 2 werden migriert.
 
-Noch nicht vorhanden: Preisänderungen, Nachfrage und Laufkundschaft (Verkäufe sind ein Kassenvorgang des Spielers, außer den Käufen der vier Bewohner), Wetter, Events, Audio. Alle Marken sind frei erfunden; die Namen sind Arbeitstitel und rechtlich nicht geprüft. Das Sortiment steht im [Produktkatalog](docs/PRODUKTKATALOG.md).
+Noch nicht vorhanden: Preisänderungen, Laufkundschaft (Verkäufe sind ein Kassenvorgang des Spielers, außer den Käufen der Bewohner), Audio (auch keine Wettergeräusche), mehrköpfige Haushalte als Inhalt. Alle Marken sind frei erfunden; die Namen sind Arbeitstitel und rechtlich nicht geprüft. Das Sortiment steht im [Produktkatalog](docs/PRODUKTKATALOG.md).
 
 **Prüfstand:** Geprüft wurde ausschließlich automatisch: Typecheck, Lint, 605 Unit- und Integrationstests in 37 Dateien (eigener Lauf am 2026-11-14; der Phase-3-Stand mit 370 Tests wurde dabei bestätigt), Build sowie die Browserprüfung in Headless-Chromium mit Software-Rendering: 149 von 149 Prüfungen bestanden (zwei Läufe nacheinander am 2026-11-14, 1.287 s und 1.188 s). Die Prüfung auf echter Grafikhardware und in Firefox oder Safari steht aus; die Schritte dafür stehen in der [manuellen Prüfanleitung](docs/PRUEFANLEITUNG-MANUELL.md) (Schritte 32 bis 47 für die Bewohner); sie wurden nicht von Hand ausgeführt.
 
@@ -72,7 +81,7 @@ Weitere Screenshots aus der laufenden Anwendung: [Warenverwaltung](docs/screensh
 - [ThreeRT – Proof of Concept](docs/THREERT-POC.md) – separater Versuch mit einem Pfadverfolger; Ergebnis: nicht als Hauptrenderer, allenfalls als Offline-Werkzeug
 - [Architektur-Entscheidungen (ADRs)](docs/ARCHITEKTUR-ENTSCHEIDUNGEN.md)
 - [Modul- und Datenverträge](docs/MODUL-UND-DATENVERTRAEGE.md)
-- [Produktkatalog](docs/PRODUKTKATALOG.md) – alle 28 Produkte mit Preisen, Alterskennzeichen, Asset-IDs und Warenplätzen
+- [Produktkatalog](docs/PRODUKTKATALOG.md) – die 28 Grundprodukte mit Preisen, Alterskennzeichen, Asset-IDs und Warenplätzen
 - [Bewohner, Dialoge und Geschichten](docs/BEWOHNER-UND-GESCHICHTEN.md) – Profile, Routinen und Wege, Dialogsystem, beide Geschichten mit allen Ausgängen, Kundenkäufe, Alterskontrolle
 
 ## Produktentscheidungen
@@ -83,9 +92,11 @@ Weitere Screenshots aus der laufenden Anwendung: [Warenverwaltung](docs/screensh
 - **Offen:** O-5 Hosting und Lizenz.
 
 ## Nächster Schritt
+Phase 5 ist umgesetzt; offen sind die Prüfung auf echter Grafikhardware und die Punkte im [Abschlussbericht Phase 5](docs/PHASE-05-ABSCHLUSSBERICHT.md). Danach folgt Phase 6 (Viertel und Atmosphäre, u. a. Audio) laut [Implementierungsplan](docs/IMPLEMENTIERUNGSPLAN.md).
+
 Phase 4 – **Bewohner, Kundenverhalten und soziale Bindung** ist mit [Auftrag 04](docs/auftraege/04-bewohner-und-soziale-bindung.md) umgesetzt. Der visuelle Qualitätsschritt [Auftrag 04.5 – Visual Identity & Graphics Foundation](docs/auftraege/04-5-visual-identity-und-graphics-foundation.md) ist umgesetzt ([Abschlussbericht](docs/PHASE-04-5-ABSCHLUSSBERICHT.md)). Günters Figuren-Prototyp wurde visuell positiv bestätigt; mit [Auftrag 04.6](docs/auftraege/04-6-bewohnerfiguren-und-charakterpipeline.md) sind alle vier Bewohner (Günter, Derya, Jonas, Marlene) GLB-Figuren aus derselben Pipeline, mit dezenter Mimik ([Abschlussbericht](docs/PHASE-04-6-ABSCHLUSSBERICHT.md), Bilder unter [docs/screenshots/auftrag-04-6/](docs/screenshots/auftrag-04-6/README.md)). Die verbindlichen Gestaltungsregeln stehen in [VISUAL-BASELINE.md](docs/VISUAL-BASELINE.md).
 
-Die Spezifikation für Phase 5 ist bereits vorbereitet: [Auftrag 05 – Das lebendige Viertel](docs/auftraege/05-das-lebendige-viertel.md). Sie verbindet Kalender und Jahreszeiten, Wettervorhersage, fünf erste Veranstaltungen, dynamische Nachfrage, NPC-Reaktionen und die Spezialität **Frikadelle im Brötchen**. Die Umsetzung steht ausdrücklich noch aus und setzt die technische Bestandsaufnahme nach Auftrag 04 voraus. Die visuelle Grundlage dafür steht mit Auftrag 04.5.
+
 
 ## Projekt-Dokumentation
 Die Art-Direction, Produktionsplanung, Regionen, fiktive Produktwelt, Claude-Code-Prompts und Three.js-Asset-Standards liegen unter [docs/artwork-prompts](docs/artwork-prompts/README.md).

@@ -35,11 +35,6 @@ function setClock(game: Game, day: number, minute: number): void {
   c.phase = 'open';
 }
 
-/** Ticks real seconds at 60 Hz (one game minute per real second at speed 1). */
-function run(game: Game, seconds: number): void {
-  for (let i = 0; i < seconds * 60; i += 1) game.tick(1 / 60);
-}
-
 function runUntil(game: Game, predicate: () => boolean, maxSeconds: number): boolean {
   for (let i = 0; i < maxSeconds * 60; i += 1) {
     if (predicate()) return true;

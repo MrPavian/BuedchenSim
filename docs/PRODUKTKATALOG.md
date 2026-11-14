@@ -99,3 +99,14 @@ Kapazität je Platz in Stück (Wandregal N/W jeweils 12 Plätze, Angaben „36/4
 | P-028 | Zechenhof Drehtabak 30 g | Theke | 5 | Theke 14 |
 
 Auffälligkeit: Chips (P-009, 27 cm hoch) passen nicht in die 26 cm hohen Mittelregal-Plätze (Kapazität 0 dort). Die Einräum-Ansicht bietet diese Plätze für Chips nicht an; ein direkter Aufruf würde vom Spiel mit `slot_capacity_exceeded` abgelehnt.
+
+## Ergänzung Auftrag 05: Spezialität und Zutaten
+
+| Asset | Produkt | Marke (fiktiv) | Lagerart | Einkauf | Verkauf | Hinweis |
+|---|---|---|---|---|---|---|
+| P-029 | Frikadelle im Brötchen | Büdchen am Eck | Theke | 1,00 € (Wareneinsatz je Stück) | 2,90 € | wird nicht bestellt, sondern hergestellt (6 je Durchgang, 40 Spielminuten) |
+| P-030 | Frikadellenmasse für 6 | Fleischerei Zur Glocke | Zutat (nur Lager) | 4,20 € | – | 1 je Durchgang |
+| P-031 | Senf mittelscharf (für 6) | Pottgold | Zutat (nur Lager) | 0,60 € | – | 1 je Durchgang |
+| P-032 | Röstzwiebeln (für 6) | Pottgold | Zutat (nur Lager) | 0,50 € | – | optional, +8 Qualität |
+
+Für einen Durchgang werden außerdem sechs Pottbäcker Brötchen (P-019) aus dem Lager verbraucht. Zutaten sind bestellbar, kommen ins Lager, belegen keinen Warenplatz und sind nicht verkäuflich (Richtpreis = Einkaufspreis). Die Frikadelle selbst ist beim Großhandel nicht bestellbar (Ablehnung `not_orderable`, im Bestellreiter nicht gelistet); sie entsteht nur durch Herstellung.

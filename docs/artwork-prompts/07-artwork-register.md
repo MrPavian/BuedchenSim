@@ -28,6 +28,8 @@ Dieses Register ist die zentrale Liste für geplante und umgesetzte Artworks. St
 | I-011 | Lagerregal | Ruhrgebiet | P1 | Im Spiel integriert |
 | I-012 | Leergut-/Kistenbereich | Ruhrgebiet | P1 | Im Spiel integriert |
 | I-013 | Gerahmtes Kioskfoto (Folge von Geschichte B, steht nur mit dem Story-Flag `kiosk.photo` auf der Theke; Auftrag 04, neue ID) | Ruhrgebiet | P2 | Im Spiel integriert |
+| I-014 | Kundenstopper „Frikadelle im Brötchen“ (Kreide-Aufsteller, 0,55 × 0,5 × 1,0 m; Belohnung der Stufe Geheimtipp, Flag `specialty.frikadelle.sign`; Auftrag 05, neue ID) | Ruhrgebiet | P2 | Im Spiel integriert |
+| I-015 | Kult-Tafel „Frikadellen-Freitag“ (Wandtafel an der Südfassade, 0,7 × 0,06 × 1,85 m; Belohnung der Stufe Kultstatus, Flag `specialty.frikadelle.cult`; Auftrag 05, neue ID) | Ruhrgebiet | P2 | Im Spiel integriert |
 | P-001 | Ruhrbrause Wasser still 0,5 l (PET-Flasche, Fabrik `pet-bottle`) | Ruhrgebiet | P0 | Im Spiel integriert |
 | P-002 | Ruhrbrause Zitronenlimo 0,5 l (PET-Flasche, Fabrik `pet-bottle`) | Ruhrgebiet | P0 | Im Spiel integriert |
 | P-003 | Ruhrbrause Brause Klassik 0,33 l (Glasflasche, Fabrik `glass-bottle`) | Ruhrgebiet | P0 | Im Spiel integriert |
@@ -56,7 +58,10 @@ Dieses Register ist die zentrale Liste für geplante und umgesetzte Artworks. St
 | P-026 | Flammwerk Einwegfeuerzeug 2er (Schachtel, Fabrik `box`) | Ruhrgebiet | P0 | Im Spiel integriert |
 | P-027 | Zechenhof Filter 20er (Schachtel, Fabrik `box`) | Ruhrgebiet | P0 | Im Spiel integriert |
 | P-028 | Zechenhof Drehtabak 30 g (Beutel, Fabrik `bag`) | Ruhrgebiet | P0 | Im Spiel integriert |
-| P-029, P-030 | nicht vergeben | Ruhrgebiet | – | Geplant (ID frei) |
+| P-029 | Frikadelle im Brötchen, Spezialität „Büdchen am Eck“ (Fabrik `pastry`; Auftrag 05) | Ruhrgebiet | P1 | Im Spiel integriert |
+| P-030 | Zur Glocke Frikadellenmasse für 6, Zutat (Fabrik `box`, nur Lager; Auftrag 05) | Ruhrgebiet | P2 | Im Spiel integriert |
+| P-031 | Pottgold Senf mittelscharf, Zutat (Fabrik `box`, nur Lager; Auftrag 05) | Ruhrgebiet | P2 | Im Spiel integriert |
+| P-032 | Pottgold Röstzwiebeln, optionale Zutat (Fabrik `bag`, nur Lager; Auftrag 05) | Ruhrgebiet | P2 | Im Spiel integriert |
 | E-001 | Gehweg / Bordstein | Ruhrgebiet | P0 | In Arbeit (Greybox) |
 | E-002 | Straßenbelag | Ruhrgebiet | P0 | In Arbeit (Greybox) |
 | E-003 | Laterne | Ruhrgebiet | P1 | Geplant |
@@ -71,6 +76,8 @@ Dieses Register ist die zentrale Liste für geplante und umgesetzte Artworks. St
 | N-005 | Fiktiver Fußballfan | Ruhrgebiet | P2 | Geplant |
 | N-006 | Fahrradkurier (Jonas Pietrek, `npc.jonas`; GLB `public/models/residents/n-006.glb`, prozedurale Fabrik als Fallback) | Ruhrgebiet | P2 | Im Spiel integriert |
 | N-007 | Nachbarin (Marlene Hoffmann, `npc.marlene`; GLB `public/models/residents/n-007.glb`, prozedurale Fabrik als Fallback) | Ruhrgebiet | P2 | Im Spiel integriert |
+| N-008 | Fußballfan (Ole Brinkmann, `npc.ole`, Gast an Heimspieltagen; GLB `public/models/residents/n-008.glb`; Auftrag 05) | Ruhrgebiet | P2 | Im Spiel integriert |
+| N-009 | Trödelhändlerin (Hilde Kaczmarek, `npc.hilde`, Gast beim Flohmarkt und im Advent; GLB `public/models/residents/n-009.glb`; Auftrag 05) | Ruhrgebiet | P2 | Im Spiel integriert |
 
 **Produkte P-001 bis P-028 (Auftrag 03):** je ein Produkt, eine Asset-ID; mehrere Produkte teilen sich die Modellfabrik ihrer Verpackungsart (`src/world/assets/products/`), Etikett, Farben, Beschriftung und Maße unterscheiden sie. Die Fabriken sind über `src/world/assets/registry.ts` erreichbar, die Platzierung erfolgt über die Warenplätze (`slots.ts`) und die Bestandsdarstellung (`stockView.ts`). Sichtprüfung: in Headless-Chromium über die Browserprüfung (3D-Bestand folgt den Daten, Screenshot `docs/screenshots/auftrag-03-innen-bestueckt.png` angesehen); nicht auf echter Grafikhardware. Alle Marken sind fiktive Arbeitstitel ohne rechtliche Prüfung; die vollständige Tabelle mit Preisen und Altersangaben steht im [Produktkatalog](../PRODUKTKATALOG.md). Etiketten (Nacharbeit 2026-11-13): großes Akzentfeld und ein originales Emblem je Markenfamilie; ein Produktwort nur bei physisch mindestens 2,6 cm Schrifthöhe, sonst Emblem mit großem Anfangsbuchstaben. Bei normaler Spielkamera (1280×720) sind Magazine, Beutel, Schachteln und Eiswaren über Farbfeld und Emblem erkennbar; Wörter auf Beuteln nur bei doppelter Pixeldichte. Flaschen und Dosen (4–6 px breit) sind nicht lesbar und werden über Farbteilung und Kronkorkenfarbe unterschieden. Die Anforderung „lesbare Etiketten“ ist damit nur teilweise erfüllt.
 
@@ -95,3 +102,4 @@ Bei jeder neuen oder geänderten Asset-Version Datum, Änderung, verantwortliche
 | 2026-11-14 | Auftrag 04.5: P-001 bis P-028 mit gröberer Unterteilung (Maße unverändert), N-002/N-003/N-006/N-007 mit zusammengeführten Teilen je Gelenkgruppe; Status unverändert „Im Spiel integriert“; Regeln für neue Assets in `docs/VISUAL-BASELINE.md` | Claude Code (Auftrag 04.5) | `src/world/assets/products/`, `src/world/assets/residents/kit.ts` |
 | 2026-11-14 | N-002 als GLB-Figurenprototyp aus CC0-MakeHuman-Daten (Körper mit Alters- und Detailzielen, 53 Knochen, Anzug, Schuhe, Haare, Augen, Brauen, Haut; Mütze und Stock im Skript; Clips idle/walk/talk; 28.902 Dreiecke, 1,5 MB); prozedurale Figur bleibt Fallback; Abnahme offen, siehe `docs/VISUAL-BASELINE.md` Abschnitt 8 | Claude Code (Auftrag 04.5) | `tools/characters/build_mh_resident.py`, `public/models/residents/n-002.glb`, `src/world/assets/residents/glbResident.ts` |
 | 2026-11-14 | Auftrag 04.6: N-002 korrigiert (Arme, Hand am Stock, Nasenlöcher, Schirmkanten) und N-003, N-006, N-007 als GLB-Figuren aus derselben Pipeline (eigene Körper, Gesichter, Kleidung, Requisiten, Gang); Mimik als Morph Targets (`friendly`, `thoughtful`, `blink`); 30.234–31.607 Dreiecke und 1,43–1,54 MB je Datei; prozedurale Figuren bleiben Fallback; Parameter in `docs/VISUAL-BASELINE.md` 8.6 | Claude Code (Auftrag 04.6) | `tools/characters/build_mh_resident.py`, `public/models/residents/`, `src/world/assets/residents/glbResident.ts` |
+| 2026-11-14 | Auftrag 05: N-008 (Ole) und N-009 (Hilde) als Gäste zu Veranstaltungen; P-029 Frikadelle im Brötchen und die Zutaten P-030 bis P-032 (Zutaten nur im Lager, nie auf einem Warenplatz); I-014 Kundenstopper und I-015 Kult-Tafel als flaggebundene Belohnungen der Spezialität; Veranstaltungsdekorationen (Wimpelketten, Fahne, Wimpel des Straßenfests, Flohmarkttische, Lichterkette und Tanne, Sonnenschirm) als prozedurale Geometrie in `eventDecorView.ts` ohne eigene Asset-ID. Sichtprüfung in Headless-Chromium mit Software-Rendering, nicht auf echter Grafikhardware | Claude Code (Auftrag 05) | `src/world/assets/furniture/frikadelleProps.ts`, `src/world/views/eventDecorView.ts`, `src/content/regions/ruhrgebiet/{guests,specialty,layout}.ts`, `src/content/assets/{catalog,productAssets}.ts` |

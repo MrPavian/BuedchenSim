@@ -227,6 +227,55 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 
 **Ergänzung (Auftrag 04.6):** Alle vier Bewohner nutzen diesen Weg; jede Figur ist eine Spezifikation im Skript. Gesichtsausdrücke kommen als optionale Morph Targets `friendly`, `thoughtful`, `blink` (aus MakeHuman-Ausdruckseinheiten, dünn besetzt) in dieselbe Datei; die Laufzeit blinzelt und blendet beim Sprechen weich zwischen den Ausdrücken. Dateien ohne Morph Targets bleiben gültig.
 
+
+### ADR-024 – Datum, Wetter und Veranstaltungen werden abgeleitet, nicht gespeichert
+**Status:** Entschieden (umgesetzt in Auftrag 05).
+
+**Kontext:** Auftrag 05 verlangt Kalender, Jahreszeiten, Wetter mit Vorhersage und Veranstaltungen, die reproduzierbar sind und einen Neustart überstehen. Jeder gespeicherte abgeleitete Wert kann veralten oder dem Inhalt widersprechen.
+
+**Entscheidung:** Gespeichert bleibt nur `calendar.day` (Tageszähler ab Montag, 7. Juni 2027) und der Weltseed. Datum, Wochentag und Jahreszeit berechnet `src/game/date.ts` (Gregorianischer Kalender, Schaltjahre). Das Wetter eines Tages ist eine reine Funktion `weatherOfDay(seed, Klima, Tag)`: eine Kette mit Erhaltungsneigung und Temperaturanomalie, je Monat aus den Klimadaten des Regionalpakets; die Vorhersage (`forecastFor`) liefert drei sichere Tage und vier Tendenztage mit Verlässlichkeit. Veranstaltungen sind Daten mit Terminregeln (`everyNthWeek`, `monthlyNthWeekday`, `yearlyNthWeekday`, `dateRange`, `heatwave`); ihr Status (geplant, angekündigt, läuft, beendet) folgt aus Datum und Uhrzeit (`eventCalendar.ts`). `environmentOf` bündelt Jahreszeit, Wetter, Temperatur und laufende Veranstaltungen je Spielminute (zwischengespeichert). Eine Veranstaltung kann ein Story-Flag verlangen (`EventDef.requiresFlag`), z. B. eine Tradition.
+
+**Gründe:** Kein Speicherstand kann eine Veranstaltung doppelt starten oder ihre Wirkung „hängen lassen“; Wirkungen enden genau mit dem Ende der Veranstaltung. Die Vorhersage bleibt stabil, weil sie dieselbe Funktion wie das spätere Wetter nutzt. Savegames bleiben klein, ältere Stände brauchen keine Wetter- oder Eventmigration.
+
+**Konsequenzen:** Inhaltsänderungen an Klima oder Terminen verändern auch Wetter und Termine bestehender Spielstände (gewollt: Inhalt hat Vorrang). Einmalige, nicht wiederholbare Ereignisse müssten künftig als Flag oder Erinnerung gespeichert werden.
+
+### ADR-025 – Nachfrage als begrenzte Summe, die nur Wahrscheinlichkeiten verändert
+**Status:** Entschieden (umgesetzt in Auftrag 05).
+
+**Kontext:** Wetter, Temperatur, Jahreszeit, Wochentag, Tageszeit und Veranstaltungen sollen Kaufverhalten beeinflussen, ohne dass es Hintergrundverkäufe gibt.
+
+**Entscheidung:** Nachfrage je Produkt ist `D = clamp(B + W + E + S + T)` aus Inhaltsdaten (`demand.ts`, Schlüssel `tag:`, `category:` oder Produkt-ID). Sie wirkt nur an zwei Stellen: als Gewichtsfaktor bei der Wunschauswahl der Bewohner (`wishDemandFactor`) und, über `visitorBonus` der Veranstaltungen und die persönliche `weatherResponse` der Bewohner, auf die Wahrscheinlichkeit ihrer Routinen (`routineChance`). Verkauft wird weiterhin nur über `economy.completeSale`. Der Kalender zeigt Nachfragepfeile relativ zu einem üblichen Tag (bewölkt, 18 °C, keine Veranstaltung).
+
+**Konsequenzen:** Nachfrage ist nachvollziehbar und testbar, aber kein Marktmodell; Preise bleiben fest (ADR-015).
+
+### ADR-026 – Spezialitäten als Rezept über das bestehende Lager, Qualität und Bekanntheit im Spielstand
+**Status:** Entschieden (umgesetzt in Auftrag 05).
+
+**Kontext:** Die erste Spezialität „Frikadelle im Brötchen“ soll vom Zutateneinkauf bis zum Kultstatus spielbar sein, ohne doppelte Lagerlogik oder Küchenmanagement.
+
+**Entscheidung:** Zutaten sind normale Katalogprodukte mit der Lagerart `ingredient` (bestellbar, nur im Lager, nie auf einem Warenplatz, nie verkäuflich; Richtpreis = Einkaufspreis). Ein `RecipeDef` nennt Zutaten je Durchgang, optionale Zutaten mit Qualitätsbonus, Durchgangsgröße, Spielminuten und Qualitätsparameter. `specialty.startProduction` verbraucht die Zutaten sofort; nach der Spielzeit kommen die fertigen Einheiten ins Lager und werden wie jede Ware eingeräumt und über die Verkaufsdomäne verkauft. Qualität = Grundwert + Rezeptstufe + optionale Zutaten + Übung (gedeckelt). Jeder Verkauf an einen Bewohner erzeugt eine Bewertung (Qualität, Beziehung, Vorlieben, kleiner deterministischer Wurf); Bekanntheit wächst aus Zufriedenheit, Wiederholungskäufen und Empfehlungen (einmal je Bewohner, mit Erinnerung). Stufen (Erster Versuch, Geheimtipp, Kultstatus) verlangen Bekanntheit, Verkäufe, Wiederholungskäufer, Empfehlungen **und** eine Mindestzufriedenheit; sie setzen Story-Flags, die Wünsche, Dialoge, Platzierungen (I-014, I-015) und die Tradition „Frikadellen-Freitag“ freischalten.
+
+**Konsequenzen:** Weitere Spezialitäten sind reine Daten. Der Wareneinsatz der Spezialität wird über ihren festen Einkaufspreis gebucht (Näherung der Zutatenkosten), der tatsächliche Zutateneinkauf erscheint als Einkauf. Ein dauerhaft schlechtes Produkt erreicht den Kultstatus nie (getestet).
+
+### ADR-027 – Gäste zu Veranstaltungen sind normale Bewohner mit bedingten Routinen
+**Status:** Entschieden (umgesetzt in Auftrag 05).
+
+**Entscheidung:** Ole (N-008) und Hilde (N-009) sind gewöhnliche `NpcDef` mit Routinen, die nur bei laufender Veranstaltung (Bedingung `eventActive`) gelten; mit dem Kultstatus kommen sie zusätzlich am Frikadellen-Freitag. Ihre Figuren sind GLB aus der Pipeline von ADR-023 (`n-008.glb`, `n-009.glb`); bis zum Laden und bei Fehlern gilt die neutrale prozedurale Figur. Wetter- und Veranstaltungsdialoge stehen in einer eigenen Datei und werden beim Zusammenbau des Pakets den Bewohnern zugeordnet.
+
+**Konsequenzen:** Keine Sonderlogik für Gäste; Simulation, Gespräche, Verkäufe und Speicherung gelten unverändert.
+
+### ADR-028 – Haushalte als soziale Gruppe ohne gemeinsame Steuerung
+**Status:** Entschieden (Architektur umgesetzt in Auftrag 05; Inhalte bisher nur Ein-Personen-Haushalte).
+
+**Entscheidung:** `HouseholdDef` (Art, Name, Wohnort, Mitglieder) ist Inhalt; `NpcDef.householdId` verweist darauf. Jedes Mitglied behält eigene Routine, Geldbörse (`purseCents`: Wünsche, die es nicht bezahlen kann, werden nicht gewählt), Vorlieben, Beziehungen und Erinnerungen. Der Spielstand hält je Haushalt nur Gemeinsames: `households[id].memories` (erlebte Veranstaltungen eines Mitglieds), abfragbar über die Bedingung `householdMemory`. Die Validierung prüft Mitgliedschaft, Eindeutigkeit und Mindestgröße je Art.
+
+**Konsequenzen:** Familien, Paare und Wohngemeinschaften (z. B. später Familie Schneider) sind reine Daten; Altersgrenzen gelten weiter je Person über die Verkaufsregeln.
+
+### ADR-029 – Savegame-Schema 4
+**Status:** Entschieden (umgesetzt in Auftrag 05).
+
+**Entscheidung:** Version 4 ergänzt `specialties` (Stufe, Bekanntheit, Rezeptstufe, Durchgänge, Lagerqualität, laufende Herstellung, Verkäufe, Bewertungen, Käufer, Empfehlungen, Stimmen) und `households`. Die Migration 3 → 4 legt beide leer an; unbekannte Einträge werden mit Warnung verworfen, fehlende ergänzt. Datum, Wetter, Vorhersage und Veranstaltungen werden nicht gespeichert (ADR-024). Ältere Migrationen 1 → 2 → 3 bleiben unverändert in der Kette.
+
 ---
 
 ## Teil B – Offene Produktentscheidungen

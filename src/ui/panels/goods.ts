@@ -124,7 +124,8 @@ export function createGoodsPanel(ctx: PanelContext): Panel {
 
   // ---- Bestellen
   const renderOrder = (body: HTMLElement): void => {
-    const products = productList(content);
+    // Specialties are made, not ordered.
+    const products = productList(content).filter((p) => !(content.recipes ?? []).some((r) => r.productId === p.id));
     if (products.length === 0) {
       body.append(el('p', 'ui-muted', texts.panel.none));
       return;

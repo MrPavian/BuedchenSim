@@ -346,6 +346,7 @@ export const texts = {
     insufficient_cash: 'Nicht genug Geld in der Kasse.',
     storage_full: 'Nicht genug freier Lagerplatz.',
     unknown_specialty: 'Unbekannte Spezialität.',
+    not_orderable: 'Das stellst du selbst her – beim Großhandel gibt es das nicht.',
     invalid_batches: 'Ungültige Anzahl Durchgänge.',
     production_running: 'Es läuft schon eine Herstellung. Warte, bis sie fertig ist.',
     missing_ingredients: 'Nicht genug Zutaten im Lager. Bestelle sie zuerst.',

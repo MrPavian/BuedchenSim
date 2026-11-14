@@ -172,7 +172,8 @@ describe('stock view follows the game state', () => {
     for (const slot of pack.stockSlots) {
       const n = perPlacement.get(slot.placementId) ?? 0;
       perPlacement.set(slot.placementId, n + 1);
-      const candidates = Object.values(pack.products).filter((p) => p.storage === slot.accepts);
+      // Specialties are produced, not ordered (Auftrag 05).
+      const candidates = Object.values(pack.products).filter((p) => p.storage === slot.accepts && !(pack.recipes ?? []).some((r) => r.productId === p.id));
       const product = candidates[n % candidates.length]!;
       units += stock(game, slot.id, product.id);
     }

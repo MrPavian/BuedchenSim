@@ -201,7 +201,7 @@ Umfang:
 
 **Abnahme:** Der Integrationsdurchlauf „Heißer Samstag mit Heimspiel“ ist spielbar: Wettervorhersage und Event ermöglichen Planung, Nachfrage und NPC-Verhalten verändern sich, die Spezialität wird produziert und verkauft, die Tagesabrechnung stimmt und der Fortschritt bleibt nach Neustart erhalten.
 
-**Status (2026-11-14): Spezifikation erstellt und im Repository abgelegt; Umsetzung steht aus.** Die Bestandsaufnahme nach Auftrag 04 ist zwingende Voraussetzung. Details und technische Abnahmekriterien stehen im [Auftrag 05](auftraege/05-das-lebendige-viertel.md).
+**Status (2026-11-14): umgesetzt auf Branch `claude/elegant-curie-17qulu`** (Pakete 5.1–5.6, Details und Prüfergebnisse im [Abschlussbericht Phase 5](PHASE-05-ABSCHLUSSBERICHT.md)). Kalender und Jahreszeiten, deterministisches Wetter mit Vorhersage, Niederschlag und Jahreszeitenlook in der Szene, sechs Veranstaltungen (die fünf verbindlichen und die freischaltbare Tradition „Frikadellen-Freitag“) mit Dekorationen, Nachfrage, zwei Gäste (Ole, Hilde), die Spezialität „Frikadelle im Brötchen“ mit Kundenstopper (I-014) und Kult-Tafel (I-015), Haushalte und Geldbörsen, Savegame 4. Nicht umgesetzt: Wettergeräusche (Audio, Phase 6) und eine mehrköpfige Familie als Inhalt (nur Architektur). Geprüft in Headless-Chromium mit Software-Rendering, nicht auf echter Grafikhardware.
 
 ## Phase 6 – Viertel und Atmosphäre
 **Ziel:** das Umfeld macht den Ort glaubwürdig.

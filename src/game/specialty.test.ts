@@ -63,6 +63,12 @@ describe('specialty production', () => {
     expect(state.story.flags['test.tried']).toBe(true);
   });
 
+  it('the finished product cannot be ordered from the supplier; the ingredients can', () => {
+    const game = setup();
+    expect(game.economy.placeOrder([{ productId: FRIKA, quantity: 6 }])).toEqual({ ok: false, reason: 'not_orderable' });
+    expect(game.economy.placeOrder([{ productId: MASSE, quantity: 1 }])).toEqual({ ok: true });
+  });
+
   it('refuses without ingredients and when the day is not open', () => {
     const game = setup();
     delete mutable(game).economy.storage[MASSE];
