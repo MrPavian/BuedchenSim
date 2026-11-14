@@ -83,4 +83,4 @@ Die Browserprüfung umfasst die geforderten Nachweise: Warenbestände und Regalp
 - Die Bewohner-Draw-Calls bleiben spürbar (rund 35–40 je sichtbarer Figur einschließlich Schattenpass, vorher rund 60).
 
 ## 9. Branch und Commits
-Branch `claude/elegant-curie-17qulu`; Commit-Hashes: [[COMMITS]].
+Branch `claude/elegant-curie-17qulu`; Commit-Hashes (älteste zuerst): `d0a2c04` (Licht, Tone Mapping, Palette, Geometrie, Messwerkzeug, Baseline), `eb255ac`, `4e0d277`, `169750a` (erster, verworfener Figurenprototyp aus Grundformen), `4f0df07`, `0108aeb`, `0cf0767` (Günter aus CC0-MakeHuman-Daten, Doku), `3beea45`, `cb15d3a`, `732b459` (Mütze nach Rückmeldungen, Bilder, Messwerte, Browserprüfung) sowie dieser Abschluss-Commit.
