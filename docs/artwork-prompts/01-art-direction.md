@@ -3,8 +3,9 @@
 ## Visuelle Zielsetzung
 Ein eigenständiger, warmherziger und glaubwürdiger Büdchen-/Kiosk-Simulator. Die Welt darf humorvoll und leicht überzeichnet sein, soll aber nach einem tatsächlich belebten Viertel aussehen. Kein steriler Asset-Store-Look und keine austauschbare „Kiosk-Kulisse“.
 
-- Stylized 3D mit Low-Poly-/Mid-Poly-Einflüssen
+- Stylized 3D mit kontrollierten Low-/Mid-Poly-Einflüssen bei Architektur und Requisiten; Figuren dürfen und sollen deutlich feiner modelliert sein
 - klare, aus mittlerer Spielkamera gut lesbare Silhouetten
+- Charaktere: so realistisch und glaubwürdig wie innerhalb der gewählten Stilrichtung möglich – natürliche menschliche Proportionen, individuelle Gesichter, hochwertige Kleidungsmaterialien und überzeugende Animationen; keine groben Low-Poly-Puppen und keine fotorealistischen Fremdkörper
 - warme, atmosphärische Beleuchtung; glaubwürdige Schatten
 - Materialvariation und dezente Gebrauchsspuren statt extremer Verschmutzung
 - gut erkennbare Interaktionspunkte und lesbare Waren
@@ -28,6 +29,20 @@ Stattdessen:
 - eigens gestaltete Plakate und Wandgrafiken
 
 Beispiele für vorläufige fiktive Arbeitsnamen: Ruhrbrause, Püttbräu, Naschwerk, Eiskumpel. Das sind Platzhalter; vor einer Veröffentlichung müssen Namens- und Markenrecherchen erfolgen.
+
+## Charakterdarstellung – hoher Qualitätsanspruch
+
+Die Figuren tragen Persönlichkeit und soziale Bindung. Deshalb gilt für sie ein höherer Detail- und Qualitätsanspruch als für viele Hintergrundobjekte:
+
+- glaubwürdige menschliche Anatomie und altersgerechte Proportionen;
+- individuelle, wiedererkennbare Gesichter statt austauschbarer Standardköpfe;
+- differenzierte Haut-, Haar-, Bart- und Augenmaterialien;
+- Kleidung mit nachvollziehbarem Schnitt, Falten, Nähten, Lagen und dezenten Gebrauchsspuren;
+- natürliche Idle-, Geh-, Gesprächs- und Gestenanimationen;
+- erkennbare Persönlichkeit und soziale Rolle bereits über Silhouette, Haltung und Kleidung;
+- Nahansicht muss Details tragen, Spielkamera muss Figur und Emotion klar lesbar halten.
+
+Realismus bedeutet hier nicht Fotorealismus. Figuren sollen wie glaubwürdige Menschen in derselben stilisierten Spielwelt wirken. Sie dürfen gegenüber Gebäuden und Waren feiner modelliert und texturiert sein, müssen aber dieselbe visuelle Handschrift behalten.
 
 ## Modellierungsprinzipien
 - maßstäblich und modular denken
