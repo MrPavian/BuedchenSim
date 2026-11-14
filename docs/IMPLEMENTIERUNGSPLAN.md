@@ -154,6 +154,26 @@ Offene Restpunkte aus Phase 4:
 - Prüfung auf echter Grafikhardware und in Firefox/Safari steht aus.
 - Die Phase-3-Restpunkte (Preise, Kosten, Etiketten, Lager) bestehen unverändert fort.
 
+## Phase 4.5 – Visuelle Identität und Grafikgrundlage
+
+**Ziel:** Vor dem Ausbau des Viertels einen überprüften visuellen Maßstab für die laufende Three.js-Szene etablieren. Grafik wird parallel zur Gameplay-Entwicklung verbessert und nicht bis zum Ende aufgeschoben.
+
+**Konkreter Auftrag:** [Auftrag 04.5 – Visual Identity & Graphics Foundation](auftraege/04-5-visual-identity-und-graphics-foundation.md).
+
+Umfang:
+1. Tatsächliche Renderer-, Kamera-, Licht-, Material- und Asset-Konfiguration untersuchen.
+2. Visuelle Baseline mit reproduzierbaren Screenshots und belastbaren Messwerten dokumentieren.
+3. Verbindliche Style-Spezifikation für das Ruhrgebiets-Vertical-Slice festlegen.
+4. Kiosk, Innenraum, Warenpräsentation, unmittelbaren Außenbereich und Bewohner gezielt abstimmen.
+5. Warenlesbarkeit, Materialwiederverwendung, Geometrie und Draw Calls prüfen.
+6. Performance- und Regressionstests durchführen; echte Hardwareprüfung klar von Headless-Rendering unterscheiden.
+
+**Abgrenzung:** Keine vollständige finale Politur, keine neue Engine, keine neue Region und keine großflächige Stadtumgebung. Die bestehenden Gameplay- und Savegame-Verträge bleiben erhalten.
+
+**Abnahme:** Style-Zielbild ist in der echten Anwendung überprüft; Vorher-/Nachher-Screenshots und Performancewerte sind dokumentiert; bestehende Funktionen bleiben intakt; die Style-Regeln sind verbindliche Grundlage für Phase 5.
+
+**Status:** vorbereitet, Umsetzung steht aus.
+
 ## Phase 5 – Das lebendige Viertel
 **Ziel:** Kalender, Wettervorhersage, Veranstaltungen, dynamische Nachfrage, Bewohnerverhalten und eine eigene Kiosk-Spezialität zu einer zusammenhängenden Viertelsimulation verbinden.
 
