@@ -64,6 +64,8 @@ export type Condition =
   | { type: 'eventActive'; eventId: string }
   /** The event takes place today (before, during or after its hours). */
   | { type: 'eventToday'; eventId: string }
+  /** The household shares this memory (an event its members lived through; Auftrag 05, 5.6). */
+  | { type: 'householdMemory'; householdId: string; memoryId: string }
   | { type: 'not'; condition: Condition }
   | { type: 'any'; conditions: Condition[] };
 
@@ -192,6 +194,30 @@ export interface NpcDef {
    * or more). Residents react differently: an old man with a bad knee stays home in the rain, a courier comes anyway.
    */
   weatherResponse?: Partial<Record<WeatherCondition | 'hot', number>>;
+  /** The household this resident belongs to (Auftrag 05, 5.6); the resident still has its own routine, likes, memories. */
+  householdId?: string;
+  /**
+   * The resident's purse: what it spends at most per visit (cents). Wishes that cost more are not picked. Absent: no
+   * limit. Children get small purses; age limits still come from the products and the sale rules.
+   */
+  purseCents?: number;
+}
+
+export type HouseholdKind = 'single' | 'couple' | 'family' | 'shared-flat';
+
+/**
+ * A household (Auftrag 05, 5.6): a social group of independent residents, never one controlled figure. It holds only
+ * what members share: the group, the home, shared memories. Each member keeps its own routine, purse, likes,
+ * relationships and memories.
+ */
+export interface HouseholdDef {
+  /** Prefix 'household.'. */
+  id: string;
+  name: string;
+  kind: HouseholdKind;
+  /** Where the household lives (content text, e.g. "Stellwerkstraße 2, Erdgeschoss"). */
+  home: string;
+  memberIds: string[];
 }
 
 /**

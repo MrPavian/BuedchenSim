@@ -25,6 +25,7 @@ import {
   type DayTime,
   type EconomyState,
   type GameState,
+  type HouseholdState,
   type NpcState,
   type NpcStatus,
   type NpcWishState,
@@ -88,7 +89,7 @@ const migrateV2toV3: Migration = (save) => {
 const migrateV3toV4: Migration = (save) => {
   const state = save['state'];
   if (!isRecord(state)) return save; // validation reports it
-  return { ...save, state: { ...state, specialties: {} } };
+  return { ...save, state: { ...state, specialties: {}, households: {} } };
 };
 
 /** migrations[n] converts version n to n+1. */
@@ -676,6 +677,8 @@ function validateState(raw: unknown, content: ContentPack, warnings: string[]): 
   if (!story.ok) return story;
   const specialties = validateSpecialties(raw['specialties'], content, warnings);
   if (!specialties.ok) return specialties;
+  const households = validateHouseholds(raw['households'], content, warnings);
+  if (!households.ok) return households;
 
   const b = content.layout.walkBounds;
   return {
@@ -693,8 +696,31 @@ function validateState(raw: unknown, content: ContentPack, warnings: string[]): 
       npcs: npcs.value,
       story: story.value,
       specialties: specialties.value,
+      households: households.value,
     },
   };
+}
+
+/** Households (version 4): shared memories per household of the content; unknown households are dropped. */
+function validateHouseholds(raw: unknown, content: ContentPack, warnings: string[]): Checked<Record<string, HouseholdState>> {
+  const obj = objectAt(raw, 'state.households');
+  if (!obj.ok) return obj;
+  const known = new Set((content.households ?? []).map((h) => h.id));
+  const out: Record<string, HouseholdState> = {};
+  for (const [id, value] of Object.entries(obj.value)) {
+    const path = `state.households["${id}"]`;
+    if (!known.has(id)) {
+      warnings.push(`${path}: unknown household dropped`);
+      continue;
+    }
+    const h = objectAt(value, path);
+    if (!h.ok) return h;
+    const memories = strings(h.value['memories'], `${path}.memories`, SAVE_LIMITS.memoriesPerNpc);
+    if (!memories.ok) return memories;
+    out[id] = { memories: [...new Set(memories.value)] };
+  }
+  for (const id of known) out[id] ??= { memories: [] };
+  return { ok: true, value: out };
 }
 
 const RATINGS: readonly FeedbackRating[] = ['great', 'good', 'meh', 'bad'];

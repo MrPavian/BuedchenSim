@@ -7,7 +7,10 @@ import type { DeepReadonly, GameState } from './state';
  * What conditions may read. `env` is the derived environment (weather, temperature, season; see environment.ts);
  * without it, environment conditions never match.
  */
-export type ConditionContext = DeepReadonly<Pick<GameState, 'npcs' | 'story' | 'calendar'>> & { readonly env?: Environment };
+export type ConditionContext = DeepReadonly<Pick<GameState, 'npcs' | 'story' | 'calendar'>> & {
+  readonly env?: Environment;
+  readonly households?: DeepReadonly<GameState['households']>;
+};
 
 function has(record: object, key: string): boolean {
   return Object.hasOwn(record, key);
@@ -58,6 +61,8 @@ export function evaluateCondition(cond: DeepReadonly<Condition>, ctx: ConditionC
       return ctx.env !== undefined && ctx.env.activeEvents.includes(cond.eventId);
     case 'eventToday':
       return ctx.env !== undefined && ctx.env.eventsToday.includes(cond.eventId);
+    case 'householdMemory':
+      return ctx.households !== undefined && has(ctx.households, cond.householdId) && (ctx.households[cond.householdId]?.memories.includes(cond.memoryId) ?? false);
     case 'not':
       return !evaluateCondition(cond.condition, ctx);
     case 'any':

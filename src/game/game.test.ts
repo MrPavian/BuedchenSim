@@ -29,6 +29,7 @@ describe('game facade', () => {
       npcs: expect.objectContaining({ 'npc.stammkunde': expect.objectContaining({ status: 'away', relationship: 30 }) }),
       story: { flags: {}, quests: {}, seenDialogues: [], effectKeys: [] },
       specialties: {},
+      households: {},
     });
     expect(game.getAvailableInteraction()).toBeNull();
   });

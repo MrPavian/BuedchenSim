@@ -1,5 +1,6 @@
 import { conditionsHold, type ConditionContext } from './conditions';
 import type { NpcDef, WishDef } from './npcTypes';
+import type { ContentPack } from './types';
 import { roll } from './random';
 
 /**
@@ -37,4 +38,11 @@ export function pickWish(
 function weightOf(wish: WishDef): number {
   const w = wish.weight ?? 1;
   return Number.isFinite(w) && w > 0 ? w : 0;
+}
+
+/** What a wish costs at the suggested prices (for the resident's purse). Unknown products cost nothing. */
+export function wishCostCents(content: Pick<ContentPack, 'products'>, wish: Pick<WishDef, 'lines'>): number {
+  let sum = 0;
+  for (const l of wish.lines) sum += (Object.hasOwn(content.products, l.productId) ? (content.products[l.productId]?.suggestedPriceCents ?? 0) : 0) * l.quantity;
+  return sum;
 }

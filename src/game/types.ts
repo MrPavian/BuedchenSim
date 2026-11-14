@@ -3,7 +3,7 @@
  * Coordinates: 1 unit = 1 m, Y up, ground plane is X/Z; +X = east (screen right),
  * +Z = south (toward the camera/street).
  */
-import type { CustomerLines, DialogueDef, NavDef, NpcDef, QuestDef } from './npcTypes';
+import type { CustomerLines, DialogueDef, HouseholdDef, NavDef, NpcDef, QuestDef } from './npcTypes';
 import type { DemandConfig } from './demand';
 import type { EventDef } from './eventCalendar';
 import type { RecipeDef, SpecialtyDef } from './specialty';
@@ -231,4 +231,6 @@ export interface ContentPack {
   /** Recipes and kiosk specialties (Auftrag 05); absent = none. */
   recipes?: RecipeDef[];
   specialties?: SpecialtyDef[];
+  /** Households of the residents (Auftrag 05, 5.6); absent = every resident on its own. */
+  households?: HouseholdDef[];
 }

@@ -98,6 +98,7 @@ describe('specialty sales, fame and stages', () => {
     expect(s?.ratings).toBe(1);
     expect(s?.buyers[CUSTOMER]).toBe(1);
     expect(s?.feedback[0]?.npcId).toBe(CUSTOMER);
+    expect(game.state.npcs[CUSTOMER]?.memories).toContain('probiert:test-frika');
     expect(s?.feedback[0]?.text).toMatch(/: /);
   });
 

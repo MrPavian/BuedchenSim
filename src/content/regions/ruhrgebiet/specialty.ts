@@ -115,6 +115,7 @@ export const ruhrgebietSpecialties: SpecialtyDef[] = [
       },
     ],
     recommendMemory: 'empfiehlt:frikadelle',
+    tasteMemory: 'probiert:frikadelle',
     feedback: {
       great: [
         '{name}: „Die ist ja wie früher bei Muttern. Davon erzähl ich.“',

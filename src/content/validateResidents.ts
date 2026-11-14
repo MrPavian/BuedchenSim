@@ -231,6 +231,10 @@ function validateCondition(c: Condition, where: string, refs: Refs, errors: stri
     case 'eventToday':
       if (!(pack.events ?? []).some((e) => e.id === c.eventId)) errors.push(`${where}: unknown event "${c.eventId}"`);
       return;
+    case 'householdMemory':
+      if (!(pack.households ?? []).some((h) => h.id === c.householdId)) errors.push(`${where}: unknown household "${c.householdId}"`);
+      if (!nonEmpty(c.memoryId)) errors.push(`${where}: householdMemory needs a memory id`);
+      return;
     case 'season':
       if (c.seasons.length === 0 || c.seasons.some((x) => !['spring', 'summer', 'autumn', 'winter'].includes(x))) {
         errors.push(`${where}: season needs spring, summer, autumn or winter`);
@@ -518,6 +522,7 @@ export function validateResidents(pack: ContentPack): string[] {
   for (const d of Object.values(pack.dialogues)) validateDialogue(d, refs, errors, flagsRead);
   for (const p of pack.layout.placements) if (p.requiresFlag !== undefined) flagsRead.add(p.requiresFlag);
   for (const e of pack.events ?? []) if (e.requiresFlag !== undefined) flagsRead.add(e.requiresFlag);
+  validateHouseholds(pack, errors);
   for (const f of flagsRead) if (!refs.flagsSet.has(f)) errors.push(`flag "${f}" is read but never set to true by an effect`);
 
   // Relationship keys: one key always means the same effect (resident and delta).
@@ -533,4 +538,33 @@ export function validateResidents(pack: ContentPack): string[] {
   validateQuests(pack, effects, errors);
   validateCustomerLines(pack, errors);
   return errors;
+}
+
+/** Households (Auftrag 05, 5.6): known members, each resident in at most one household, `householdId` matches. */
+function validateHouseholds(pack: ContentPack, errors: string[]): void {
+  const households = pack.households ?? [];
+  checkIds('household', 'household.', households.map((h) => h.id), errors);
+  const memberOf = new Map<string, string>();
+  for (const h of households) {
+    const tag = `household "${h.id}"`;
+    if (!nonEmpty(h.name) || !nonEmpty(h.home)) errors.push(`${tag}: name and home must not be empty`);
+    if (!['single', 'couple', 'family', 'shared-flat'].includes(h.kind)) errors.push(`${tag}: unknown kind "${h.kind}"`);
+    if (h.memberIds.length === 0) errors.push(`${tag}: needs at least one member`);
+    if (h.kind === 'single' && h.memberIds.length !== 1) errors.push(`${tag}: a single household has exactly one member`);
+    if (h.kind !== 'single' && h.memberIds.length < 2) errors.push(`${tag}: a ${h.kind} household needs at least two members`);
+    for (const id of h.memberIds) {
+      const npc = hasKey(pack.npcs, id) ? pack.npcs[id] : undefined;
+      if (!npc) errors.push(`${tag}: unknown member "${id}"`);
+      else if (npc.householdId !== h.id) errors.push(`${tag}: member "${id}" has householdId "${npc.householdId ?? '(none)'}"`);
+      const other = memberOf.get(id);
+      if (other !== undefined) errors.push(`resident "${id}" belongs to two households: "${other}" and "${h.id}"`);
+      memberOf.set(id, h.id);
+    }
+  }
+  for (const npc of Object.values(pack.npcs)) {
+    if (npc.householdId !== undefined && !households.some((h) => h.id === npc.householdId)) {
+      errors.push(`resident "${npc.id}": unknown household "${npc.householdId}"`);
+    }
+    if (npc.purseCents !== undefined && (!isInt(npc.purseCents) || npc.purseCents < 0)) errors.push(`resident "${npc.id}": purseCents must be an integer >= 0`);
+  }
 }

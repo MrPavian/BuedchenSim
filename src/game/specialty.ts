@@ -73,6 +73,8 @@ export interface SpecialtyDef {
   feedback: Record<FeedbackRating, string[]>;
   /** Memory a resident gets when it recommends the specialty. */
   recommendMemory: string;
+  /** Memory a resident gets when it buys the specialty for the first time. */
+  tasteMemory?: string;
 }
 
 export type FeedbackRating = 'great' | 'good' | 'meh' | 'bad';
@@ -293,6 +295,7 @@ export function createSpecialtyApi(ctx: DomainContext): SpecialtyApi {
           const noise = (roll(state.world.seed, 'specialty-taste', transaction.id, npcId) - 0.5) * 16;
           const satisfaction = clamp(Math.round(quality + (npc.relationship - 30) / 5 + (likes ? 8 : 0) - (dislikes ? 15 : 0) + noise), 0, 100);
           const before = s.buyers[npcId] ?? 0;
+          if (before === 0 && def.tasteMemory) addMemory(ctx, npcId, def.tasteMemory);
           s.buyers[npcId] = before + units;
           s.ratings += 1;
           s.satisfactionSum += satisfaction;

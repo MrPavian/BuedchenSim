@@ -8,6 +8,7 @@ import { ruhrgebietEvents } from './events';
 import { ruhrgebietDialogues } from './dialogues';
 import { worldDialogues } from './dialoguesWorld';
 import { ruhrgebietGuests } from './guests';
+import { ruhrgebietHouseholds, ruhrgebietPurses } from './households';
 import { ruhrgebietLayout } from './layout';
 import { ruhrgebietProducts } from './products';
 import { ruhrgebietQuests } from './quests';
@@ -23,6 +24,8 @@ const npcs = Object.fromEntries(
     id,
     {
       ...def,
+      householdId: ruhrgebietHouseholds.find((h) => h.memberIds.includes(id))?.id,
+      purseCents: ruhrgebietPurses[id],
       routine: [...def.routine, ...(specialtyRoutines[id] ?? [])],
       wishes: [...(def.wishes ?? []), ...(specialtyWishes[id] ?? [])],
       dialogueIds: [...def.dialogueIds, ...extraDialogues.filter((d) => d.npcId === id).map((d) => d.id)],
@@ -46,4 +49,5 @@ export const ruhrgebietPack: ContentPack = {
   demand: ruhrgebietDemand,
   recipes: ruhrgebietRecipes,
   specialties: ruhrgebietSpecialties,
+  households: ruhrgebietHouseholds,
 };

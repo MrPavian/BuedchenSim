@@ -90,6 +90,11 @@ export interface NpcWishState {
  * Saved state of one resident: only what a reload needs to continue. No view, UI or dialogue-session data
  * (a saved 'talking' status is restored as 'walking' / 'waiting' / 'at_place').
  */
+export interface HouseholdState {
+  /** Shared memories, e.g. 'erlebt:heimspiel' once any member lived through the event. */
+  memories: string[];
+}
+
 export interface NpcState {
   status: NpcStatus;
   position: Vec2;
@@ -163,6 +168,8 @@ export interface GameState {
   story: StoryState;
   /** Kiosk specialties by specialty id (Auftrag 05): production, quality, fame, stage. */
   specialties: Record<string, SpecialtyState>;
+  /** What households share (Auftrag 05, 5.6), by household id. Membership and home are content, not state. */
+  households: Record<string, HouseholdState>;
 }
 
 export type DeepReadonly<T> = T extends readonly (infer U)[]
@@ -246,5 +253,6 @@ export function createInitialState(content: ContentPack, seed: number = DEFAULT_
     npcs: createInitialNpcs(content),
     story: createInitialStory(),
     specialties: Object.fromEntries((content.specialties ?? []).map((s) => [s.id, createInitialSpecialty()])),
+    households: Object.fromEntries((content.households ?? []).map((h) => [h.id, { memories: [] }])),
   };
 }

@@ -49,6 +49,7 @@ export const specialty: SpecialtyDef = {
     { stage: 3, name: 'Kultstatus', minFame: 70, minSold: 25, minRepeatBuyers: 1, minRecommendations: 1, minSatisfaction: 65, flag: 'test.cult', recipeLevel: 3 },
   ],
   recommendMemory: 'empfiehlt:test-frika',
+  tasteMemory: 'probiert:test-frika',
   feedback: { great: ['{name}: super'], good: ['{name}: gut'], meh: ['{name}: geht so'], bad: ['{name}: nee'] },
 };
 

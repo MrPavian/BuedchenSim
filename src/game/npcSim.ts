@@ -22,8 +22,8 @@ import type { NpcDef, PlaceDef, RoutineEntry } from './npcTypes';
 import { roll } from './random';
 import { weekdayOf } from './selectors';
 import type { NpcState, NpcStatus } from './state';
-import { addMemory } from './story';
-import { pickWish } from './wishes';
+import { addHouseholdMemory, addMemory } from './story';
+import { pickWish, wishCostCents } from './wishes';
 import { NEUTRAL_DEMAND, demandContextOf, routineChance, wishDemandFactor } from './demand';
 
 /** Absolute game minute: `day * 1440 + minute`. */
@@ -263,7 +263,10 @@ export function createNpcSim(ctx: DomainContext): NpcSim {
     const env = ctx.env();
     for (const eventId of env.activeEvents) {
       const memory = (content.events ?? []).find((e) => e.id === eventId)?.memory;
-      if (memory) addMemory(ctx, id, memory);
+      if (memory) {
+        addMemory(ctx, id, memory);
+        addHouseholdMemory(ctx, id, memory); // events are lived through together
+      }
     }
     const entry = entryOf(def, npc.routineId);
     if (entry?.activity === 'shop' && place.kind === 'kiosk-window') {
@@ -480,8 +483,10 @@ export function createNpcSim(ctx: DomainContext): NpcSim {
       const env = ctx.env();
       const demandCtx = demandContextOf(env, calendar.minute, content.events);
       const demand = content.demand ?? NEUTRAL_DEMAND;
+      const purse = def.purseCents;
       const wish = pickWish(def, { ...state, env }, state.world.seed, entry.id, (w) =>
-        wishDemandFactor(
+        // The resident's own purse: wishes it cannot pay are never picked.
+        purse !== undefined && wishCostCents(content, w) > purse ? 0 : wishDemandFactor(
           w.lines.map((l) => content.products[l.productId]).filter((p) => p !== undefined),
           demand,
           demandCtx,

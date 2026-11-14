@@ -18,6 +18,16 @@ export function addMemory(ctx: DomainContext, npcId: string, memoryId: string): 
   return true;
 }
 
+/** Adds a shared memory to the resident's household, if it has one (once). */
+export function addHouseholdMemory(ctx: DomainContext, npcId: string, memoryId: string): boolean {
+  const householdId = Object.hasOwn(ctx.content.npcs, npcId) ? ctx.content.npcs[npcId]?.householdId : undefined;
+  const households = ctx.state().households;
+  const household = householdId !== undefined && Object.hasOwn(households, householdId) ? households[householdId] : undefined;
+  if (!household || household.memories.includes(memoryId) || household.memories.length >= SAVE_LIMITS.memoriesPerNpc) return false;
+  household.memories.push(memoryId);
+  return true;
+}
+
 /** Changes the relationship (clamped 0..100); emits only when the value changed. */
 export function changeRelationship(ctx: DomainContext, npcId: string, delta: number): boolean {
   const npc = Object.hasOwn(ctx.state().npcs, npcId) ? ctx.state().npcs[npcId] : undefined;
