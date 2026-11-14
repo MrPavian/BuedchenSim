@@ -127,17 +127,17 @@ Richtwerte für neue Assets: Ware höchstens 300 Dreiecke je Stück; Bewohner h�
 
 ## 6. Umgesetzte Änderungen und Messwerte nachher
 
-Änderungen siehe [Abschlussbericht](PHASE-04-5-ABSCHLUSSBERICHT.md). **Messwerte nachher** (`docs/screenshots/auftrag-04-5/nachher/metrics.json`):
+Änderungen siehe [Abschlussbericht](PHASE-04-5-ABSCHLUSSBERICHT.md). **Messwerte nachher** (`docs/screenshots/auftrag-04-5/nachher/metrics.json`, aufgenommen mit allen Änderungen einschließlich der GLB-Figur für Günter; Prozentangaben gegenüber `vorher`):
 
 | Ansicht | Waren | Draw Calls | Dreiecke | Geometrien | Texturen | Bewohner | Bildzeit Median (Software) |
 |---|---|---|---|---|---|---|---|
-| aussen | 203 | 407 (−16 %) | 74.268 (−30 %) | 197 | 20 | 3 | 274 ms |
-| innen | 1.573 | 272 | 187.748 (−57 %) | 232 | 40 | 0 | 244 ms |
-| regale | 1.573 | 272 | 187.748 (−57 %) | 232 | 40 | 0 | 352 ms |
-| bewohner | 203 | 461 (−18 %) | 78.384 (−29 %) | 245 | 40 | 4 | 354 ms |
-| detail | 203 | 303 | 61.376 (−34 %) | 245 | 40 | 0 | 241 ms |
+| aussen | 203 | 389 (−20 %) | 127.780 (+21 %) | 196 | 38 | 3 | 340 ms |
+| innen | 1.573 | 272 | 187.748 (−57 %) | 231 | 58 | 0 | 307 ms |
+| regale | 1.573 | 272 | 187.748 (−57 %) | 231 | 58 | 0 | 366 ms |
+| bewohner | 203 | 443 (−21 %) | 131.896 (+20 %) | 244 | 58 | 4 | 384 ms |
+| detail | 203 | 303 | 61.376 (−34 %) | 244 | 58 | 0 | 327 ms |
 
-Die Bildzeiten streuen im Software-Rendering zu stark für eine Aussage; die Zahl der Geometrien steigt leicht, weil jede Figur ihre zusammengeführten Teile als eigene Geometrie besitzt.
+Ohne die GLB-Figur (nur Licht, Waren und zusammengeführte prozedurale Figuren) lagen `aussen` bei 407 Draw Calls und 74.268 Dreiecken (−30 %), `bewohner` bei 461 und 78.384 (−29 %). Die Figur kostet also rund 53.000 Dreiecke (einschließlich Schattenpass), spart aber Draw Calls; begründet in Abschnitt 8.4. Die Bildzeiten streuen im Software-Rendering zu stark für eine Aussage. Mehr Texturen zählen, weil die Figurentexturen geladen sind.
 
 ![Außenansicht nachher](screenshots/auftrag-04-5/nachher/aussen.png)
 
@@ -171,7 +171,7 @@ CC0 verlangt keine Namensnennung; die Herkunft steht trotzdem hier und im Skript
 1. **Körper:** Grundmesh plus Makro-Formziele nach MakeHumans Mischregeln (Geschlecht, Alter 0,86 ≈ 71 Jahre, Muskeln, Gewicht, Größe), dazu Detailziele für Günter (älteres Gesicht, größere Nase und Ohren, Doppelkinn, Bauchansatz, schmalere Schultern, hängende Brauen).
 2. **Rig:** 53 Knochen nach `rig.game_engine.json` (Gelenkpositionen aus den Hilfswürfeln des Meshes, also passend zur geformten Figur), Gewichte aus `weights.game_engine.json`.
 3. **Kleidung, Haare, Augen, Brauen, Wimpern:** MakeHuman-Anpassdateien (`.mhclo`: jeder Punkt hängt an drei Körperpunkten plus Versatz) auf den geformten Körper gesetzt, Gewichte vom Körper übertragen; Körperflächen unter der Kleidung entfallen.
-4. **Anpassungen:** Jeans → dunkle Stoffhose, olivgrüne Jacke → warmes Grau, Haare und Brauen grau, Haut weniger orange; Schiebermütze aus dem Tweedstoff des Hutes, Spazierstock in der rechten Hand.
+4. **Anpassungen:** Jeans → dunkle Stoffhose, olivgrüne Jacke → warmes Grau, Haare und Brauen grau, Haut weniger orange; Spazierstock in der rechten Hand. Die Schiebermütze (Tweedstoff des Hutes) entsteht als Schale aus der abgetasteten Oberfläche von Kopf und Haar: Strahlen aus der Kopfmitte, Rand tief an der Stirn und hinten tiefer, Krone nach vorn gezogen und oben abgeflacht, kurzer Schirm; Haar unter der Mütze wird entfernt. Zwei frühere Varianten (frei geformte Kuppel, flache Scheibe) wirkten aufgesetzt und wurden verworfen.
 5. **Animation:** `idle` (8 s), `walk` (1 s, kurzer Schritt, leicht gebeugt), `talk` (3 s, Handgeste, Nicken), Finger leicht gekrümmt, rechte Hand am Stock.
 6. **Export:** GLB mit WebP-Texturen (Haut und Kleidung 1024², Rest 256–512²).
 
@@ -198,21 +198,21 @@ Sichtprüfung: `tools/character-viewer/` (Vite-Seite `/tools/character-viewer/in
 ### 8.4 Messwerte
 | Wert | Prozedural (nach 04.5 zusammengeführt) | GLB Günter |
 |---|---|---|
-| Dreiecke | rund 2.000 | 29.940 |
-| Vertices | – | 16.604 (Position, Normale, UV, 4 Gelenke, 4 Gewichte) |
+| Dreiecke | rund 2.000 | 28.902 |
+| Vertices | – | 16.116 (Position, Normale, UV, 4 Gelenke, 4 Gewichte) |
 | Primitive / Materialien / Texturen | 8–12 Meshes | 9 / 9 / 8 |
 | Knochen | – | 53 (mit Fingern) |
-| Datei | – | 1,50 MB (Texturen 0,27 MB) |
+| Datei | – | 1,47 MB (Texturen 0,27 MB) |
 | GPU-Speicher (geschätzt) | – | rund 0,8 MB Geometrie und rund 12 MB Texturen (entpackt, mit Mipmaps), einmal geteilt; je Instanz nur das Skelett (53 Matrizen) |
-| Szene `aussen` (3 Bewohner) | 407 Draw Calls, 74.268 Dreiecke | 389 Draw Calls, 129.856 Dreiecke |
-| Szene `bewohner` (4 Bewohner) | 461 Draw Calls, 78.384 Dreiecke | 443 Draw Calls, 133.972 Dreiecke |
+| Szene `aussen` (3 Bewohner) | 407 Draw Calls, 74.268 Dreiecke | 389 Draw Calls, 127.780 Dreiecke |
+| Szene `bewohner` (4 Bewohner) | 461 Draw Calls, 78.384 Dreiecke | 443 Draw Calls, 131.896 Dreiecke |
 
-Die Dreiecke steigen um rund 55.000 (Figur plus Schattenpass), die Draw Calls sinken um 18, weil die GLB-Figur weniger Teile hat als die prozedurale. Mit vier GLB-Figuren wären rund 240.000 Dreiecke zu erwarten, etwa so viel wie volle Regale. Bildraten auf echter Hardware sind nicht gemessen. Ein LOD ist bei vier Figuren nicht nötig; ab etwa acht gleichzeitig sichtbaren Figuren sollte das Skript eine zweite Stufe exportieren (Körper per Decimate auf rund 40 %, MakeHuman-Proxy `male1591` mit 3.140 Dreiecken als Vorlage).
+Die Dreiecke steigen um rund 53.000 (Figur plus Schattenpass), die Draw Calls sinken um 18, weil die GLB-Figur weniger Teile hat als die prozedurale. Mit vier GLB-Figuren wären rund 240.000 Dreiecke zu erwarten, etwa so viel wie volle Regale. Bildraten auf echter Hardware sind nicht gemessen. Ein LOD ist bei vier Figuren nicht nötig; ab etwa acht gleichzeitig sichtbaren Figuren sollte das Skript eine zweite Stufe exportieren (Körper per Decimate auf rund 40 %, MakeHuman-Proxy `male1591` mit 3.140 Dreiecken als Vorlage).
 
 ### 8.5 Bewertung gegen die Abnahme (6A)
 | Kriterium | Stand |
 |---|---|
-| Nahansicht: überzeugende Gesichts- und Kleidungsdetails | **weitgehend.** Altersgerechtes Gesicht mit Falten, Tränensäcken, großen Ohren, Augen mit Iris, Wimpern, buschigen grauen Brauen; Jacke mit Revers, Nähten, Pattentaschen; gestreiftes Hemd, Stoffhose mit Taschen, Lederschuhe. Schwächen: Die Mütze ist im Skript gebaut (flache Krone mit Schirm, das Haar darunter wird angedrückt) und einfacher als die übrigen Teile; zwei rote Punkte der Hauttextur neben der Nase |
+| Nahansicht: überzeugende Gesichts- und Kleidungsdetails | **weitgehend.** Altersgerechtes Gesicht mit Falten, Tränensäcken, großen Ohren, Augen mit Iris, Wimpern, buschigen grauen Brauen; Jacke mit Revers, Nähten, Pattentaschen; gestreiftes Hemd, Stoffhose mit Taschen, Lederschuhe. Die Schiebermütze ist im Skript an Kopf und Haar angepasst (siehe 8.2). Schwächen: zwei rote Punkte der Hauttextur neben der Nase, kleine Zacken an den Schirmenden |
 | Spielkamera: Proportionen und Silhouette | **ja.** Natürliche Proportionen; Mütze, Stock, graue Jacke und gebeugte Haltung machen Günter erkennbar |
 | Geh- und Idle-Animation natürlich, ohne Deformation | **weitgehend.** Kurzer Schritt mit Stock, Atmen, Kopfbewegung, Finger gekrümmt; Hände stehen im Stand etwas vom Körper ab; keine Gesichtsausdrücke (Blend Shapes) |
 | Passt zu Licht und Materialwelt | **ja**, Schatten und Licht stimmen. Neben den noch prozeduralen Blockfiguren wirkt Günter deutlich detaillierter: Der Stilbruch verschwindet erst, wenn alle Bewohner umgestellt sind |

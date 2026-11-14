@@ -4,7 +4,7 @@
 
 **Entstehung:** `node scripts/visual-shots.mjs --out docs/screenshots/auftrag-04-5/<vorher|nachher>`. Das Skript startet die laufende Anwendung, setzt über den Debug-Zugang einen festen Spielstand (Uhr angehalten) und eine feste Spielerposition und nimmt die normale Spielkamera auf: 1280 × 720 CSS-Pixel bei Gerätefaktor 2 (Bild 2560 × 1440), die Detailansicht als Ausschnitt 640 × 360 CSS-Pixel. Renderer: Headless Chromium 153 mit SwiftShader (Software-Rendering). **Keine Aufnahmen echter Grafikhardware, keine Render-Mockups.** Die Messwerte je Ansicht stehen in `vorher/metrics.json` und `nachher/metrics.json` und sind in [VISUAL-BASELINE.md](../../VISUAL-BASELINE.md) ausgewertet.
 
-`vorher/` entstand vor jeder Änderung von Auftrag 04.5, `nachher/` nach allen Änderungen; Spielzustände und Kamerapositionen sind identisch.
+`vorher/` entstand vor jeder Änderung von Auftrag 04.5, `nachher/` nach allen Änderungen einschließlich der GLB-Figur für Günter; Spielzustände und Kamerapositionen sind identisch.
 
 | Datei | Perspektive | Spielzustand | Einordnung |
 |---|---|---|---|
@@ -16,7 +16,7 @@
 
 ## Figuren-Prototyp Günter (N-002), Ordner `figur/`
 
-GLB-Figur aus CC0-MakeHuman-Daten, erzeugt mit `tools/characters/build_mh_resident.py`. `vorne`, `gesicht`, `seite`, `hinten`, `sprechen` stammen aus dem Figurenbetrachter (`tools/character-viewer/`, Renderer und Licht wie im Spiel, 900 × 1100 bzw. 900 × 900 Pixel, Gerätefaktor 1); `im-spiel-*` sind Ausschnitte aus `node scripts/visual-shots.mjs --only aussen,bewohner --scale 3` mit der normalen Spielkamera. Bewertung und Messwerte in [VISUAL-BASELINE.md, Abschnitt 8](../../VISUAL-BASELINE.md).
+GLB-Figur aus CC0-MakeHuman-Daten, erzeugt mit `tools/characters/build_mh_resident.py`. `vorne`, `gesicht`, `seite`, `hinten`, `sprechen` stammen aus dem Figurenbetrachter (`tools/character-viewer/`, Renderer und Licht wie im Spiel, 900 × 1100 bzw. 900 × 900 Pixel, Gerätefaktor 1); `im-spiel-*` sind Ausschnitte aus `nachher/aussen.png` und `nachher/bewohner.png` (normale Spielkamera). Bewertung und Messwerte in [VISUAL-BASELINE.md, Abschnitt 8](../../VISUAL-BASELINE.md).
 
 | Datei | Inhalt |
 |---|---|

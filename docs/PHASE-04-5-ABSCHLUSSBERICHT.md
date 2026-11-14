@@ -18,7 +18,7 @@ Die Szene war funktional, aber flach: starkes Halbkugel- und Umgebungslicht, sch
 8. **Figuren-Prototyp Günter (N-002), Abschnitt 6A:** Günter ist eine GLB-Figur auf Basis frei lizenzierter MakeHuman-Daten (CC0): realistisch proportionierter Grundkörper, über Alters-, Gewichts- und Gesichtsregler individualisiert, Rig mit 53 Knochen (mit Fingern), Anzug, Lederschuhe, graue Haare, Augen, Brauen, Wimpern und Hauttextur eines älteren Mannes; Schiebermütze aus Tweedstoff und Spazierstock im Skript; Clips Idle, Gehen, Sprechen. Das Skript `tools/characters/build_mh_resident.py` liest nur die Daten, fremder Programmcode wird nicht ausgeführt. Im Spiel ersetzt das GLB die prozedurale Figur, sobald es geladen ist (`glbResident.ts`, `residentView.ts`); die prozedurale Figur bleibt Fallback. Ein erster Prototyp aus Grundformen wurde wegen unglaubwürdiger Proportionen verworfen. Vertrag, Lizenz, Messwerte und Bewertung: [VISUAL-BASELINE.md, Abschnitt 8](VISUAL-BASELINE.md), Entscheidung ADR-023.
 
 ### Figuren-Prototyp: Bewertung
-Günter hat jetzt natürliche Proportionen, ein altersgerechtes Gesicht mit Falten, Augen, Wimpern und buschigen Brauen, Kleidung mit Revers, Nähten und Taschen und geht mit kurzem Schritt am Stock. In der Spielkamera ist er klar erkennbar. Schwächen: Die Mütze ist schlichter als die übrigen Teile (nach Rückmeldung kleiner und flacher gemacht), die Hände stehen im Stand etwas ab, es gibt keine Gesichtsausdrücke. Neben den noch prozeduralen Blockfiguren fällt der Qualitätsunterschied stark auf; er verschwindet erst, wenn N-003, N-006 und N-007 nach der Abnahme mit demselben Skript umgestellt sind.
+Günter hat jetzt natürliche Proportionen, ein altersgerechtes Gesicht mit Falten, Augen, Wimpern und buschigen Brauen, Kleidung mit Revers, Nähten und Taschen und geht mit kurzem Schritt am Stock. In der Spielkamera ist er klar erkennbar. Die Schiebermütze liegt nach mehreren Rückmeldungen an Kopf und Haar an (aus der abgetasteten Kopfoberfläche geformt). Schwächen: Die Hände stehen im Stand etwas ab, es gibt keine Gesichtsausdrücke. Neben den noch prozeduralen Blockfiguren fällt der Qualitätsunterschied stark auf; er verschwindet erst, wenn N-003, N-006 und N-007 nach der Abnahme mit demselben Skript umgestellt sind.
 
 | Günter in der Spielkamera | Nahansicht |
 |---|---|
@@ -58,7 +58,7 @@ Headless Chromium 153, SwiftShader, 1280 × 720, Gerätefaktor 1, Spiel angehalt
 | Bewohner, 4 Bewohner, 203 Waren | 559 → 461 | 110.124 → 78.384 |
 | Detail ohne Bewohner | 303 → 303 | 93.116 → 61.376 |
 
-Mit der GLB-Figur für Günter steigen die Dreiecke in `aussen` auf 129.856 und in `bewohner` auf 133.972 (+ rund 55.000 einschließlich Schattenpass), die Draw Calls sinken auf 389 bzw. 443 (−18). Die Figurendatei hat 1,5 MB (29.940 Dreiecke, 16.604 Vertices, 8 WebP-Texturen); auf der GPU rund 0,8 MB Geometrie und rund 12 MB Texturen, einmal geteilt. Begründung: Die Figurenqualität hat in 6A Vorrang; volle Regale bleiben mit 187.748 Dreiecken die teuerste Ansicht.
+Mit der GLB-Figur für Günter steigen die Dreiecke in `aussen` auf 127.780 und in `bewohner` auf 131.896 (+ rund 53.000 einschließlich Schattenpass), die Draw Calls sinken auf 389 bzw. 443 (−18). Die Figurendatei hat 1,5 MB (28.902 Dreiecke, 16.116 Vertices, 8 WebP-Texturen); auf der GPU rund 0,8 MB Geometrie und rund 12 MB Texturen, einmal geteilt. Begründung: Die Figurenqualität hat in 6A Vorrang; volle Regale bleiben mit 187.748 Dreiecken die teuerste Ansicht.
 
 Die Bildzeit liegt im Software-Rendering bei 240–560 ms (Median), mit 8–20 Bildern je Messung und großer Streuung. Eine Verbesserung oder Verschlechterung der Bildrate lässt sich daraus nicht belegen. Belegt ist der geringere Aufwand: weniger Dreiecke und Draw Calls. Eine Messung auf echter Hardware (Gerät, Browser, Auflösung, Messdauer) ist offen; die Schritte stehen in [PRUEFANLEITUNG-MANUELL.md](PRUEFANLEITUNG-MANUELL.md).
 
@@ -69,7 +69,7 @@ Die Bildzeit liegt im Software-Rendering bei 240–560 ms (Median), mit 8–20 B
 | `npm run lint` | fehlerfrei |
 | `npm run test` | 38 Dateien, 608 Tests bestanden |
 | `npm run build` | erfolgreich (Spielcode 289 kB, Three.js-Teil 645 kB einschließlich GLTFLoader und SkeletonUtils, vorher 548 kB; Figurendatei 1,5 MB separat) |
-| `npm run check:browser` | [[BROWSERCHECK]] |
+| `npm run check:browser` | 149 von 149 Prüfungen bestanden (1.537 s, Headless-Chromium mit SwiftShader), mit der GLB-Figur im Spiel; danach wurde nur noch die Form der Mütze in der Figurendatei geändert |
 
 Die Browserprüfung umfasst die geforderten Nachweise: Warenbestände und Regalplätze, Interaktionspunkte, Tür, Klappe und Kollisionen, Bewohner (Erscheinen, Bewegung, Ansprechbarkeit), Dialoge und Kundenkäufe, Sichtfreistellung, Savegame Version 3 mit Migrationen. Die visuellen Referenzansichten wurden vorher und nachher erzeugt und von mir angesehen.
 

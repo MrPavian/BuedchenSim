@@ -531,6 +531,11 @@ def build_cap(rig, hair, body, brows, texture):
             p.y -= 0.045 * lift
             p.x = cx + (p.x - cx) * (1.0 + 0.10 * math.sin(math.pi * min(1.0, t * 1.2)))
             p.z -= 0.024 * lift * (1.0 + 0.6 * max(0.0, math.sin(a)))
+            # Shaping must not push the crown into the skull (the scalp would show through at the back).
+            dd = p - centre
+            hit = body_t.ray_cast(centre, dd.normalized())[0]
+            if hit is not None and dd.length < (hit - centre).length + 0.008:
+                p = centre + dd.normalized() * ((hit - centre).length + 0.008)
             row.append(p)
         grid.append(row)
 
@@ -572,7 +577,7 @@ def build_cap(rig, hair, body, brows, texture):
         for li in poly.loop_indices:
             c = mesh.vertices[mesh.loops[li].vertex_index].co
             a = math.atan2(c.y - cy, c.x - cx)
-            uv.data[li].uv = (0.05 + 0.40 * (a + math.pi) / (2 * math.pi), 0.2 + 0.6 * (c.z - zmin) / 0.14)
+            uv.data[li].uv = (0.10 + 0.28 * (a + math.pi) / (2 * math.pi), 0.30 + 0.40 * (c.z - zmin) / 0.14)
     solid = obj.modifiers.new("solid", "SOLIDIFY")
     solid.thickness = 0.004
     bpy.context.view_layer.objects.active = obj
@@ -584,7 +589,7 @@ def build_cap(rig, hair, body, brows, texture):
         a = math.atan2(d.y, d.x)
         front = max(0.0, -math.sin(a))
         e0 = math.radians(2.0 + 22.0 * front - 6.0 * max(0.0, math.sin(a)))
-        return math.atan2(d.z, math.hypot(d.x, d.y)) > e0 + math.radians(3.0)
+        return math.atan2(d.z, math.hypot(d.x, d.y)) > e0 + math.radians(3.0 - 7.0 * front)
 
     hb = bmesh.new()
     hb.from_mesh(hair.data)
