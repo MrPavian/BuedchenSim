@@ -212,7 +212,7 @@ Die Dreiecke steigen um rund 55.000 (Figur plus Schattenpass), die Draw Calls si
 ### 8.5 Bewertung gegen die Abnahme (6A)
 | Kriterium | Stand |
 |---|---|
-| Nahansicht: überzeugende Gesichts- und Kleidungsdetails | **weitgehend.** Altersgerechtes Gesicht mit Falten, Tränensäcken, großen Ohren, Augen mit Iris, Wimpern, buschigen grauen Brauen; Jacke mit Revers, Nähten, Pattentaschen; gestreiftes Hemd, Stoffhose mit Taschen, Lederschuhe. Schwächen: Die Mütze (im Skript gebaut) wirkt von vorn zu hoch und kastenförmig, im Profil stimmt sie; zwei rote Punkte der Hauttextur neben der Nase |
+| Nahansicht: überzeugende Gesichts- und Kleidungsdetails | **weitgehend.** Altersgerechtes Gesicht mit Falten, Tränensäcken, großen Ohren, Augen mit Iris, Wimpern, buschigen grauen Brauen; Jacke mit Revers, Nähten, Pattentaschen; gestreiftes Hemd, Stoffhose mit Taschen, Lederschuhe. Schwächen: Die Mütze ist im Skript gebaut (flache Krone mit Schirm, das Haar darunter wird angedrückt) und einfacher als die übrigen Teile; zwei rote Punkte der Hauttextur neben der Nase |
 | Spielkamera: Proportionen und Silhouette | **ja.** Natürliche Proportionen; Mütze, Stock, graue Jacke und gebeugte Haltung machen Günter erkennbar |
 | Geh- und Idle-Animation natürlich, ohne Deformation | **weitgehend.** Kurzer Schritt mit Stock, Atmen, Kopfbewegung, Finger gekrümmt; Hände stehen im Stand etwas vom Körper ab; keine Gesichtsausdrücke (Blend Shapes) |
 | Passt zu Licht und Materialwelt | **ja**, Schatten und Licht stimmen. Neben den noch prozeduralen Blockfiguren wirkt Günter deutlich detaillierter: Der Stilbruch verschwindet erst, wenn alle Bewohner umgestellt sind |

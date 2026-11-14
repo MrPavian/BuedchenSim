@@ -485,7 +485,7 @@ def rigid_part(obj, rig, bone):
     mod.object = rig
 
 
-def build_cap(rig, hair, texture):
+def build_cap(rig, hair, body, texture):
     """Flat cap ("Schiebermütze") over the hair: flattened crown pulled forward plus a short brim; tweed texture."""
     import bmesh
 
@@ -493,12 +493,17 @@ def build_cap(rig, hair, texture):
     lo = Vector((min(c.x for c in co), min(c.y for c in co), min(c.z for c in co)))
     hi = Vector((max(c.x for c in co), max(c.y for c in co), max(c.z for c in co)))
     cx, cy = (lo.x + hi.x) / 2, (lo.y + hi.y) / 2
-    rx, ry = (hi.x - lo.x) / 2 * 1.06, (hi.y - lo.y) / 2 * 1.06
-    top = hi.z
+    rx, ry = (hi.x - lo.x) / 2 * 0.97, (hi.y - lo.y) / 2 * 0.99
+    band = hi.z - 0.078  # lower edge of the cap, low on the forehead
+    # The cap presses the hair flat: hair above the band is squashed onto the skull, so a shallow crown covers it.
+    skull = max(v.co.z for v in body.data.vertices)
+    for v in hair.data.vertices:
+        if v.co.z > band:
+            v.co.z = band + (v.co.z - band) * 0.55
+    top = max(skull, max(v.co.z for v in hair.data.vertices)) + 0.008
     mesh = bpy.data.meshes.new("cap")
     bm = bmesh.new()
     bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=14, radius=1.0, calc_uvs=True)
-    band = top - 0.088  # lower edge of the cap
     keep = []
     for v in bm.verts:
         x, y, z = v.co
@@ -508,9 +513,9 @@ def build_cap(rig, hair, texture):
         # Crown from the band (t = 0) to a flat top (t = 1). It bulges outwards above the band and its upper part
         # is pulled forward over the brim (-Y is the face), the typical flat-cap profile.
         t = (z + 0.02) / 1.02
-        height = 0.098 * (1 - (1 - t) ** 3) * (1 - 0.30 * max(0.0, -y) * t)
-        bulge = 1.03 + 0.22 * math.sin(math.pi * min(1.0, t * 1.25)) * (1 - t)
-        v.co = Vector((cx + x * rx * bulge, cy + y * ry * bulge * 1.04 - 0.035 * t ** 1.2, band + height))
+        height = (top - band) * (1 - (1 - t) ** 3) * (1 - 0.25 * max(0.0, -y) * t)
+        bulge = 1.01 + 0.10 * math.sin(math.pi * min(1.0, t * 1.25)) * (1 - t)
+        v.co = Vector((cx + x * rx * bulge, cy + y * ry * bulge * 1.04 - 0.025 * t ** 1.2, band + height))
     bmesh.ops.delete(bm, geom=keep, context="VERTS")
     # Brim: a short half ring in front at the band height.
     ring = []
@@ -751,7 +756,7 @@ def main():
 
     build_actions(rig)
     hair = bpy.data.objects["hair"]
-    build_cap(rig, hair, os.path.join(A, items["cap_texture"]))
+    build_cap(rig, hair, body, os.path.join(A, items["cap_texture"]))
     build_stick(rig)
     rig.name = spec["name"]
 
