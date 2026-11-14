@@ -1015,3 +1015,76 @@ body {
   font-size: 12px;
   color: var(--ui-muted);
 }
+
+/* Specialty tab (Auftrag 05, 5.5) */
+.ui-specialty .ui-subtitle {
+  margin-top: 14px;
+}
+
+.ui-table-specialty .ui-row {
+  grid-template-columns: minmax(0, 1fr) 90px 80px;
+}
+
+.ui-warn {
+  color: #ff9b80;
+}
+
+.ui-meter {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  margin: 4px 0 6px;
+}
+
+.ui-meter-fill {
+  height: 100%;
+  background: var(--ui-accent);
+}
+
+.ui-specialty-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+
+.ui-specialty-controls [aria-pressed='true'] {
+  outline: 1px solid var(--ui-accent);
+}
+
+.ui-check {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.ui-specialty-next {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--ui-accent);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ui-specialty-reqs {
+  margin: 6px 0 0;
+  padding-left: 4px;
+  list-style: none;
+  font-size: 13px;
+  color: var(--ui-muted);
+}
+
+.ui-specialty-reqs li.met {
+  color: var(--ui-fg);
+}
+
+.ui-specialty-feedback p {
+  margin: 4px 0;
+}
+
+.ui-feedback-bad,
+.ui-feedback-meh {
+  opacity: 0.85;
+}

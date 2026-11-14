@@ -8,9 +8,10 @@ import {
 } from '../../game/selectors';
 import type { ProductDef } from '../../game/types';
 import { ageBadge, button, el, quantityInput, swatch, testId } from '../dom';
-import { formatEuro } from '../format';
+import { formatClock, formatEuro } from '../format';
 import type { Panel, PanelContext } from '../modal';
 import { texts } from '../texts';
+import { renderSpecialtyTab, type SpecialtyUi } from './specialtyTab';
 import {
   MAX_QUANTITY_INPUT,
   ageLabel,
@@ -25,8 +26,8 @@ import {
   summarizeOrder,
 } from '../viewModel';
 
-type Tab = 'stock' | 'order' | 'delivery' | 'restock';
-const TABS: Tab[] = ['stock', 'order', 'delivery', 'restock'];
+type Tab = 'stock' | 'order' | 'delivery' | 'restock' | 'specialty';
+const TABS: Tab[] = ['stock', 'order', 'delivery', 'restock', 'specialty'];
 
 interface Message {
   kind: 'ok' | 'error';
@@ -63,6 +64,7 @@ export function createGoodsPanel(ctx: PanelContext): Panel {
   const order = new Map<string, number>();
   const slotUi = new Map<string, SlotUi>();
   let showAllSlots = false;
+  const specialtyUi: SpecialtyUi = { batches: 1, useOptional: true };
 
   const reject = (reason: string): void => {
     message = { kind: 'error', text: reasonText(reason) };
@@ -371,6 +373,7 @@ export function createGoodsPanel(ctx: PanelContext): Panel {
       const bar = el('div', 'ui-tabs');
       bar.setAttribute('role', 'tablist');
       for (const id of TABS) {
+        if (id === 'specialty' && game.specialty.list().length === 0) continue;
         const tabButton = button(
           id === 'delivery' && game.state.economy.pendingDelivery ? `${texts.goods.tabs[id]} •` : texts.goods.tabs[id], `goods-tab-${id}`, () => {
           tab = id;
@@ -385,7 +388,18 @@ export function createGoodsPanel(ctx: PanelContext): Panel {
       if (tab === 'stock') renderStock(body);
       else if (tab === 'order') renderOrder(body);
       else if (tab === 'delivery') renderDelivery(body);
-      else renderRestock(body);
+      else if (tab === 'specialty') {
+        body.append(messageBox());
+        renderSpecialtyTab(body, game, specialtyUi, {
+          start: (id, batches, useOptional) => {
+            const result = game.specialty.startProduction(id, batches, useOptional);
+            if (!result.ok) return reject(result.reason);
+            const p = game.specialty.list().find((s) => s.def.id === id)?.state.production;
+            success(texts.specialty.started(p?.units ?? 0, formatClock((p?.readyAt ?? 0) % 1440)));
+          },
+          changed: () => ctx.refresh(),
+        });
+      } else renderRestock(body);
     },
     reset() {
       tab = 'stock';

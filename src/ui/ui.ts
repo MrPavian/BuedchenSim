@@ -260,7 +260,9 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
     'delivery.received',
     'sale.completed',
     'kiosk.shutter.changed',
+    'specialty.changed',
   ] as const;
+  const specialtyOf = (id: string) => game.specialty.list().find((s) => s.def.id === id);
   const offs = [
     game.signals.on('interaction.target.changed', renderPrompt),
     game.signals.on('dialogue.opened', () => {
@@ -286,6 +288,20 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
     }),
     game.signals.on('sale.completed', ({ npcId, totalCents }) => {
       if (npcId !== undefined) notify(texts.notices.saleDone(formatEuro(totalCents)));
+    }),
+    game.signals.on('specialty.produced', ({ specialtyId, units, quality }) => {
+      const s = specialtyOf(specialtyId);
+      if (s) notify(texts.notices.specialtyReady(units, s.def.name, quality));
+    }),
+    // A resident's verdict on the specialty (the newest feedback line).
+    game.signals.on('specialty.feedback', ({ specialtyId }) => {
+      const line = specialtyOf(specialtyId)?.state.feedback[0];
+      if (line) notify(line.text);
+    }),
+    game.signals.on('specialty.stage', ({ specialtyId, stage }) => {
+      const s = specialtyOf(specialtyId);
+      const name = s?.def.stages.find((st) => st.stage === stage)?.name;
+      if (s && name) notify(texts.notices.specialtyStage(s.def.name, name));
     }),
     game.signals.on('interaction.available.changed', ({ interaction }) => {
       renderPrompt();
