@@ -174,7 +174,8 @@ Umfang:
 
 **Status (2026-11-14): umgesetzt mit Auftrag 04.5.** Ergebnisse in [VISUAL-BASELINE.md](VISUAL-BASELINE.md) (Ist-Zustand, Messwerte, verbindliche Style-Spezifikation) und im [Abschlussbericht](PHASE-04-5-ABSCHLUSSBERICHT.md).
 - Umgesetzt: Neutral-Tone-Mapping, neu gewichtetes und gebündeltes Licht, nachgezogene Palette, schlankere Warenmodelle (−57 % Dreiecke bei vollen Regalen), zusammengeführte Figurenteile (rund ein Drittel weniger Draw Calls je Bewohner), Messwerkzeug `scripts/visual-shots.mjs`, Vorher/Nachher-Screenshots; Figuren-Pipeline CC0-MakeHuman-Daten → Blender-Skript → GLB mit Prototyp Günter (N-002) im Spiel (ADR-023).
-- Offen: Abnahme des Figuren-Prototyps (Bewertung in [VISUAL-BASELINE.md, Abschnitt 8.5](VISUAL-BASELINE.md)); danach Umstellung von N-003, N-006, N-007 mit demselben Skript. Prüfung auf echter Grafikhardware (Bildrate, GPU-Last); lesbare Schrift auf Flaschen und Dosen; Hervorhebung ausgewählter Waren; Horizont und Umgebung (Phase 6).
+- Günters Figuren-Prototyp wurde vom Nutzer visuell positiv bestätigt („Sieht super aus“); die Stilrichtung gilt als akzeptiert. Die gezielte Fertigstellung Günters und die Umstellung von N-003, N-006 und N-007 sind als [Auftrag 04.6 – Bewohnerfiguren und Charakterpipeline](auftraege/04-6-bewohnerfiguren-und-charakterpipeline.md) festgelegt.
+- Weiterhin offen: Prüfung auf echter Grafikhardware (Bildrate, GPU-Last); lesbare Schrift auf Flaschen und Dosen; Hervorhebung ausgewählter Waren; Horizont und Umgebung (Phase 6).
 
 ## Phase 5 – Das lebendige Viertel
 **Ziel:** Kalender, Wettervorhersage, Veranstaltungen, dynamische Nachfrage, Bewohnerverhalten und eine eigene Kiosk-Spezialität zu einer zusammenhängenden Viertelsimulation verbinden.
