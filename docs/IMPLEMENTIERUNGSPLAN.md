@@ -123,17 +123,30 @@ Umfang:
 
 **Status (2026-11-14): Auftrag erstellt; Umsetzung steht aus.** Die Phase-3-Vorabprüfung und alle dokumentierten Grenzen sind Teil des Auftrags.
 
-## Phase 5 – Events, Wetter und Kiosk-Traditionen
-**Ziel:** Ereignisse verbinden Wirtschaft, Menschen und Jahreszeiten.
+## Phase 5 – Das lebendige Viertel
+**Ziel:** Kalender, Wettervorhersage, Veranstaltungen, dynamische Nachfrage, Bewohnerverhalten und eine eigene Kiosk-Spezialität zu einer zusammenhängenden Viertelsimulation verbinden.
 
-Aufgaben:
-1. Kleinen Kalender für Datum, Jahreszeiten und besondere Termine einführen, passend zur bestehenden Zeitlogik; der Wochentag ist als Ableitung bereits vorhanden.
-2. Mindestens ein Event (z. B. Spieltag oder Straßenfest) mit Vorbereitung, Durchführung und Nachwirkung umsetzen.
-3. Wetter bzw. Temperatur mit Waren-Nachfrage und NPC-Verhalten verbinden.
-4. Eine eigene Kiosk-Spezialität als entstehende Tradition implementieren – beispielsweise selbstgemachte Frikadellen: Rezept/Herstellung, Kosten, Angebot, Feedback und wiederkehrende Nachfrage.
-5. Belohnungen nicht nur monetär gestalten: Vertrauen, Stammkunden, Rezept, Dekoration oder neue Begegnungen.
+**Konkreter Auftrag:** [Auftrag 05 – Das lebendige Viertel](auftraege/05-das-lebendige-viertel.md).
 
-**Abnahme:** ein Event verändert sichtbar den Kiosk-Alltag; mindestens ein soziales Ereignis hat wirtschaftliche und erzählerische Folgen.
+Verbindliche Entscheidungen:
+- Spieljahr mit 365 Tagen und korrekter Schaltjahrbehandlung.
+- Dynamisches Wetter mit spielinterner Vorhersage für heute bis sieben Tage (drei Tage konkret, vier Tage als unsichere Tendenz).
+- Erste Spezialität heißt verbindlich **Frikadelle im Brötchen**.
+- Erste Events: Fußballspieltag, Straßenfest, Flohmarkt, Weihnachtszeit und Hitzewelle.
+
+Umfang:
+1. Kalender, Datum, Wochentag und Jahreszeiten.
+2. Wetterzustände, Temperatur, Vorhersage und visuelle 3D-Effekte.
+3. Datengetriebener Eventmanager mit fünf ersten Veranstaltungen.
+4. Nachfrageberechnung aus Produktgrundnachfrage, Wetter, Temperatur, Saison, Wochentag, Tageszeit und Events; NPCs kaufen weiterhin über die bestehende Wirtschaftsdomäne, keine Hintergrundverkäufe.
+5. Vollständiger Kreislauf für **Frikadelle im Brötchen**: Zutaten, Einkauf, Lagerung, Produktion mit Spielzeit, Qualität, Verkauf, Kundenfeedback und Bekanntheitsstufen bis zum Kultstatus.
+6. Wetter- und Eventreaktionen der bestehenden Bewohner; Haushaltsarchitektur für eigenständige Familienmitglieder vorbereiten.
+
+**Abgrenzung:** Keine vollständige Stadt, keine 20–30 neuen Bewohner, keine komplette Familienkampagne, kein komplexes Küchenmanagement, keine vollständige Fußballsimulation und kein Multiplayer.
+
+**Abnahme:** Der Integrationsdurchlauf „Heißer Samstag mit Heimspiel“ ist spielbar: Wettervorhersage und Event ermöglichen Planung, Nachfrage und NPC-Verhalten verändern sich, die Spezialität wird produziert und verkauft, die Tagesabrechnung stimmt und der Fortschritt bleibt nach Neustart erhalten.
+
+**Status (2026-11-14): Spezifikation erstellt und im Repository abgelegt; Umsetzung steht aus.** Die Bestandsaufnahme nach Auftrag 04 ist zwingende Voraussetzung. Details und technische Abnahmekriterien stehen im [Auftrag 05](auftraege/05-das-lebendige-viertel.md).
 
 ## Phase 6 – Viertel und Atmosphäre
 **Ziel:** das Umfeld macht den Ort glaubwürdig.
