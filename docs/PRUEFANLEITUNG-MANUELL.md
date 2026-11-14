@@ -69,6 +69,56 @@ In der Konsole ausführen, dabei 10 Sekunden herumlaufen:
 (() => { let n = 0; const t0 = performance.now(); const f = () => { n++; performance.now() - t0 < 10000 ? requestAnimationFrame(f) : console.log((n / 10).toFixed(1) + ' Bilder/s', window.__buedchen.world.getRenderStats()); }; requestAnimationFrame(f); })();
 ```
 
+## Bewohnerfiguren auf echter Grafikhardware (Auftrag 04.6)
+Misst die anspruchsvollste Figurenszene: alle vier GLB-Bewohner an der Hofbank und auf dem Gehweg, Spiel angehalten.
+
+1. Für realistische Werte den Produktions-Build verwenden: `npm run build`, dann `npm run preview` und `http://localhost:4173/?debug` öffnen. Fenster wie beim normalen Spielen (z. B. Vollbild), Netzteil angeschlossen.
+2. Warten, bis das Spiel steht (rund 5 Sekunden; die Figuren laden kurz nach dem Start).
+3. Entwicklerwerkzeuge (F12) → Konsole, folgenden Block einfügen und Enter drücken. Danach 15 Sekunden nichts anklicken.
+4. Die ausgegebene JSON-Ausgabe kopieren und ins Protokoll übernehmen (oder an Claude geben). Zusätzlich die Szene mit Blick auf die Figuren ansehen: Gesichter, Kleidung, Schatten, Flimmern, Durchdringungen.
+5. Achtung: Das Snippet lädt einen Prüfzustand in das laufende Spiel (Do, Tag 4, 16:50). Danach „Neues Spiel“ klicken, wenn normal weitergespielt werden soll.
+
+```js
+(async () => {
+  const { game: g, world: w } = window.__buedchen;
+  const s = structuredClone(g.state);
+  const places = new Map(g.content.layout.nav.places.map((p) => [p.id, p]));
+  const wp = new Map(g.content.layout.nav.waypoints.map((x) => [x.id, x.position]));
+  Object.assign(s.calendar, { day: 4, minute: 1010, phase: 'open', paused: true });
+  s.story.flags = { ...s.story.flags, 'yard.bench': true };
+  s.player.position = { x: -3.0, z: 3.4 };
+  s.player.heading = Math.PI;
+  const at = { 'npc.guenter': 0, 'npc.marlene': 1, 'npc.derya': 2 };
+  for (const [id, n] of Object.entries(s.npcs)) {
+    const spot = id in at ? places.get('place.yard-bench').spots[at[id]] : places.get('place.corner').spots[0];
+    const pos = id in at ? wp.get(spot.waypointId) : { x: -5.4, z: 3.3 };
+    Object.assign(n, { status: 'at_place', position: { ...pos }, heading: id in at ? spot.heading : Math.PI / 2, placeId: id in at ? 'place.yard-bench' : 'place.corner', spotIndex: id in at ? at[id] : 0, route: [], routineId: null, wish: null, waitingSince: null });
+  }
+  g.load(s);
+  await new Promise((r) => setTimeout(r, 3000));
+  const times = [];
+  let last = performance.now();
+  const t0 = last;
+  await new Promise((r) => { const f = () => { const now = performance.now(); times.push(now - last); last = now; now - t0 < 10000 ? requestAnimationFrame(f) : r(); }; requestAnimationFrame(f); });
+  const sorted = [...times].sort((a, b) => a - b);
+  const gl = document.querySelector('canvas').getContext('webgl2');
+  const dbg = gl && gl.getExtension('WEBGL_debug_renderer_info');
+  const result = {
+    gpu: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'unbekannt',
+    browser: navigator.userAgent,
+    canvas: `${innerWidth}x${innerHeight} @ dpr ${devicePixelRatio}`,
+    fps: +(times.length / 10).toFixed(1),
+    frameMs: { median: +sorted[Math.floor(sorted.length / 2)].toFixed(1), p95: +sorted[Math.floor(sorted.length * 0.95)].toFixed(1), max: +sorted[sorted.length - 1].toFixed(1) },
+    render: w.getRenderStats(),
+    residents: w.getResidentInfo().map((r) => `${r.npcId}: ${r.model}${r.visible ? '' : ' (unsichtbar)'}`),
+  };
+  console.log(JSON.stringify(result, null, 2));
+  return result;
+})();
+```
+
+Erwartet: `residents` zeigt viermal `glb`; `render.calls` rund 380–400, `render.triangles` rund 270.000–310.000. Wichtig für die Bewertung sind `gpu`, `canvas` (Auflösung und Pixeldichte), `fps` und `frameMs` (Median, 95-%-Wert, Maximum).
+
 ## Protokoll
 | Datum | Gerät / Grafikkarte | Betriebssystem | Browser und Version | Schritte 1–47 | Bilder/s | Auffälligkeiten |
 |---|---|---|---|---|---|---|
