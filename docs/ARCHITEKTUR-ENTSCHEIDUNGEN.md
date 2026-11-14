@@ -214,6 +214,17 @@ Die technischen ADRs sind seit Auftrag 01 umgesetzt, soweit ihr Status das angib
 
 **Konsequenzen:** Das Layout bleibt Inhalt und nahezu unverändert; ein Objekt lässt sich nur zu- und abschalten, nicht verschieben. Wird ein Flag zurückgesetzt, verschwindet das Objekt wieder (das nutzt derzeit keine Geschichte für Platzierungen).
 
+### ADR-023 – Figuren als GLB aus einem Blender-Skript, prozedurale Figur als Fallback
+**Status:** Entschieden (Prototyp N-002 umgesetzt in Auftrag 04.5). Erweitert ADR-021, setzt den GLB-Weg aus ADR-006 erstmals um.
+
+**Kontext:** Auftrag 04.5, Abschnitt 6A verlangt glaubwürdige stilisierte Figuren mit Gesicht, Kleidung, Rig und natürlicher Animation. Mit dem prozeduralen Kit aus Grundkörpern ist das nicht erreichbar. Ein Modellierprogramm mit Oberfläche gibt es in der Umgebung nicht; Blender ist als Python-Modul (`bpy`) installierbar.
+
+**Entscheidung:** Figuren entstehen als GLB nach dem Vertrag in [VISUAL-BASELINE.md, Abschnitt 8.2](VISUAL-BASELINE.md) (Pivot an den Füßen, Blick +Z, Clips `idle`/`walk`/`talk`, ein Skin). Quelle ist ein versioniertes Blender-Skript (`tools/characters/build_resident.py`); ein von Hand modelliertes GLB nach demselben Vertrag ist ebenso zulässig. Zur Laufzeit lädt `residentView` die Datei über `GLTFLoader`, kopiert das Skelett je Instanz (`SkeletonUtils.clone`) und mischt die Clips mit einem `AnimationMixer` nach denselben Regeln wie das prozedurale Kit; die Schnittstelle `ResidentFigure` bleibt unverändert. Bis zum Laden, bei Ladefehlern und in Node-Tests bleibt die prozedurale Figur. Welche Asset-ID ein Modell hat, steht in `RESIDENT_MODELS`.
+
+**Gründe:** reproduzierbar und im Diff prüfbar; keine Engine- oder Build-Änderung (Three.js-Zusätze und `public/` genügen); der Austausch gegen bessere Modelle braucht keine Codeänderung.
+
+**Konsequenzen:** Je Figur rund 21.000 Dreiecke statt rund 2.000; Draw Calls etwa gleich. Glanz und Helligkeit der PBR-Materialien weichen von den Lambert-Materialien der Welt ab (abzustimmen, wenn mehr Figuren umgestellt sind). Die Skriptqualität hat eine Obergrenze (keine Finger, keine Texturen, keine Gesichtsausdrücke); siehe Bewertung in Abschnitt 8.4. Python 3.13 und `bpy` 5.3 werden nur zum Erzeugen gebraucht, nicht für Build oder Tests.
+
 ---
 
 ## Teil B – Offene Produktentscheidungen
@@ -274,4 +285,4 @@ Diese Punkte kann die Analyse nicht entscheiden. Bis zur Antwort gilt jeweils di
 ---
 
 ## Teil C – Bewusst nicht entschieden
-Diese Themen werden erst geplant, wenn ihre Phase ansteht: Audio-Technik (Phase 6), ein eigenes Animationssystem für Figuren (für Phase 4 entschieden: leichtes Kit statt Framework, siehe ADR-021), LOD und Instancing-Strategie (bei nachgewiesenem Bedarf), Aufbau regionaler Pakete jenseits der Ordnerstruktur (nach dem Ruhrgebiets-Slice), Mehrsprachigkeit.
+Diese Themen werden erst geplant, wenn ihre Phase ansteht: Audio-Technik (Phase 6), ein eigenes Animationssystem für Figuren (für Phase 4 entschieden: leichtes Kit statt Framework, siehe ADR-021; für GLB-Figuren der `AnimationMixer` von Three.js, siehe ADR-023), LOD und Instancing-Strategie (bei nachgewiesenem Bedarf), Aufbau regionaler Pakete jenseits der Ordnerstruktur (nach dem Ruhrgebiets-Slice), Mehrsprachigkeit.

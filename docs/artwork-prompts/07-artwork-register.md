@@ -65,7 +65,7 @@ Dieses Register ist die zentrale Liste für geplante und umgesetzte Artworks. St
 | E-006 | Fahrrad | Ruhrgebiet | P1 | Geplant |
 | E-007 | Baum / Pflanzkübel | Ruhrgebiet | P2 | Geplant |
 | N-001 | Kioskbetreiber | Ruhrgebiet | P0 | Geplant |
-| N-002 | Stammkunde (Günter Wollny, `npc.guenter`; prozedurale Fabrik) | Ruhrgebiet | P1 | Im Spiel integriert |
+| N-002 | Stammkunde (Günter Wollny, `npc.guenter`; GLB-Prototyp `public/models/residents/n-002.glb` aus `tools/characters/build_resident.py`, prozedurale Fabrik als Fallback) | Ruhrgebiet | P1 | Im Spiel integriert (Prototyp, Abnahme offen) |
 | N-003 | Handwerker (Handwerkerin Derya Aksoy, `npc.derya`; prozedurale Fabrik) | Ruhrgebiet | P1 | Im Spiel integriert |
 | N-004 | Schülergruppe | Ruhrgebiet | P2 | Geplant |
 | N-005 | Fiktiver Fußballfan | Ruhrgebiet | P2 | Geplant |
@@ -93,3 +93,4 @@ Bei jeder neuen oder geänderten Asset-Version Datum, Änderung, verantwortliche
 | 2026-11-14 | E-004 Hofbank: Möbelfabrik, Katalogeintrag und Platzierung `placement.yard-bench`, die nur mit dem Flag `yard.bench` existiert (Darstellung und Kollision) | Claude Code (Auftrag 04) | `src/world/assets/furniture/bench.ts`, `src/content/assets/catalog.ts`, `src/content/regions/ruhrgebiet/layout.ts`, `src/world/placementGates.ts` |
 | 2026-11-14 | I-013 Gerahmtes Kioskfoto: neue Asset-ID (Möbelfabrik mit Canvas-Bild „1972“, Katalogeintrag, Platzierung `placement.kiosk-photo` auf der Theke, nur mit dem Flag `kiosk.photo`) | Claude Code (Auftrag 04) | `src/world/assets/furniture/photo.ts`, `src/content/assets/catalog.ts`, `src/content/regions/ruhrgebiet/layout.ts` |
 | 2026-11-14 | Auftrag 04.5: P-001 bis P-028 mit gröberer Unterteilung (Maße unverändert), N-002/N-003/N-006/N-007 mit zusammengeführten Teilen je Gelenkgruppe; Status unverändert „Im Spiel integriert“; Regeln für neue Assets in `docs/VISUAL-BASELINE.md` | Claude Code (Auftrag 04.5) | `src/world/assets/products/`, `src/world/assets/residents/kit.ts` |
+| 2026-11-14 | N-002 als GLB-Figurenprototyp (Blender-Skript, 17 Knochen, Clips idle/walk/talk, 21.072 Dreiecke, 753 kB); prozedurale Figur bleibt Fallback; Qualitätslücke und Abnahme offen, siehe `docs/VISUAL-BASELINE.md` Abschnitt 8 | Claude Code (Auftrag 04.5) | `tools/characters/`, `public/models/residents/n-002.glb`, `src/world/assets/residents/glbResident.ts` |

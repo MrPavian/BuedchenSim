@@ -153,3 +153,57 @@ Die Bildzeiten streuen im Software-Rendering zu stark für eine Aussage; die Zah
 | Flaschen, Dosen (Regal, Kühlschrank) | ja | nur über Farbe und Deckel | 4–6 px breit; Schrift physikalisch nicht lesbar |
 
 Eine dezente Hervorhebung ausgewählter Waren gibt es noch nicht; sie gehört zu einer späteren Interaktion mit einzelnen Waren.
+
+## 8. Figuren-Pipeline und Prototyp Günter (N-002)
+
+Auftrag 04.5, Abschnitt 6A verlangt einen hochwertigen Figuren-Prototyp und eine belastbare Pipeline. Umgesetzt ist **ein Prototyp mit Pipeline**; den geforderten hohen Qualitätsstandard erreicht er **noch nicht** (Bewertung in 8.4).
+
+### 8.1 Weg: Blender-Skript → GLB
+- **Quelle ist Code, nicht eine Modelldatei:** `tools/characters/build_resident.py` baut die Figur reproduzierbar in Blender (Python-Modul `bpy` 5.3, ohne Oberfläche) und exportiert GLB. Aufruf:
+  `python tools/characters/build_resident.py --resident guenter --out public/models/residents/n-002.glb`
+  (Python 3.13 mit `pip install bpy==5.3.0`; Blender selbst wird nicht benötigt). Gleiche Eingabe ergibt dieselbe Datei; Änderungen sind im Diff des Skripts nachvollziehbar.
+- **Aufbau:** Körper aus Skin-Modifikator mit Unterteilung (Gelenkpunkte und Radien je Figur), Jacke als aufgedickte Hülle über dem Körper mit Schnitten an Saum und Ärmeln, Kragen, Knöpfen, Taschenklappen; Kopf aus einer verformten Kugel (Stirnwulst, Augenhöhlen, Nase, Wangen, Kiefer, Kinn) mit Augen, Lidern, Brauen, Ohren, Lippe, Schnurrbart, Haarkranz und Schiebermütze; Schal und Stock als Requisiten. Farben je Zone als eigene Materialien.
+- **Rig:** 17 Knochen (Becken, Wirbelsäule, Brust, Hals, Kopf, Ober-/Unterarm, Hand, Ober-/Unterschenkel, Fuß je Seite). Körper und Jacke automatisch gewichtet, starre Teile (Kopfteile, Schal, Stock) mit vollem Gewicht auf ihren Knochen.
+- **Animation:** drei Clips, als Schlüsselbilder aus Formeln erzeugt: `idle` (8 s, Atmen, Gewichtsverlagerung, Kopfbewegung), `walk` (1 s, ein Doppelschritt mit kurzem Schritt und leicht vorgebeugtem Oberkörper), `talk` (3 s, Kopfnicken, Handgeste).
+- **Werkzeug zur Sichtprüfung:** `tools/character-viewer/` (Vite-Seite `/tools/character-viewer/index.html?view=close|game|side|back&clip=idle|walk|talk&time=…&face=1`) zeigt die GLB mit Renderer und Licht des Spiels.
+
+### 8.2 Vertrag einer Figurendatei
+| Punkt | Festlegung |
+|---|---|
+| Format, Ort | GLB unter `public/models/residents/<asset-id>.glb`, eingetragen in `RESIDENT_MODELS` (`src/world/assets/residents/glbResident.ts`) |
+| Maßstab, Pivot, Richtung | 1 Einheit = 1 m, Pivot zwischen den Füßen auf dem Boden, Blick nach +Z (wie die prozeduralen Figuren) |
+| Clips | `idle`, `walk` (ein Schrittzyklus bei `walkSpeed` m/s), `talk`; fehlende Clips werden übersprungen |
+| Skelett | ein Skin; jede Instanz erhält eine eigene Kopie (`SkeletonUtils.clone`), Geometrien und Materialien werden geteilt |
+| Materialien | glTF-PBR (`MeshStandardMaterial`), nicht metallisch, Rauheit 0,3 (Augen) bis 0,95 (Mütze), keine Texturen; Farben je Zone als eigenes Material |
+| Budget je Figur | ≤ 25.000 Dreiecke, ≤ 20 Primitive (Draw Calls je Pass), ≤ 1 MB Datei |
+| Laufzeit | `residentView` lädt die Datei beim Start; bis dahin und bei Ladefehler (Warnung im Log) bleibt die prozedurale Figur. In Node (Tests) wird nie geladen |
+| Gewichtung der Clips | Gehen folgt der Geschwindigkeit (Wiedergabetempo `speed / walkSpeed`, 0,5–1,6), Sprechen überlagert, Idle füllt den Rest; weiche Übergänge |
+
+### 8.3 Messwerte
+| Wert | Prozedural (Auftrag 04.5 zusammengeführt) | GLB-Prototyp |
+|---|---|---|
+| Dreiecke | rund 2.000 | 21.072 |
+| Vertices | – | 10.873 (Position, Normale, 4 Gelenke, 4 Gewichte) |
+| Primitive / Materialien | 8–12 Meshes | 19 Primitive, 16 Materialien |
+| Datei | – | 753 kB (Geometrie und Animation 695 kB) |
+| GPU-Speicher (geschätzt) | – | rund 0,5 MB Geometrie, einmal geteilt; je Instanz nur Skelett (17 Matrizen) |
+| Szene `aussen` (3 Bewohner) | 407 Draw Calls, 74.268 Dreiecke | 409 Draw Calls, 112.120 Dreiecke |
+| Szene `bewohner` (4 Bewohner) | 461 Draw Calls, 78.384 Dreiecke | 463 Draw Calls, 116.236 Dreiecke |
+
+Die Dreiecke steigen um rund 38.000 (Figur plus Schattenpass); die Draw Calls bleiben praktisch gleich. Für vier GLB-Figuren wären rund 170.000 Dreiecke zu erwarten, weniger als volle Regale. Bildraten auf echter Hardware sind nicht gemessen. Ein LOD ist bei vier Figuren nicht nötig; ab etwa zehn gleichzeitig sichtbaren Figuren sollte das Skript eine zweite, gröbere Stufe (Unterteilung 1 statt 2) exportieren.
+
+### 8.4 Ehrliche Bewertung gegen die Abnahme (6A)
+| Kriterium | Stand |
+|---|---|
+| Nahansicht: überzeugende Gesichts- und Kleidungsdetails | **teilweise.** Älterer Mann mit Mütze, Schnurrbart, Lidern, Ohren, Schal klar lesbar; Gesicht wirkt aber glatt und puppenhaft, Brauen und Schnurrbart als einfache Wülste, keine Hautstruktur, keine Falten im Gesicht. Jacke mit Saum, Kragen, Knöpfen, Taschen, aber ohne echten Faltenwurf und Nähte |
+| Spielkamera: Proportionen und Silhouette | **ja.** Gebeugte Haltung, Stock, Mütze und graue Jacke unterscheiden Günter klar; Proportionen erwachsen statt Blockfigur |
+| Geh- und Idle-Animation natürlich, ohne Deformation | **teilweise.** Gehen und Idle laufen flüssig; beim Sprechen dringt der Körper am rechten Oberarm durch den Ärmel, die Hände sind Fäustlinge ohne Finger, der Stock steht im Idle zu weit vom Körper ab |
+| Passt zu Licht und Materialwelt | **teilweise.** Schatten und Licht stimmen; die PBR-Materialien wirken heller und weicher als die matten Lambert-Materialien der anderen Figuren |
+| Identität stabil über Blickwinkel | **ja** (vorne, seitlich, hinten, Spielkamera) |
+| Performance und Speicher dokumentiert | **ja** (8.3) |
+
+**Qualitätslücke:** Ein Skript aus Grundformen erreicht nicht die Qualität eines von Hand modellierten, gesculpteten und texturierten Charakters. Für den in 6A beschriebenen Standard fehlen: Hände mit Fingern, ein gesculptetes Gesicht mit Alterszügen (Falten, Tränensäcke, Nasolabialfalten), Haar- und Stoffstruktur über Texturen oder Normal Maps, echter Faltenwurf, eine saubere Topologie an Schultern und Ellbogen sowie Gesichtsausdrücke (Blend Shapes). Die Pipeline (GLB-Vertrag, Laden, Skelettkopie, Clip-Gewichtung, Fallback, Messung) trägt solche Modelle bereits: Ein von Hand erstelltes GLB nach Vertrag 8.2 ersetzt die Skriptfigur ohne Codeänderung.
+
+**Empfehlung vor den übrigen Bewohnern:** den Prototyp abnehmen oder nachschärfen lassen. Zwei Wege: (a) das Skript gezielt verbessern (Finger, Ärmeltopologie, Brauen, Texturen) – günstig, Obergrenze sichtbar; (b) eine von Hand modellierte Figur nach dem Vertrag (Künstler oder Auftragsarbeit), die das Skript als Maß- und Proportionsvorlage nutzt – höchste Qualität. Erst danach N-003, N-006, N-007 umstellen.
+
+![Günter, Nahansicht](screenshots/auftrag-04-5/figur/gesicht.png)
