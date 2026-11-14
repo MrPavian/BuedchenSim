@@ -213,10 +213,13 @@ function buildChristmas(owned: Owned, k: Rect, height: number): Object3D {
 
 function buildHeatwave(owned: Owned, k: Rect): Object3D {
   const g = new Group();
-  const x = k.minX - 0.6;
-  const z = k.maxZ + 0.35;
+  // Free-standing next to the west facade: the canopy edge stays 0.4 m clear of the wall (and its roof overhang) and
+  // the pole 0.8 m off the residents' walkway in front of the kiosk.
+  const radius = 1.1;
+  const x = k.minX - radius - 0.4;
+  const z = k.maxZ + 0.5;
   g.add(pole(owned, x, z, 2.35, 0xdedede));
-  const canopyGeo = new ConeGeometry(1.25, 0.45, 12, 1, true);
+  const canopyGeo = new ConeGeometry(radius, 0.45, 12, 1, true);
   owned.geometries.push(canopyGeo);
   const canopyMat = new MeshLambertMaterial({ color: 0xe9e2cf, side: 2 });
   owned.materials.push(canopyMat);
