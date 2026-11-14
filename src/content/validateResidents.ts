@@ -504,7 +504,11 @@ export function validateResidents(pack: ContentPack): string[] {
   const effects = collectEffects(pack);
   const refs: Refs = {
     pack,
-    flagsSet: new Set(effects.flatMap((e) => (e.type === 'setFlag' && e.value ? [e.id] : []))),
+    // Flags are set by effects and by specialties (first batch, stages; Auftrag 05).
+    flagsSet: new Set([
+      ...effects.flatMap((e) => (e.type === 'setFlag' && e.value ? [e.id] : [])),
+      ...(pack.specialties ?? []).flatMap((s) => [...(s.firstFlag ? [s.firstFlag] : []), ...s.stages.map((st) => st.flag)]),
+    ]),
     memoriesSet: new Set(effects.flatMap((e) => (e.type === 'remember' ? [`${e.npcId}|${e.memoryId}`] : []))),
   };
   const flagsRead = new Set<string>();
@@ -513,6 +517,7 @@ export function validateResidents(pack: ContentPack): string[] {
   for (const npc of npcs) validateNpc(pack, npc, refs, errors, tags, flagsRead);
   for (const d of Object.values(pack.dialogues)) validateDialogue(d, refs, errors, flagsRead);
   for (const p of pack.layout.placements) if (p.requiresFlag !== undefined) flagsRead.add(p.requiresFlag);
+  for (const e of pack.events ?? []) if (e.requiresFlag !== undefined) flagsRead.add(e.requiresFlag);
   for (const f of flagsRead) if (!refs.flagsSet.has(f)) errors.push(`flag "${f}" is read but never set to true by an effect`);
 
   // Relationship keys: one key always means the same effect (resident and delta).

@@ -5,7 +5,7 @@ import { climateOf, environmentOf, type Environment } from './environment';
 import { forecast, forecastFor, weatherOfDay, type DayWeather, type ForecastDay } from './weather';
 import { NEUTRAL_DEMAND, demandContextOf, demandFor, groupDeltas, type DemandBreakdown, type DemandOutlookDay } from './demand';
 import { dateOfDay } from './date';
-import { eventStates, eventsOnDay, type EventDef, type EventState } from './eventCalendar';
+import { eventStates, eventsOnDay, unlockedEvents, type EventDef, type EventState } from './eventCalendar';
 import { createEconomyApi, type CloseDayResult, type EconomyApi, type SaleRequest, type SaleResult } from './economy';
 import type { GameEvents } from './events';
 import { createDialogueEngine, type DialogueApi } from './dialogue';
@@ -18,6 +18,7 @@ import {
 } from './interaction';
 import { createNpcApi, type NpcApi } from './npcs';
 import { createNpcSim } from './npcSim';
+import { createSpecialtyApi, type SpecialtyApi } from './specialty';
 import type { ActionResult } from './result';
 import { CURRENT_SCHEMA_VERSION, type SaveFile } from './save/save';
 import { createInitialState, type DeepReadonly, type GameState } from './state';
@@ -83,6 +84,8 @@ export interface Game {
   readonly events: EventApi;
   /** Demand (derived, never saved; influences residents only). */
   readonly demand: DemandApi;
+  /** Kiosk specialties: production from ingredients, quality, fame and stages. */
+  readonly specialty: Pick<SpecialtyApi, 'list' | 'startProduction'>;
   /**
    * Advances the day clock by real seconds (called from the fixed-step update of the loop) and the residents with it.
    * Ignores invalid dt; clock and residents stand still while paused; the clock also stands still outside phase 'open'.
@@ -165,6 +168,11 @@ export function createGame(content: ContentPack, initialState?: GameState, seed?
     return result;
   };
   const npcs = createNpcApi(ctx, talk);
+  const specialty = createSpecialtyApi(ctx);
+  signals.on('sale.completed', ({ transactionId }) => {
+    const t = state.economy.transactions.find((x) => x.id === transactionId);
+    if (t) specialty.onSale(t);
+  });
   const dialogue: DialogueApi = {
     current: () => dialogueEngine.api.current(),
     choose(optionId) {
@@ -219,8 +227,8 @@ export function createGame(content: ContentPack, initialState?: GameState, seed?
       onDay: (day) => weatherOfDay(state.world.seed, climateOf(content), day),
     },
     events: {
-      current: () => eventStates(content.events ?? [], state.calendar.day, state.calendar.minute, state.world.seed, climateOf(content)),
-      onDay: (day) => eventsOnDay(content.events ?? [], day, state.calendar.day, state.world.seed, climateOf(content)),
+      current: () => eventStates(unlockedEvents(content.events ?? [], state.story.flags), state.calendar.day, state.calendar.minute, state.world.seed, climateOf(content)),
+      onDay: (day) => eventsOnDay(unlockedEvents(content.events ?? [], state.story.flags), day, state.calendar.day, state.world.seed, climateOf(content)),
     },
     demand: {
       forProduct(productId) {
@@ -239,7 +247,7 @@ export function createGame(content: ContentPack, initialState?: GameState, seed?
           const f = forecastFor(state.world.seed, climate, today, offset);
           const day = today + offset;
           const date = dateOfDay(day);
-          const events = eventsOnDay(content.events ?? [], day, today, state.world.seed, climate);
+          const events = eventsOnDay(unlockedEvents(content.events ?? [], state.story.flags), day, today, state.world.seed, climate);
           const condition = f.condition ?? tendencyCondition[f.tendency];
           const noon = f.low + (f.high - f.low) * 0.85;
           days.push({
@@ -257,8 +265,13 @@ export function createGame(content: ContentPack, initialState?: GameState, seed?
         return days;
       },
     },
+    specialty: {
+      list: () => specialty.list(),
+      startProduction: (id, batches, useOptional) => specialty.startProduction(id, batches, useOptional),
+    },
     tick(dtSeconds) {
       tickClock(ctx, dtSeconds);
+      specialty.tick();
       if (npcIds.length === 0) return;
       sim.tick(dtSeconds);
       refreshInteraction();

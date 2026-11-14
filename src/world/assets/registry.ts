@@ -12,6 +12,8 @@ import {
   createMagazineRackI007,
   createMiddleShelfI004,
   createPhotoI013,
+  createKundenstopperI014,
+  createFrikadellenFreitagI015,
   createRegisterI002,
   createStorageRackI011,
   createWallShelfI003,
@@ -51,6 +53,8 @@ const furnitureFactories: Record<string, FurnitureFactory> = {
   'I-011': createStorageRackI011,
   'I-012': createCratesI012,
   'I-013': createPhotoI013,
+  'I-014': createKundenstopperI014,
+  'I-015': createFrikadellenFreitagI015,
   // Yard furniture (E = environment) is built by the same furniture factories.
   'E-004': createBenchE004,
 };

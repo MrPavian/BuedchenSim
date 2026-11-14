@@ -27,7 +27,10 @@ describe('validateResidents on the real pack', () => {
     }
     expect(Object.keys(ruhrgebietPack.quests).sort()).toEqual(['quest.hof', 'quest.paket']);
     const gated = ruhrgebietPack.layout.placements.filter((p) => p.requiresFlag).map((p) => [p.id, p.requiresFlag]);
-    expect(gated).toEqual([['placement.yard-bench', 'yard.bench'], ['placement.kiosk-photo', 'kiosk.photo']]);
+    expect(gated).toEqual([['placement.yard-bench', 'yard.bench'], ['placement.kiosk-photo', 'kiosk.photo'],
+      ['placement.frikadelle-sign', 'specialty.frikadelle.sign'],
+      ['placement.frikadelle-board', 'specialty.frikadelle.cult'],
+    ]);
   });
 
   it('contains no real brands or clubs (small deny list)', () => {

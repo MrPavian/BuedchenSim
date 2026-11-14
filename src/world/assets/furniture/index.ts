@@ -11,3 +11,4 @@ export { createFurniturePlaceholder } from './placeholder';
 export { furnitureSurfaceTilt } from './surfaces';
 export { createBenchE004 } from './bench';
 export { createPhotoI013 } from './photo';
+export { createKundenstopperI014, createFrikadellenFreitagI015 } from './frikadelleProps';

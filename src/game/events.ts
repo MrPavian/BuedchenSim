@@ -39,4 +39,12 @@ export type GameEvents = {
   /** A story flag or the progress (step or outcome) of a quest changed. */
   'story.changed': { questId?: string; flag?: string };
   'memory.added': { npcId: string; memoryId: string };
+  /** Any change of a specialty's state (production, fame, stage, feedback). */
+  'specialty.changed': { specialtyId: string };
+  /** A production finished: the units are in storage. */
+  'specialty.produced': { specialtyId: string; units: number; quality: number };
+  /** A resident tasted the specialty and said something about it. */
+  'specialty.feedback': { specialtyId: string; npcId: string; rating: string };
+  /** The specialty reached a new stage (2 insider tip, 3 cult status). */
+  'specialty.stage': { specialtyId: string; stage: number };
 };

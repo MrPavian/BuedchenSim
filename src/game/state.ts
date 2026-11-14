@@ -1,4 +1,5 @@
 import { DAY_START_MINUTE, DEFAULT_SPEED, START_CASH_CENTS, type GameSpeed } from './balance';
+import { createInitialSpecialty, type SpecialtyState } from './specialty';
 import type { ContentPack, NpcDef, Vec2 } from './types';
 
 /** 'open' = clock runs; 'awaiting_close' = 22:00 reached, waiting for the day close; 'closed' = day closed, waiting for the next day. */
@@ -160,6 +161,8 @@ export interface GameState {
   world: { seed: number };
   npcs: Record<string, NpcState>;
   story: StoryState;
+  /** Kiosk specialties by specialty id (Auftrag 05): production, quality, fame, stage. */
+  specialties: Record<string, SpecialtyState>;
 }
 
 export type DeepReadonly<T> = T extends readonly (infer U)[]
@@ -242,5 +245,6 @@ export function createInitialState(content: ContentPack, seed: number = DEFAULT_
     world: { seed },
     npcs: createInitialNpcs(content),
     story: createInitialStory(),
+    specialties: Object.fromEntries((content.specialties ?? []).map((s) => [s.id, createInitialSpecialty()])),
   };
 }

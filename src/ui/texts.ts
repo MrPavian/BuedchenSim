@@ -180,6 +180,7 @@ export const texts = {
       frozen: 'Tiefkühlung',
       counter: 'Theke',
       press: 'Zeitschriftenständer',
+      ingredient: 'Zutat (nur Lager)',
     },
   },
   goods: {

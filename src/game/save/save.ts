@@ -1,3 +1,4 @@
+import { FEEDBACK_LIMIT, createInitialSpecialty, type FeedbackRating, type ProductionState, type SpecialtyFeedback, type SpecialtyState } from '../specialty';
 import { log } from '../../core/log';
 import {
   DAY_END_MINUTE,
@@ -37,7 +38,7 @@ import {
 } from '../state';
 import type { ContentPack, NpcDef } from '../types';
 
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 4;
 
 export interface SaveFile {
   schemaVersion: number;
@@ -79,8 +80,19 @@ const migrateV2toV3: Migration = (save) => {
   return { ...save, state: { ...state, world: { seed }, npcs: {}, story: createInitialStory() } };
 };
 
+/**
+ * 3 -> 4 (Auftrag 05): adds the (empty) specialties. Date, weather, forecast and events are derived from
+ * `calendar.day` and `world.seed` and need nothing; the content-aware validation adds the initial state of every
+ * specialty of the content pack.
+ */
+const migrateV3toV4: Migration = (save) => {
+  const state = save['state'];
+  if (!isRecord(state)) return save; // validation reports it
+  return { ...save, state: { ...state, specialties: {} } };
+};
+
 /** migrations[n] converts version n to n+1. */
-export const migrations: Readonly<Record<number, Migration>> = { 1: migrateV1toV2, 2: migrateV2toV3 };
+export const migrations: Readonly<Record<number, Migration>> = { 1: migrateV1toV2, 2: migrateV2toV3, 3: migrateV3toV4 };
 
 export interface ParseOptions {
   /** Injectable for tests. */
@@ -662,6 +674,8 @@ function validateState(raw: unknown, content: ContentPack, warnings: string[]): 
   if (!npcs.ok) return npcs;
   const story = validateStory(raw['story'], content, warnings);
   if (!story.ok) return story;
+  const specialties = validateSpecialties(raw['specialties'], content, warnings);
+  if (!specialties.ok) return specialties;
 
   const b = content.layout.walkBounds;
   return {
@@ -678,8 +692,130 @@ function validateState(raw: unknown, content: ContentPack, warnings: string[]): 
       world: world.value,
       npcs: npcs.value,
       story: story.value,
+      specialties: specialties.value,
     },
   };
+}
+
+const RATINGS: readonly FeedbackRating[] = ['great', 'good', 'meh', 'bad'];
+
+function num01(value: unknown, path: string, max: number): Checked<number> {
+  const v = finite(value, path);
+  if (!v.ok) return v;
+  if (v.value < 0 || v.value > max) return { ok: false, reason: `${path} must be within 0..${max}` };
+  return v;
+}
+
+/**
+ * Specialties (version 4): every specialty of the content gets a state; unknown ids are dropped with a warning.
+ * A running production whose recipe no longer exists is dropped.
+ */
+function validateSpecialties(raw: unknown, content: ContentPack, warnings: string[]): Checked<Record<string, SpecialtyState>> {
+  const obj = objectAt(raw, 'state.specialties');
+  if (!obj.ok) return obj;
+  const out: Record<string, SpecialtyState> = {};
+  const known = new Set((content.specialties ?? []).map((s) => s.id));
+  for (const [id, value] of Object.entries(obj.value)) {
+    const path = `state.specialties["${id}"]`;
+    if (!known.has(id)) {
+      warnings.push(`${path}: unknown specialty dropped`);
+      continue;
+    }
+    const s = objectAt(value, path);
+    if (!s.ok) return s;
+    const v = s.value;
+    const stage = integer(v['stage'], `${path}.stage`);
+    if (!stage.ok) return stage;
+    if (stage.value > 3) return { ok: false, reason: `${path}.stage must be within 0..3` };
+    const fame = num01(v['fame'], `${path}.fame`, 100);
+    if (!fame.ok) return fame;
+    const level = integer(v['recipeLevel'], `${path}.recipeLevel`, 1);
+    if (!level.ok) return level;
+    const batches = integer(v['batchesProduced'], `${path}.batchesProduced`);
+    if (!batches.ok) return batches;
+    let stockQuality: number | null = null;
+    if (v['stockQuality'] !== null) {
+      const q = num01(v['stockQuality'], `${path}.stockQuality`, 100);
+      if (!q.ok) return q;
+      stockQuality = q.value;
+    }
+    let production: ProductionState | null = null;
+    if (v['production'] !== null) {
+      const p = objectAt(v['production'], `${path}.production`);
+      if (!p.ok) return p;
+      const recipeId = text(p.value['recipeId'], `${path}.production.recipeId`);
+      if (!recipeId.ok) return recipeId;
+      const fields = ['batches', 'units', 'quality', 'startedAt', 'readyAt'] as const;
+      const numbers: Record<string, number> = {};
+      for (const f of fields) {
+        const n = integer(p.value[f], `${path}.production.${f}`);
+        if (!n.ok) return n;
+        numbers[f] = n.value;
+      }
+      if ((content.recipes ?? []).some((r) => r.id === recipeId.value)) {
+        production = {
+          recipeId: recipeId.value,
+          batches: numbers['batches'] ?? 1,
+          units: numbers['units'] ?? 0,
+          quality: Math.min(100, numbers['quality'] ?? 0),
+          startedAt: numbers['startedAt'] ?? 0,
+          readyAt: numbers['readyAt'] ?? 0,
+        };
+      } else warnings.push(`${path}.production: unknown recipe dropped`);
+    }
+    const counts: Record<string, number> = {};
+    for (const f of ['sold', 'ratings', 'recommendations'] as const) {
+      const n = integer(v[f], `${path}.${f}`);
+      if (!n.ok) return n;
+      counts[f] = n.value;
+    }
+    const sum = finite(v['satisfactionSum'], `${path}.satisfactionSum`);
+    if (!sum.ok) return sum;
+    const buyersRaw = objectAt(v['buyers'], `${path}.buyers`);
+    if (!buyersRaw.ok) return buyersRaw;
+    const buyers: Record<string, number> = {};
+    for (const [npcId, n] of Object.entries(buyersRaw.value)) {
+      const c = integer(n, `${path}.buyers["${npcId}"]`);
+      if (!c.ok) return c;
+      if (Object.hasOwn(content.npcs, npcId)) buyers[npcId] = c.value;
+    }
+    const fb = v['feedback'];
+    if (!Array.isArray(fb) || fb.length > FEEDBACK_LIMIT) return { ok: false, reason: `${path}.feedback must be a list of at most ${FEEDBACK_LIMIT}` };
+    const feedback: SpecialtyFeedback[] = [];
+    for (const [i, entry] of fb.entries()) {
+      const e = objectAt(entry, `${path}.feedback[${i}]`);
+      if (!e.ok) return e;
+      const day = integer(e.value['day'], `${path}.feedback[${i}].day`, 1);
+      if (!day.ok) return day;
+      const minute = integer(e.value['minute'], `${path}.feedback[${i}].minute`);
+      if (!minute.ok) return minute;
+      const npcId = text(e.value['npcId'], `${path}.feedback[${i}].npcId`);
+      if (!npcId.ok) return npcId;
+      const rating = e.value['rating'];
+      if (!RATINGS.includes(rating as FeedbackRating)) return { ok: false, reason: `${path}.feedback[${i}].rating is unknown` };
+      const satisfaction = num01(e.value['satisfaction'], `${path}.feedback[${i}].satisfaction`, 100);
+      if (!satisfaction.ok) return satisfaction;
+      const t = text(e.value['text'], `${path}.feedback[${i}].text`);
+      if (!t.ok) return t;
+      feedback.push({ day: day.value, minute: minute.value, npcId: npcId.value, rating: rating as FeedbackRating, satisfaction: satisfaction.value, text: t.value });
+    }
+    out[id] = {
+      stage: stage.value,
+      fame: fame.value,
+      recipeLevel: Math.min(level.value, 3),
+      batchesProduced: batches.value,
+      stockQuality,
+      production,
+      sold: counts['sold'] ?? 0,
+      satisfactionSum: sum.value,
+      ratings: counts['ratings'] ?? 0,
+      buyers,
+      recommendations: counts['recommendations'] ?? 0,
+      feedback,
+    };
+  }
+  for (const id of known) if (!out[id]) out[id] = createInitialSpecialty();
+  return { ok: true, value: out };
 }
 
 export function parseSave(json: string, content: ContentPack, options: ParseOptions = {}): LoadResult {

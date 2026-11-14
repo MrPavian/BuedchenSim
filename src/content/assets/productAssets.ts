@@ -70,4 +70,9 @@ export const productAssets: Record<string, AssetDef> = Object.fromEntries([
   // Tobacco
   unit('P-027', 'Ware: Filterzigaretten 20er (Schachtel)', 0.055, 0.022, 0.088),
   unit('P-028', 'Ware: Drehtabak 30 g (Beutel)', 0.12, 0.03, 0.09),
+  // Kiosk specialty and its ingredients (Auftrag 05); ingredients are never presented, their size matters for storage only.
+  unit('P-029', 'Ware: Frikadelle im Brötchen', 0.12, 0.09, 0.08),
+  unit('P-030', 'Zutat: Frikadellenmasse (Schale)', 0.2, 0.14, 0.06),
+  unit('P-031', 'Zutat: Senf (Glas)', 0.07, 0.07, 0.11),
+  unit('P-032', 'Zutat: Röstzwiebeln (Beutel)', 0.14, 0.04, 0.2),
 ]);

@@ -42,6 +42,16 @@ export interface EventDef {
   decoration?: string;
   /** Memory residents get when they visit the kiosk while the event is active. */
   memory?: string;
+  /**
+   * Story flag the event needs (e.g. a local tradition that only exists once the specialty has cult status). Without
+   * the flag the event does not exist: no occurrences, no announcement.
+   */
+  requiresFlag?: string;
+}
+
+/** The events that exist with the given story flags (events without `requiresFlag` always exist). */
+export function unlockedEvents(defs: readonly EventDef[], flags: Readonly<Record<string, boolean>> | undefined): EventDef[] {
+  return defs.filter((d) => d.requiresFlag === undefined || flags?.[d.requiresFlag] === true);
 }
 
 export interface EventOccurrence {

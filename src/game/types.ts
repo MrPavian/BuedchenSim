@@ -6,6 +6,7 @@
 import type { CustomerLines, DialogueDef, NavDef, NpcDef, QuestDef } from './npcTypes';
 import type { DemandConfig } from './demand';
 import type { EventDef } from './eventCalendar';
+import type { RecipeDef, SpecialtyDef } from './specialty';
 import type { Climate } from './weather';
 
 export type * from './npcTypes';
@@ -142,7 +143,8 @@ export interface RegionLayout {
 }
 
 /** Kind of presentation place a product needs. */
-export type StorageKind = 'shelf' | 'cooled' | 'frozen' | 'counter' | 'press';
+/** 'ingredient': only kept in the back storage for recipes (Auftrag 05), never presented or sold directly. */
+export type StorageKind = 'shelf' | 'cooled' | 'frozen' | 'counter' | 'press' | 'ingredient';
 
 export type ProductCategory = 'drink' | 'snack' | 'sweet' | 'icecream' | 'bakery' | 'press' | 'everyday';
 
@@ -226,4 +228,7 @@ export interface ContentPack {
   events?: EventDef[];
   /** Demand model (Auftrag 05); absent = every product at its base demand. */
   demand?: DemandConfig;
+  /** Recipes and kiosk specialties (Auftrag 05); absent = none. */
+  recipes?: RecipeDef[];
+  specialties?: SpecialtyDef[];
 }

@@ -36,11 +36,13 @@ describe('product catalog', () => {
 
   it('has the expected shape', () => {
     expect(products.length).toBeGreaterThanOrEqual(24);
-    expect(products.length).toBeLessThanOrEqual(28);
+    expect(products.length).toBeLessThanOrEqual(32);
     expect(new Set(products.map((p) => p.id)).size).toBe(products.length);
     for (const p of products) {
       expect(Number.isInteger(p.purchasePriceCents) && Number.isInteger(p.suggestedPriceCents), p.id).toBe(true);
-      expect(p.purchasePriceCents, p.id).toBeLessThan(p.suggestedPriceCents);
+      // Ingredients (Auftrag 05) are never sold: their reference price equals the purchase price.
+      if (p.storage === 'ingredient') expect(p.purchasePriceCents, p.id).toBe(p.suggestedPriceCents);
+      else expect(p.purchasePriceCents, p.id).toBeLessThan(p.suggestedPriceCents);
     }
     const cats = new Set(products.map((p) => p.category));
     for (const c of ['drink', 'snack', 'sweet', 'icecream', 'bakery', 'press', 'everyday'] as const) expect(cats.has(c), c).toBe(true);
@@ -76,6 +78,7 @@ describe('product catalog', () => {
 
   it('every product has a sensible capacity in its best slot (1..64)', () => {
     for (const p of products) {
+      if (p.storage === 'ingredient') continue; // back storage only, no sales slot
       const asset = ruhrgebietPack.assets[p.assetId];
       if (!asset) throw new Error(p.assetId);
       const best = Math.max(

@@ -23,7 +23,9 @@ export const STORAGE_KINDS_BY_ROLE: Readonly<Record<PlacementRole, readonly Stor
   returns: [],
 };
 
-const STORAGE_KINDS: readonly string[] = ['shelf', 'cooled', 'frozen', 'counter', 'press'];
+const STORAGE_KINDS: readonly string[] = ['shelf', 'cooled', 'frozen', 'counter', 'press', 'ingredient'];
+/** Storage kinds a sales slot may accept: ingredients (Auftrag 05, 5.5) stay in the back storage and are never sold. */
+const SLOT_KINDS: readonly string[] = ['shelf', 'cooled', 'frozen', 'counter', 'press'];
 const CATEGORIES: readonly ProductCategory[] = ['drink', 'snack', 'sweet', 'icecream', 'bakery', 'press', 'everyday'];
 const SUBCATEGORIES: readonly ProductSubcategory[] = ['beer', 'tobacco'];
 const PACKAGES: readonly PackageKind[] = [
@@ -75,7 +77,9 @@ function validateProducts(pack: ContentPack, errors: string[]): void {
     for (const [field, value] of [['purchasePriceCents', p.purchasePriceCents], ['suggestedPriceCents', p.suggestedPriceCents]] as const) {
       if (!Number.isSafeInteger(value) || value <= 0) errors.push(`${tag}: ${field} ${value} must be a positive safe integer`);
     }
-    if (p.purchasePriceCents >= p.suggestedPriceCents) errors.push(`${tag}: purchase price must be lower than the suggested price`);
+    if (p.storage === 'ingredient') {
+      if (p.purchasePriceCents !== p.suggestedPriceCents) errors.push(`${tag}: an ingredient is not sold, its suggested price must equal the purchase price`);
+    } else if (p.purchasePriceCents >= p.suggestedPriceCents) errors.push(`${tag}: purchase price must be lower than the suggested price`);
     if (!CATEGORIES.includes(p.category)) errors.push(`${tag}: unknown category "${p.category}"`);
     if (p.subcategory !== undefined && !SUBCATEGORIES.includes(p.subcategory)) errors.push(`${tag}: unknown subcategory "${p.subcategory}"`);
     if (!STORAGE_KINDS.includes(p.storage)) errors.push(`${tag}: unknown storage kind "${p.storage}"`);
@@ -105,7 +109,7 @@ function validateProducts(pack: ContentPack, errors: string[]): void {
   // Every product needs at least one compatible slot that holds at least one unit.
   for (const p of Object.values(pack.products)) {
     const asset = Object.hasOwn(pack.assets, p.assetId) ? pack.assets[p.assetId] : undefined;
-    if (!asset || !STORAGE_KINDS.includes(p.storage)) continue;
+    if (!asset || !SLOT_KINDS.includes(p.storage)) continue;
     const fits = pack.stockSlots.some(
       (s) => s.accepts === p.storage && slotCapacity(s, asset.size, { maxStack: productMaxStack(p) }) >= 1,
     );
@@ -123,7 +127,7 @@ function validateSlots(pack: ContentPack, errors: string[]): void {
     ids.add(s.id);
     const { width, depth, height } = s.size;
     if (!(width > 0 && depth > 0 && height > 0)) errors.push(`slot "${s.id}" size must be positive in all dimensions`);
-    if (!STORAGE_KINDS.includes(s.accepts)) errors.push(`slot "${s.id}" accepts unknown storage kind "${s.accepts}"`);
+    if (!SLOT_KINDS.includes(s.accepts)) errors.push(`slot "${s.id}" accepts unknown storage kind "${s.accepts}"`);
 
     const placement = layout.placements.find((p) => p.id === s.placementId);
     if (!placement) {

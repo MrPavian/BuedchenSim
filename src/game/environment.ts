@@ -1,5 +1,5 @@
 import { dateOfDay, type Season } from './date';
-import { eventsTodayAt } from './eventCalendar';
+import { eventsTodayAt, unlockedEvents } from './eventCalendar';
 import type { DeepReadonly, GameState } from './state';
 import type { ContentPack } from './types';
 import { temperatureAt, weatherOfDay, type Climate, type DayWeather } from './weather';
@@ -33,19 +33,21 @@ export function climateOf(content: Pick<ContentPack, 'climate'>): Climate {
 /** Pure; cheap after the first call per day (the weather chain is memoised). */
 export function environmentOf(
   content: Pick<ContentPack, 'climate' | 'events'>,
-  state: DeepReadonly<Pick<GameState, 'calendar' | 'world'>>,
+  state: DeepReadonly<Pick<GameState, 'calendar' | 'world'>> & { readonly story?: { readonly flags: Readonly<Record<string, boolean>> } },
 ): Environment {
   const { day, minute } = state.calendar;
   const climate = climateOf(content);
   const seed = state.world.seed;
   const weather = weatherOfDay(seed, climate, day);
   // Cached per content, seed, day and whole minute: residents ask many times per frame.
-  const key = `${seed}|${day}|${Math.floor(minute)}`;
+  // Events behind a story flag (a tradition) exist only once it is set: the number of unlocked events is part of the key.
+  const events = unlockedEvents(content.events ?? [], state.story?.flags);
+  const key = `${seed}|${day}|${Math.floor(minute)}|${events.length}`;
   const cached = cache.get(content);
   if (cached && cached.key === key) return cached.env;
   const eventsToday: string[] = [];
   const activeEvents: string[] = [];
-  for (const e of eventsTodayAt(content.events ?? [], day, minute, seed, climate)) {
+  for (const e of eventsTodayAt(events, day, minute, seed, climate)) {
     eventsToday.push(e.def.id);
     if (e.status === 'active') activeEvents.push(e.def.id);
   }

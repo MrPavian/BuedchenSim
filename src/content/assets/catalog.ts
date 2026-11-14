@@ -129,6 +129,24 @@ export const assetCatalog: Record<string, AssetDef> = {
     scalable: false,
     requiresSupport: true,
   },
+  'I-014': {
+    assetId: 'I-014',
+    name: 'Kundenstopper Frikadelle',
+    category: 'furniture',
+    size: { width: 0.55, depth: 0.5, height: 1.0 },
+    collides: false,
+    allowedRotations: ALL,
+    scalable: false,
+  },
+  'I-015': {
+    assetId: 'I-015',
+    name: 'Kult-Tafel Frikadellen-Freitag',
+    category: 'furniture',
+    size: { width: 0.7, depth: 0.06, height: 1.85 },
+    collides: false,
+    allowedRotations: ALL,
+    scalable: false,
+  },
   // Product assets P-001 ... (one unit each); see productAssets.ts.
   ...productAssets,
   // Ground assets: size is informational (the ground areas carry their own rects).

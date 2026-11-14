@@ -14,7 +14,7 @@ describe('content <-> world', () => {
   it('every product of the real pack builds a model matching its asset size (+-2 cm) with the pivot at the bottom centre', () => {
     const materials = createMaterials();
     const products = Object.values(ruhrgebietPack.products);
-    expect(products).toHaveLength(28);
+    expect(products).toHaveLength(32);
     for (const product of products) {
       const asset = assets[product.assetId];
       if (!asset) throw new Error(`unknown asset ${product.assetId}`);
@@ -63,7 +63,7 @@ describe('content <-> world', () => {
 
   it('every placed asset has a dedicated factory (no placeholder fallback)', () => {
     const ids = [...new Set(layout.placements.map((p) => p.assetId))].sort();
-    expect(ids).toEqual(['E-004', 'I-001', 'I-002', 'I-003', 'I-004', 'I-005', 'I-006', 'I-007', 'I-011', 'I-012', 'I-013']);
+    expect(ids).toEqual(['E-004', 'I-001', 'I-002', 'I-003', 'I-004', 'I-005', 'I-006', 'I-007', 'I-011', 'I-012', 'I-013', 'I-014', 'I-015']);
     for (const id of ids) expect(hasFurnitureFactory(id), id).toBe(true);
   });
 
@@ -138,7 +138,7 @@ describe('content <-> world', () => {
 });
 
 describe('flag-gated story props of the real pack', () => {
-  it('E-004 and I-013 build to their catalog sizes (+-2 cm) and are gated in the layout', () => {
+  it('the gated props (E-004, I-013, I-014, I-015) build to their catalog sizes (+-2 cm) and are gated in the layout', () => {
     const materials = createMaterials();
     for (const placement of layout.placements.filter((p) => p.requiresFlag !== undefined)) {
       const asset = assets[placement.assetId];
@@ -149,6 +149,6 @@ describe('flag-gated story props of the real pack', () => {
       expect(Math.abs(size.y - asset.size.height), placement.id).toBeLessThanOrEqual(0.02);
       expect(Math.abs(size.z - asset.size.depth), placement.id).toBeLessThanOrEqual(0.02);
     }
-    expect(layout.placements.filter((p) => p.requiresFlag !== undefined).map((p) => p.assetId).sort()).toEqual(['E-004', 'I-013']);
+    expect(layout.placements.filter((p) => p.requiresFlag !== undefined).map((p) => p.assetId).sort()).toEqual(['E-004', 'I-013', 'I-014', 'I-015']);
   });
 });

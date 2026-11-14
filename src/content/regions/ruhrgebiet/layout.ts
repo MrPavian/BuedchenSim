@@ -58,6 +58,12 @@ export const ruhrgebietLayout: RegionLayout = {
       on: 'placement.counter',
       requiresFlag: 'kiosk.photo',
     },
+    // Specialty rewards (Auftrag 05, 5.5). Geheimtipp: chalk A-frame sign on the sidewalk west of the sales window
+    // (x -3.0..-2.5, z 2.2..2.7), clear of the walkway (z 3.3) and the window places (x >= -1.7).
+    { id: 'placement.frikadelle-sign', assetId: 'I-014', position: { x: -2.75, z: 2.45 }, rotation: 0, requiresFlag: 'specialty.frikadelle.sign' },
+    // Kultstatus: board on the south facade between window (to x 0.4) and door (from x 1.5); back against the wall's
+    // outer face (z 2.075).
+    { id: 'placement.frikadelle-board', assetId: 'I-015', position: { x: 0.95, z: 2.11 }, rotation: 0, requiresFlag: 'specialty.frikadelle.cult' },
   ],
   ground: [
     { id: 'ground.sidewalk', assetId: 'E-001', kind: 'sidewalk', rect: { minX: -12, maxX: 12, minZ: 2, maxZ: 5 } },
