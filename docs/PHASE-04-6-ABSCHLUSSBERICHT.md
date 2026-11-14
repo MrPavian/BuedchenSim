@@ -66,7 +66,7 @@ Unter [`docs/screenshots/auftrag-04-6/`](screenshots/auftrag-04-6/README.md): je
 | `npm run lint` | fehlerfrei |
 | `npm run test` | 38 Dateien, 609 Tests bestanden (neu: Mimik und Blinzeln in `glbResident.test.ts`) |
 | `npm run build` | erfolgreich |
-| `npm run check:browser` | [[BROWSERCHECK]] |
+| `npm run check:browser` | 149 von 149 Prüfungen bestanden (1.418 s, Headless-Chromium mit SwiftShader), ausgeführt nach der letzten Code- und Modelländerung mit allen vier GLB-Figuren |
 
 ## 9. Regression und offene Einschränkungen
 Die Browserprüfung deckt Erscheinen und Tagesroutinen der Bewohner, Navigation und Ausweichen, Dialoge mit Optionen, Beziehungen, Erinnerungen und beide Geschichten, NPC-Käufe über die Verkaufsdomäne, die Altersprüfung (Jonas kauft keinen Tabak), Interaktionen, Kollisionen, Tür und Klappe sowie Savegame Version 3 mit Migrationen ab. Spielsimulation, Dialoge, Beziehungen, Wirtschaft und Savegame wurden nicht geändert; geändert sind nur die Darstellung (`glbResident.ts`, `residentView.ts` mit der neuen Debug-Angabe `model`) und Werkzeuge.
@@ -82,4 +82,4 @@ Die Browserprüfung deckt Erscheinen und Tagesroutinen der Bewohner, Navigation 
 - Rund 6 MB Figurendaten beim Start; bei langsamer Verbindung stehen anfangs die prozeduralen Figuren.
 
 ## 10. Branch und Commits
-Branch `claude/elegant-curie-17qulu`; Commits (älteste zuerst): [[COMMITS]].
+Branch `claude/elegant-curie-17qulu`; Commits (älteste zuerst): `c2fe775` (Bestandsaufnahme, Download-Skript), `bbdca0d` (Skript auf Spezifikationen, Günter-Korrekturen, Mimik), `99c6f32` (Derya, Jonas, Marlene), `61919e5` (Referenzbilder, Gesprächsansicht, Rückfallprüfung), `2121dd7` (Dokumentation) sowie dieser Abschluss-Commit.
