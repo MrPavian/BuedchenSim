@@ -65,7 +65,9 @@ Weitere Screenshots aus der laufenden Anwendung: [Warenverwaltung](docs/screensh
 - **Offen:** O-5 Hosting und Lizenz.
 
 ## Nächster Schritt
-Phase 4 – **Bewohner, Kundenverhalten und soziale Bindung**. Der konkrete [Auftrag 04](docs/auftraege/04-bewohner-und-soziale-bindung.md) ist erstellt. Er umfasst vier wiederkehrende Bewohner, Tagesroutinen, Bewegung, Dialoge, Beziehungen, Erinnerungen, zwei Alltagsgeschichten und echte NPC-Käufe über die vorhandene Wirtschaftsdomäne. Wetter, Events und Kiosk-Traditionen bleiben Phase 5.
+Phase 4 – **Bewohner, Kundenverhalten und soziale Bindung**. [Auftrag 04](docs/auftraege/04-bewohner-und-soziale-bindung.md) wird derzeit umgesetzt. Erst nach Abschluss und Prüfung folgt Phase 5.
+
+Die Spezifikation für Phase 5 ist bereits vorbereitet: [Auftrag 05 – Das lebendige Viertel](docs/auftraege/05-das-lebendige-viertel.md). Sie verbindet Kalender und Jahreszeiten, Wettervorhersage, fünf erste Veranstaltungen, dynamische Nachfrage, NPC-Reaktionen und die Spezialität **Frikadelle im Brötchen**. Die Umsetzung steht ausdrücklich noch aus und setzt die technische Bestandsaufnahme nach Auftrag 04 voraus.
 
 ## Projekt-Dokumentation
 Die Art-Direction, Produktionsplanung, Regionen, fiktive Produktwelt, Claude-Code-Prompts und Three.js-Asset-Standards liegen unter [docs/artwork-prompts](docs/artwork-prompts/README.md).
