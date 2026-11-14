@@ -72,7 +72,7 @@ In der Konsole ausführen, dabei 10 Sekunden herumlaufen:
 ## Bewohnerfiguren auf echter Grafikhardware (Auftrag 04.6)
 Misst die anspruchsvollste Figurenszene: alle vier GLB-Bewohner an der Hofbank und auf dem Gehweg, Spiel angehalten.
 
-1. Für realistische Werte den Produktions-Build verwenden: `npm run build`, dann `npm run preview` und `http://localhost:4173/?debug` öffnen. Fenster wie beim normalen Spielen (z. B. Vollbild), Netzteil angeschlossen.
+1. Für realistische Werte den Produktions-Build verwenden: entweder die veröffentlichte Seite (GitHub Pages, `https://mrpavian.github.io/buedchensim/?debug`, Workflow `.github/workflows/pages.yml`) oder lokal `npm run build`, dann `npm run preview` und `http://localhost:4173/?debug` öffnen. Fenster wie beim normalen Spielen (z. B. Vollbild), Netzteil angeschlossen.
 2. Warten, bis das Spiel steht (rund 5 Sekunden; die Figuren laden kurz nach dem Start).
 3. Entwicklerwerkzeuge (F12) → Konsole, folgenden Block einfügen und Enter drücken. Danach 15 Sekunden nichts anklicken.
 4. Die ausgegebene JSON-Ausgabe kopieren und ins Protokoll übernehmen (oder an Claude geben). Zusätzlich die Szene mit Blick auf die Figuren ansehen: Gesichter, Kleidung, Schatten, Flimmern, Durchdringungen.
