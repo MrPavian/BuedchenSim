@@ -50,9 +50,13 @@ Inhalte und Regeln im Detail: [Bewohner, Dialoge und Geschichten](docs/BEWOHNER-
 
 Noch nicht vorhanden: Preisänderungen, Nachfrage und Laufkundschaft (Verkäufe sind ein Kassenvorgang des Spielers, außer den Käufen der vier Bewohner), Wetter, Events, Audio. Alle Marken sind frei erfunden; die Namen sind Arbeitstitel und rechtlich nicht geprüft. Das Sortiment steht im [Produktkatalog](docs/PRODUKTKATALOG.md).
 
-**Prüfstand:** Geprüft wurde ausschließlich automatisch: Typecheck, Lint, 604 Unit- und Integrationstests in 37 Dateien (eigener Lauf am 2026-11-14; der Phase-3-Stand mit 370 Tests wurde dabei bestätigt), Build sowie die Browserprüfung in Headless-Chromium mit Software-Rendering: [[BROWSERCHECK]]. Die Prüfung auf echter Grafikhardware und in Firefox oder Safari steht aus; die Schritte dafür stehen in der [manuellen Prüfanleitung](docs/PRUEFANLEITUNG-MANUELL.md) (Schritte 32 bis 47 für die Bewohner); sie wurden nicht von Hand ausgeführt.
+**Prüfstand:** Geprüft wurde ausschließlich automatisch: Typecheck, Lint, 605 Unit- und Integrationstests in 37 Dateien (eigener Lauf am 2026-11-14; der Phase-3-Stand mit 370 Tests wurde dabei bestätigt), Build sowie die Browserprüfung in Headless-Chromium mit Software-Rendering: 149 von 149 Prüfungen bestanden (zwei Läufe nacheinander am 2026-11-14, 1.287 s und 1.188 s). Die Prüfung auf echter Grafikhardware und in Firefox oder Safari steht aus; die Schritte dafür stehen in der [manuellen Prüfanleitung](docs/PRUEFANLEITUNG-MANUELL.md) (Schritte 32 bis 47 für die Bewohner); sie wurden nicht von Hand ausgeführt.
 
-Screenshots der Bewohner und Gespräche (Auftrag 04): [[SCREENSHOTS]]
+Screenshots der Bewohner und Gespräche (Auftrag 04): neun Bilder unter [`docs/screenshots/auftrag-04/`](docs/screenshots/auftrag-04/README.md), jedes mit Beschreibung in der dortigen README:
+
+![Bewohner im Viertel](docs/screenshots/auftrag-04/01-bewohner-im-viertel.png)
+
+![Gespräch mit Antwortoptionen](docs/screenshots/auftrag-04/03-dialog.png)
 
 ![Innenraum mit bestückten Regalen](docs/screenshots/auftrag-03-innen-bestueckt.png)
 

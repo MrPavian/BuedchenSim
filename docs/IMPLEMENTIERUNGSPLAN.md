@@ -130,7 +130,7 @@ Umgesetzt:
 - Zwei verknüpfte Alltagsgeschichten: „Krach im Hinterhof“ (vier Ausgänge) und „Ein Paket für Günter“ (zwei Ausgänge); Folgen sind geänderte Routinen (Derya sägt später), eine Hofbank (E-004) und ein Kioskfoto (I-013) über flaggebundene Platzierungen.
 - Alle vier Bewohner als Kunden über `economy.completeSale` (Transaktion und Signal mit `npcId`, einmalige Buchung); Alterskontrolle aus den Inhaltsdaten (Jonas, 17, kann Tabak nie kaufen).
 - Savegame Version 3 mit Migration 2→3 (und 1→2→3), Verwerfen unbekannter IDs mit Warnung.
-- Automatisiert getestet: 604 Tests in 37 Dateien (eigener Lauf 2026-11-14; der Phase-3-Stand wurde mit 370 Tests in 23 Dateien bestätigt); Browserprüfung in Headless-Chromium: [[BROWSERCHECK]]. Screenshots: [[SCREENSHOTS]]. Manuell auf echter Grafikhardware: nicht geprüft (Prüfanleitung, Schritte 32 bis 47).
+- Automatisiert getestet: 605 Tests in 37 Dateien (eigener Lauf 2026-11-14; der Phase-3-Stand wurde mit 370 Tests in 23 Dateien bestätigt); Browserprüfung in Headless-Chromium: 149 von 149 Prüfungen bestanden (zwei Läufe nacheinander am 2026-11-14, 1.287 s und 1.188 s). Screenshots: neun Bilder unter `docs/screenshots/auftrag-04/`. Manuell auf echter Grafikhardware: nicht geprüft (Prüfanleitung, Schritte 32 bis 47).
 
 **Phase-3-Grenzen: Bewertung durch Phase 4** (Auftrag 04, Abschnitt 1.1; der Phase-3-Vertrag oben bleibt unverändert, hier steht nur, was Phase 4 daraus abgeleitet hat und was bewusst so bleibt):
 
@@ -147,7 +147,6 @@ Umgesetzt:
 | Keine Prüfung auf echter Grafikhardware | **Bleibt offen** und betrifft jetzt auch die Bewohner; Schritte 32 bis 47 der Prüfanleitung. |
 
 Offene Restpunkte aus Phase 4:
-- Browserprüfung dieses Auftrags und Screenshots: [[BROWSERCHECK]], [[SCREENSHOTS]].
 - Vorlieben (`likes`/`dislikes`) und die Beziehungen der Bewohner untereinander haben keine Spielwirkung; Beziehungen zum Spieler wirken nur auf Gespräche.
 - Kunden warten bei offener Klappe bis zum Ende ihres Routinefensters; Geschichtsgespräche entstehen nicht am Fenster, solange ein Wunsch offen ist.
 - Der Ständer in Geschichte B hat kein eigenes Modell; das Paket ist kein sichtbarer Gegenstand.

@@ -40,7 +40,7 @@ TypeScript 7 wurde nicht gewählt, weil typescript-eslint 8.72.2 nur TypeScript 
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint inklusive Schichtenregel |
 | `npm run test` | Vitest |
-| `npm run check:browser` | baut, startet die Anwendung in Chromium, prüft sie mit echten Tastendrücken und schreibt Screenshots nach `docs/screenshots/` (Laufzeit in der Entwicklungsumgebung mit Software-Rendering: bis Auftrag 03 rund 11–12 Minuten; Auftrag 04: [[BROWSERCHECK]]); mit `-- --only economy` läuft nur der Wirtschaftsabschnitt |
+| `npm run check:browser` | baut, startet die Anwendung in Chromium, prüft sie mit echten Tastendrücken und schreibt Screenshots nach `docs/screenshots/` (Laufzeit in der Entwicklungsumgebung mit Software-Rendering: bis Auftrag 03 rund 11–12 Minuten; Auftrag 04: rund 20 Minuten); mit `-- --only economy` läuft nur der Wirtschaftsabschnitt |
 
 `check:browser` braucht einen zu Playwright 1.63.0 passenden Chromium. Auf einem frischen Rechner einmalig `npx playwright install chromium` ausführen.
 
@@ -243,14 +243,14 @@ Strikte Trennung: **implementiert** ist in Abschnitt 5 beschrieben, **automatisi
 |---|---|
 | `npm run typecheck` | fehlerfrei (eigener Lauf 2026-11-14) |
 | `npm run lint` | fehlerfrei (eigener Lauf 2026-11-14) |
-| `npm run test` | 37 Dateien, 604 Tests bestanden (eigener Lauf 2026-11-14) |
+| `npm run test` | 37 Dateien, 605 Tests bestanden (eigener Lauf 2026-11-14) |
 | `npm run build` | erfolgreich (131 Module), Größen siehe Abschnitt 8 |
-| `npm run check:browser` | [[BROWSERCHECK]] |
+| `npm run check:browser` | 149 von 149 Prüfungen bestanden (zwei Läufe nacheinander am 2026-11-14, 1.287 s und 1.188 s) |
 | `npm audit` | am 2026-11-14 nicht erneut ausgeführt (letzter Lauf 2026-11-12: 0 Hinweise) |
 
-**Phase-3-Vorabprüfung (Auftrag 04, Abschnitt 1.1):** Der dokumentierte Phase-3-Stand wurde nicht ungeprüft übernommen. Ein eigener Lauf der Tests am Phase-3-Commit `1247610` (Stand vor Auftrag 04) ergab 23 Dateien und 370 bestandene Tests, die Zahl stimmt also. Die 98 von 98 Browserprüfungen aus Auftrag 03 sind Teil der erweiterten Browserprüfung dieses Auftrags (Ergebnis: [[BROWSERCHECK]]). Der Vergleich der Quelltexte mit dem Phase-3-Stand zeigt für `economy.ts` und `clock.ts` ausschließlich die Erweiterung um den optionalen Kundenbezug (Abschnitt 5, Kundenkäufe); es wurde kein Phase-3-Fehler gefunden und keiner behoben. Die Bewertung der bekannten Phase-3-Grenzen steht im [Implementierungsplan (Phase 4)](IMPLEMENTIERUNGSPLAN.md).
+**Phase-3-Vorabprüfung (Auftrag 04, Abschnitt 1.1):** Der dokumentierte Phase-3-Stand wurde nicht ungeprüft übernommen. Ein eigener Lauf der Tests am Phase-3-Commit `1247610` (Stand vor Auftrag 04) ergab 23 Dateien und 370 bestandene Tests, die Zahl stimmt also. Die 98 von 98 Browserprüfungen aus Auftrag 03 sind Teil der erweiterten Browserprüfung dieses Auftrags (Ergebnis: alle 98 weiterhin grün, Teil der 149 von 149). Der Vergleich der Quelltexte mit dem Phase-3-Stand zeigt für `economy.ts` und `clock.ts` ausschließlich die Erweiterung um den optionalen Kundenbezug (Abschnitt 5, Kundenkäufe); es wurde kein Phase-3-Fehler gefunden und keiner behoben. Die Bewertung der bekannten Phase-3-Grenzen steht im [Implementierungsplan (Phase 4)](IMPLEMENTIERUNGSPLAN.md).
 
-**Automatisiert getestet mit Vitest (604 Tests in 37 Dateien; 234 mehr als in Phase 3, davon 188 in 14 neuen Dateien; Dateien mit Auftrag-04-Bezug):**
+**Automatisiert getestet mit Vitest (605 Tests in 37 Dateien; 234 mehr als in Phase 3, davon 188 in 14 neuen Dateien; Dateien mit Auftrag-04-Bezug):**
 - `src/game/npcSim.test.ts` (25): Routinen an Fensterbeginn (eingeschlossen) und -ende (ausgeschlossen), Wochentage (Tag 8 ist wieder ein Montag), Phasen, Bedingungen von Einträgen; deterministische Würfe (gleicher Seed und Tag gleiches Ergebnis, anderer Seed unterscheidet sich, Neuladen mitten am Tag, ein ganzer simulierter Tag identisch); Zustandsfolge away → walking → at_place → waiting → walking → away mit je einem Signal; ein Eintrag läuft nicht zweimal am Tag; Kunde bei geschlossener Klappe wartet und geht mit Erinnerung (einmal); getrennte Standplätze; Durchgang (pass-by); Bewohner überlappen nie und bleiben auf den Kanten; Pause, Tempo, Tagesphasen schicken alle heim; Stehenbleiben vor dem Spieler (kein Durchlaufen, kein Teleport), Umgehungsbahn, Warten bei Blockade, kein Erscheinen auf besetztem Ausgang, Vorrang der niedrigeren ID bei langer Verklemmung.
 - `src/game/customer.test.ts` (18): deterministische Wunschwahl; Kundenablauf (Wunsch, Signal, genau ein Verkauf, Gehen); Ablehnen; gescheiterter Verkauf hält den Wunsch offen; Rückfallzeilen; Schließen ändert nichts; nicht bedienter Kunde geht mit `ignored:`; Altersregeln (Erwachsener braucht die Ausweisprüfung, 17-Jähriger nie die 18er-Ware, `unknown_customer`, `customer_underage` auch bei bestätigter Prüfung); der Kassenverkauf des Spielers bleibt unverändert; Kundeneffekte in Dialogoptionen; Flags steuern Wünsche.
 - `src/game/dialogue.test.ts` (28): Öffnen und Ablehnungsgründe, Priorität, einmalige Gespräche, Status `talking` und Wiederherstellung, Bedingungen und Effekte von Optionen, `seen` erst bei einer Schlussantwort, vorzeitiges Schließen verbraucht kein einmaliges Gespräch (Regression), Beziehung (Schlüssel wirkt einmal, Tagesgruß, Begrenzung, vier Stufen), Quest-Schritte nur vorwärts, Ausgang endgültig, beide Geschichtspfade mit Alternativen, Interaktionsziel (Reichweite, Blick, Vorrang), Laden und Zurücksetzen.
@@ -262,11 +262,19 @@ Strikte Trennung: **implementiert** ist in Abschnitt 5 beschrieben, **automatisi
 - `src/ui/socialViewModel.test.ts` (9): Dialogmodell (Name, Rolle, Stufe, nummerierte Antworten; Kundenzeilen, Summen, Bestandswarnung, Altersangaben), Journal (leer vor dem Spiel, nur bekannte Leute, nur aktueller Schritt bzw. Ausgang, keine rohen Erinnerungen), zurückhaltende Stufenhinweise.
 - Weiter nicht automatisiert getestet sind die DOM-Panels selbst (Dialogpanel, Journal wie Kasse und Warenverwaltung) und das Rendering außerhalb der Browserprüfung; die Panels werden nur über die Browserprüfung berührt.
 
-**Browserprüfung (Auftrag 04):** [[BROWSERCHECK]]
+**Browserprüfung (Auftrag 04):** 149 Prüfungen in zwei Läufen nacheinander bestanden (1.287 s und 1.188 s, Headless-Chromium mit Software-Rendering). Davon 98 aus Auftrag 01–03 (unverändert grün; zwei Abschnitte zur Klappenmarkierung schicken die Bewohner vorher nach Hause und halten die Uhr an, weil ein Bewohner in Reichweite Vorrang vor Tür und Klappe hat) und 51 neue im Bewohner-Abschnitt (`--only residents`). Geprüft wird über die echte Oberfläche:
+- Alle vier Bewohner erscheinen zu ihren Zeiten (der Würfel des gespeicherten Startwerts wird mit der Spiellogik gesucht), nie zwei auf einem Platz, nie in Wänden oder Möbeln; mindestens zwei laufen sichtbar über kollisionsfreie Wege.
+- Hinweis „Mit … sprechen“, E und Klick öffnen das Gespräch, Tasten 1–n wählen, das Panel sperrt die Bewegung, Escape schließt ohne Folgen.
+- Antworten ändern den gespeicherten Zustand (Beziehung, Erinnerung, Geschichte, Spielstand Schema 3); ein späterer Besuch zeigt die Erinnerung, auch nach Neuladen.
+- Geschichte A mit den Ausgängen „Kompromiss“ (Bank erscheint und blockiert die Spielfigur) und „Derya“; Geschichte B mit den Ausgängen „Foto“ (Foto auf der Theke) und „abgelehnt“.
+- Alle vier Bewohner äußern Wünsche; ein Verkauf ändert Kasse und Bestand genau einmal (doppeltes Drücken) und trägt die Bewohner-ID; Jonas (17) bekommt keinen Tabak, auch nicht nach der Ausweisprüfung.
+- Neuladen mitten im Weg stellt Position, Weg, Routine, Beziehungen und Geschichte wieder her, die Routine läuft weiter.
+- Notizbuch zeigt nur getroffene Personen und begonnene oder abgeschlossene Geschichten.
+- Keine Konsolenfehler, WebGL-Kontext nie verloren.
 
-**Screenshots aus der laufenden Anwendung (Auftrag 04):** [[SCREENSHOTS]]
+**Screenshots aus der laufenden Anwendung (Auftrag 04):** neun Bilder unter `docs/screenshots/auftrag-04/` (Beschreibung je Bild in der dortigen `README.md`, für die Weitergabe an ChatGPT gedacht), alle angesehen: Bewohner im Viertel, Kunde am Fenster, Gespräch, Kundenwunsch, Altersgrenze (Jonas), Hofbank als Folge von Geschichte A, Foto als Folge von Geschichte B, Notizbuch, alle vier Figuren nebeneinander. Die Bilder aus Auftrag 01–03 werden von der Browserprüfung nicht mehr überschrieben.
 
-**Render-Aufwand der Figuren:** Vier Figuren zusammen 123 Meshes (je ein Draw Call) und etwa 8.300 Dreiecke (gezählt in Vitest an den Fabriken, nicht in der Szene gemessen). Messung der Szene mit Bewohnern in Headless-Chromium: [[BROWSERCHECK]]. Auf echter Hardware ungemessen.
+**Render-Aufwand der Figuren:** Vier Figuren zusammen 123 Meshes (je ein Draw Call) und etwa 8.300 Dreiecke (gezählt in Vitest an den Fabriken, nicht in der Szene gemessen). In der Szene gemessen (`getRenderStats`, Innenansicht hinter der Theke, zwei Bewohner sichtbar, leere Regale): 336 Draw Calls und rund 28.600 Dreiecke – Messwert in Headless-Chromium mit Software-Rendering, keine Aussage über die Bildrate auf echter Hardware.
 
 ### Stand Auftrag 03 (2026-11-13, zur Einordnung)
 Die Zahlen und Listen dieses Unterabschnitts gelten für den Stand nach Auftrag 03 (23 Dateien, 370 Tests; Browserprüfung 98 von 98 in 727 Sekunden). Die Phase-3-Tests laufen unverändert im heutigen Bestand mit.
@@ -375,7 +383,7 @@ Der Override setzt eine neuere Hauptversion durch, als die betroffenen Pakete se
 - **Nur vier Bewohner;** N-004 und N-005 bleiben geplant; kein Bewohner betritt ein Gebäude.
 - **Figurendetails sind aus der Spielkamera klein;** die Figuren unterscheiden sich über Silhouette, Größe und Farbe. Nicht in der Szene gemessen sind Draw Calls und Bildrate mit Bewohnern.
 - **Nicht auf echter Grafikhardware und nicht in Firefox oder Safari geprüft** (auch nicht die Bewohner); die Schritte 32 bis 47 der Prüfanleitung wurden nicht von Hand ausgeführt.
-- **Browserprüfung:** Ergebnisse und Laufzeit des erweiterten Laufs: [[BROWSERCHECK]].
+- **Browserprüfung:** Die Browserprüfung dauert mit Software-Rendering rund 20 Minuten.
 
 **Einschränkungen der Waren- und Wirtschaftsfunktionen (Auftrag 03, jeweils im Code geprüft)**
 - **Keine Preisänderung durch den Spieler:** Verkauft wird zum vorgeschlagenen Verkaufspreis (`suggestedPriceCents`); es gibt kein `setPrice`.
