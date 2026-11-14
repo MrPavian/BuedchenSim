@@ -457,11 +457,11 @@ Jeweils im Code geprüft. Die Einschränkungen der Phasen 1 bis 3 stehen im [Ist
 4. **Rückfallebene gegen Verklemmung:** Bewohner können sich als letzte Rettung (nach 20 s Blockade, nur zwischen Bewohnern) gegenseitig durchlaufen. Wände, Möbel und der Spieler sind davon nie betroffen.
 5. **Laufzeitzeiten sind nicht gespeichert:** Die Zeit, die ein Bewohner bereits blockiert war, und der Tagescache der Würfe fehlen nach dem Laden; die Entscheidungen bleiben gleich (reine Funktionen), das genaue Timing von Wartezeiten kann abweichen. Das Gespräch wird nicht gespeichert.
 6. **Erinnerungen sind einfache Kennungen:** Das Journal zeigt nur Notizen zu Geschichten, Bekanntschaften, Stufen und die Zahl erfüllter Wünsche, keine einzelnen Erinnerungen. Nur sechs Erinnerungen steuern Gespräche.
-7. **`likes`, `dislikes` und die Beziehungen der Bewohner zueinander haben keine Spielwirkung**; Beziehungen zum Spieler beeinflussen nur Gespräche und die Vermittlungsoption, keine Besuche, Preise oder Wünsche.
+7. **`likes`, `dislikes` und die Beziehungen der Bewohner zueinander haben (außer bei der Bewertung der Spezialität, Auftrag 05) keine Spielwirkung**; Beziehungen zum Spieler beeinflussen nur Gespräche und die Vermittlungsoption, keine Besuche, Preise oder Wünsche.
 8. **Der Ständer (`photo.stand`) hat kein eigenes Modell;** er wirkt nur in Dialogen. Das „Paket“ ist ein Zustand, kein sichtbarer Gegenstand; Sägen ist eine Routine ohne Animation und ohne Ton.
 9. **Nicht einmalige Folgegespräche ersetzen das einfache `moin`** ihres Bewohners dauerhaft, sobald ihre Bedingung gilt (z. B. Günter nach dem Foto, Jonas nach der Bank). Die Inhalte sind daher nach den Geschichten weniger abwechslungsreich.
 10. **Die Validierung erkennt nicht, ob Gesprächsbedingungen je zusammen erfüllbar sind** (geprüft werden Verweise, Erreichbarkeit der Knoten, Wertebereiche und Widersprüche innerhalb einer Antwort).
-11. **Nur vier Bewohner;** N-004 und N-005 bleiben geplant. Der Bewohner bleibt in der Spielwelt auf Gehweg, Ecke, Hof; es gibt keine Nachbargebäude, in die er geht.
+11. **Nur vier Bewohner und zwei Gäste (seit Auftrag 05);** N-004 und N-005 bleiben geplant. Der Bewohner bleibt in der Spielwelt auf Gehweg, Ecke, Hof; es gibt keine Nachbargebäude, in die er geht.
 12. **Figurendetails sind aus der Spielkamera klein:** Gesichter und Kleinteile (Bleistift, Brillenfassung, Reflexgurt) sind nur aus der Nähe lesbar; unterschieden werden die Figuren über Silhouette, Größe und Farbe.
 13. **Dialogtext und Routine weichen bei Deryas Sägebeginn ab:** Die Texte nennen „halb sieben“ (und „bis neun“ nach dem Kompromiss), die Routine `d.saegen-frueh` beginnt um 07:30.
 14. **Nicht auf echter Grafikhardware und nicht in Firefox oder Safari geprüft;** die Browserprüfung läuft in Headless-Chromium mit Software-Rendering. Die Schritte für die manuelle Prüfung stehen in der [Prüfanleitung](PRUEFANLEITUNG-MANUELL.md), Schritte 32 bis 47; sie wurden in der Entwicklungsumgebung nicht von Hand ausgeführt.
@@ -473,3 +473,32 @@ Maßgebliche Dateien: `src/game/{npcTypes,state,balance,npcSim,npcs,dialogue,sto
 Automatisiert getestet (Vitest; Zahlen und Ergebnisse im [Ist-Stand](TECHNISCHER-IST-STAND.md), Abschnitt 6): Tagesroutinen an Zeit- und Wochentagsgrenzen, deterministische Entscheidungen, Wegsuche und Erreichbarkeit, Bewegung ohne Überlappen, Zustandsübergänge, Dialogbedingungen und Effekte, einmalige Effekte, Beziehungsstufen, beide Geschichten mit allen Ausgängen und der Verknüpfung (`src/integration/stories.test.ts`), Kundenkäufe und Alterskontrolle, Doppelauslösung, Savegame-Migration 1→2→3 und 2→3, flaggebundene Platzierungen, Figuren und Spielerkollision, Inhaltsvalidierung (`src/content/validateResidents.test.ts`). Die Browserprüfung (Headless-Chromium) ist ein eigener Abschnitt des Ist-Stands: 149 von 149 Prüfungen bestanden (zwei Läufe nacheinander am 2026-11-14, 1.287 s und 1.188 s).
 
 Screenshots aus der laufenden Anwendung: neun Bilder mit Beschreibung (Ordner [`docs/screenshots/auftrag-04/`](screenshots/auftrag-04/)).
+
+## 14. Ergänzung Auftrag 05: Wetter, Veranstaltungen, Gäste, Spezialität, Haushalte
+
+**Wetterreaktionen** (`NpcDef.weatherResponse`, Prozentpunkte auf die Chance jeder Routine; „heiß“ ab 28 °C):
+
+| Bewohner | Regen leicht | Regen stark | Schnee | Frost | Nebel | heiß |
+|---|---|---|---|---|---|---|
+| Günter (Knie, Gehstock) | −10 | −30 | −35 | −30 | −5 | −15 |
+| Derya (Werkstatt nebenan) | – | −10 | −15 | −10 | – | −5 |
+| Jonas (Kurier, kommt eh vorbei) | – | – | −10 | – | – | +10 |
+| Marlene (ruhige Morgen) | −10 | −20 | −20 | −15 | −10 | −10 |
+| Ole | – | −10 | – | – | – | – |
+| Hilde | – | −20 | −20 | −20 | – | – |
+
+Laufende Veranstaltungen erhöhen alle Routinechancen um ihren Besucherbonus (Heimspiel +15, Straßenfest +20, Flohmarkt +15, Weihnachtszeit +10, Frikadellen-Freitag +15, Hitzewelle 0); das Ergebnis bleibt in 0…100.
+
+**Gespräche zu Wetter und Veranstaltungen** (`dialoguesWorld.ts`, Priorität 3–5, über dem Alltagsgespräch, unter den Geschichten): je Bewohner Heimspiel, Hitze, Regen, Advent, Straßenfest, Flohmarkt, Schnee/Frost oder Nebel nach Persönlichkeit.
+
+**Gäste:** Ole Brinkmann (N-008, 34, Busfahrer und Fan des erfundenen SV Grubenlicht 09) kommt an Heimspieltagen vor dem Spiel ans Fenster und danach an die Ecke, beim Straßenfest tagsüber. Hilde Kaczmarek (N-009, 66, ehemals Zechenkantine, Trödelhändlerin) kommt am Flohmarktsonntag morgens und samstags im Advent. Beide nur, solange die Veranstaltung läuft; mit dem Kultstatus der Frikadelle zusätzlich am Frikadellen-Freitag. Besuche bei laufender Veranstaltung hinterlassen die Erinnerung `erlebt:<veranstaltung>`.
+
+**Spezialität im Viertel** (`specialtySocial.ts`):
+- Erster Versuch (Flag `specialty.frikadelle.tried`): Derya und Jonas wünschen sich mittags eine Frikadelle; Derya („Wenn die was taugen …“) und Günter (Tipp mit dem eingeweichten Brötchen) sprechen sie einmal an.
+- Geheimtipp (`specialty.frikadelle.sign`): Günter und Marlene fragen mittags danach, Derya holt drei für die Baustelle, Ole zwei für die Kurve; Jonas erzählt von der Fahrergruppe, Marlene vom Schild, Ole von seiner Siegesserie.
+- Kultstatus (`specialty.frikadelle.cult`): am Frikadellen-Freitag fragen alle gezielt danach (Gewicht 5); Hilde nimmt am Flohmarkt eine; Marlene (Gemeindebrief), Günter (Enkel) und Hilde (Kantine) sprechen einmal darüber.
+- Jeder erste Kauf hinterlässt `probiert:frikadelle`; wer sehr zufrieden ist (≥ 70) und dem Büdchen vertraut (Beziehung ≥ 50), empfiehlt sie einmal weiter (`empfiehlt:frikadelle`, +4 Bekanntheit).
+
+**Geldbörse:** Jeder Bewohner hat ein Budget je Besuch (Günter, Jonas, Marlene, Hilde 15 €, Derya 20 €, Ole 25 €); Wünsche, die teurer sind, werden nicht gewählt. Alle vorhandenen Wünsche passen in die Geldbörse (Test `src/content/households.test.ts`).
+
+**Haushalte:** Alle sechs leben bisher allein (`household.wollny`, `.aksoy`, `.pietrek`, `.hoffmann`, `.brinkmann`, `.kaczmarek`; Adressen erfunden). Erlebte Veranstaltungen werden zur gemeinsamen Erinnerung des Haushalts (Bedingung `householdMemory`); Mitglieder behalten eigene Routinen, Geldbörsen, Vorlieben und Erinnerungen. Mehrköpfige Haushalte (Familie, Paar, WG) sind getestet, aber noch nicht als Inhalt angelegt.

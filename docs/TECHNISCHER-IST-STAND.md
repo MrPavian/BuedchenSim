@@ -1,6 +1,6 @@
 # Technischer Ist-Stand
 
-**Stand:** 2026-11-14 · nach [Auftrag 04](auftraege/04-bewohner-und-soziale-bindung.md) und [Auftrag 04.5](auftraege/04-5-visual-identity-und-graphics-foundation.md) (visuelle Basis: [VISUAL-BASELINE.md](VISUAL-BASELINE.md), [Abschlussbericht](PHASE-04-5-ABSCHLUSSBERICHT.md))
+**Stand:** 2026-11-14 · nach [Auftrag 05](auftraege/05-das-lebendige-viertel.md) ([Abschlussbericht](PHASE-05-ABSCHLUSSBERICHT.md)); davor [Auftrag 04](auftraege/04-bewohner-und-soziale-bindung.md) und [Auftrag 04.5](auftraege/04-5-visual-identity-und-graphics-foundation.md) (visuelle Basis: [VISUAL-BASELINE.md](VISUAL-BASELINE.md), [Abschlussbericht](PHASE-04-5-ABSCHLUSSBERICHT.md))
 
 Dieses Dokument enthält nur geprüfte Fakten und trennt durchgehend **implementiert**, **automatisiert getestet** (Vitest, Headless-Browserprüfung) und **manuell geprüft** (nichts davon ist bisher geschehen). Entscheidungen stehen in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md), Verträge in [MODUL-UND-DATENVERTRAEGE.md](MODUL-UND-DATENVERTRAEGE.md), die Inhalte der Bewohner und Geschichten in [BEWOHNER-UND-GESCHICHTEN.md](BEWOHNER-UND-GESCHICHTEN.md), die Schritte für die Prüfung auf echter Grafikhardware in [PRUEFANLEITUNG-MANUELL.md](PRUEFANLEITUNG-MANUELL.md).
 
@@ -9,7 +9,9 @@ Das Repository enthält eine startbare Three.js-Anwendung mit einem begehbaren, 
 
 Vier Bewohner (Günter Wollny, Derya Aksoy, Jonas Pietrek, Marlene Hoffmann; Figuren N-002, N-003, N-006, N-007, prozedural gebaut) gehen nach Tagesroutinen über einen handgepflegten Wegpunktgraphen vor dem Kiosk und im Hof, sind über E ansprechbar, führen Gespräche mit Bedingungen und Effekten, haben Beziehungen und Erinnerungen und stoßen zwei mehrstufige Alltagsgeschichten mit je mehreren Ausgängen an, die miteinander verknüpft sind. Alle vier kaufen als Kunden über dieselbe Verkaufsdomäne (`economy.completeSale`) ein; die Alterskontrolle gilt auch für sie (Jonas, 17, kann Tabak nie kaufen). Routinen und Wünsche sind deterministisch aus einem gespeicherten Weltseed abgeleitet. Der Spielstand ist Version 3; Version 2 und Version 1 bleiben ladbar. Inhalte und Regeln: [BEWOHNER-UND-GESCHICHTEN.md](BEWOHNER-UND-GESCHICHTEN.md).
 
-Nicht vorhanden sind Preisänderungen, dynamische Nachfrage, Wetter, Events, Kalenderdatum und Audio; nur vier Bewohner. Verkäufe an der Kasse sind weiterhin ein expliziter Kassenvorgang des Spielers. Alle automatisierten Prüfungen liefen in Node (Vitest) bzw. Headless-Chromium mit Software-Rendering; auf echter Grafikhardware und in Firefox oder Safari wurde nichts geprüft, und **manuell geprüft wurde nichts**.
+Seit Auftrag 05 hat das Spiel ein Kalenderdatum mit Jahreszeiten, deterministisches Wetter mit Vorhersage und Darstellung in der Szene, sechs datengetriebene Veranstaltungen (eine davon als freischaltbare Tradition) mit Dekorationen und zwei Gästen (Ole N-008, Hilde N-009), eine begrenzte Nachfrage, die Wunschwahl und Besuchshäufigkeit beeinflusst, die Spezialität „Frikadelle im Brötchen“ mit Herstellung, Qualität, Bekanntheit und drei Stufen, Haushalte als Datenvertrag, Geldbörsen je Bewohner und Spielstand-Version 4 (Abschnitt 5a).
+
+Nicht vorhanden sind Preisänderungen, Laufkundschaft, Audio (auch keine Wettergeräusche) und mehrköpfige Haushalte als Inhalt. Verkäufe an der Kasse sind weiterhin ein expliziter Kassenvorgang des Spielers. Alle automatisierten Prüfungen liefen in Node (Vitest) bzw. Headless-Chromium mit Software-Rendering; auf echter Grafikhardware und in Firefox oder Safari wurde nichts geprüft, und **manuell geprüft wurde nichts**.
 
 ## 2. Werkzeuge und Versionen
 Geprüft mit Node.js 22.23.4 und npm 10.9.9. Alle Pakete sind exakt gepinnt, `package-lock.json` ist eingecheckt.
@@ -247,6 +249,16 @@ Ausführlich mit allen Tabellen, Ausgängen und Texten: [BEWOHNER-UND-GESCHICHTE
 - JSON mit `schemaVersion` in `localStorage` unter `buedchensim.save.slot1`; Laden beim Start.
 - Strenge Prüfung beim Laden. Ein unlesbarer oder zu neuer Spielstand wird nach `buedchensim.save.slot1.backup` kopiert, dann startet ein neues Spiel mit Hinweis.
 - Die Migrationskette enthält seit Auftrag 03 die Migration 1→2, seit Auftrag 04 zusätzlich 2→3.
+
+### 5a. Auftrag 05 – Das lebendige Viertel (implementiert)
+- **Kalender:** `calendar.day` → Datum ab Mo 7. Juni 2027 (`date.ts`, Schaltjahre, Jahreszeiten März–Mai/Juni–August/September–November/Dezember–Februar). HUD-Knopf mit Datum, Jahreszeit und Wetter; Kalenderpanel (Taste K) mit heute, Wetter jetzt, sieben Tagen Vorhersage, Veranstaltungen und Nachfragepfeilen. Öffnen ändert keinen Zustand.
+- **Wetter:** sieben Zustände, Tageshoch/-tief und Tagesgang; reine Funktion aus Seed, Klima (`regions/ruhrgebiet/climate.ts`) und Tag; Vorhersage drei Tage sicher, vier Tage Tendenz. In der Szene: Himmel, Nebel, Licht, Rasen (Jahreszeit, Schnee), nasses Pflaster, Regen-/Schneepartikel (Einstellung voll/reduziert/aus, `localStorage`, ändert nie die Simulation).
+- **Veranstaltungen:** Heimspiel SV Grubenlicht 09 (jeder zweite Samstag ab 12. Juni 2027, 11–20 Uhr), Straßenfest (zweites Augustwochenende), Flohmarkt (erster Sonntag April–Oktober, 7–15 Uhr), Weihnachtszeit (1.–24. Dezember), Hitzewelle (≥ 3 Tage ≥ 30 °C, zwei Tage vorher angekündigt) und Frikadellen-Freitag (freitags 11–15 Uhr, erst mit Kultstatus). Status, Wirkungen und Dekoration werden aus Datum und Uhrzeit abgeleitet.
+- **Nachfrage:** `D = clamp(B + W + E + S + T)` je Produkt aus Inhaltsdaten; wirkt auf Wunschgewichte und (mit Besucherbonus und persönlicher Wetterreaktion) auf Routinenchancen; nie auf Verkäufe selbst.
+- **Gäste:** Ole (Heimspiel, Straßenfest), Hilde (Flohmarkt, Advent); eigene Dialoge, Wünsche und GLB-Figuren.
+- **Spezialität:** Zutaten (Lagerart `ingredient`) bestellen; Herstellung in der Warenverwaltung (1–3 Durchgänge à 6 Stück, 40 Spielminuten je Durchgang, optional Röstzwiebeln); fertige Ware ins Lager, Einräumen auf die Theke, Verkauf über die Verkaufsdomäne; Bewertung je Bewohnerkauf, Kundenstimmen, Bekanntheit, Empfehlungen, Stufen Erster Versuch → Geheimtipp (Kundenstopper I-014, Rezeptstufe 2, neue Wünsche und Gespräche) → Kultstatus (Kult-Tafel I-015, Frikadellen-Freitag, Ole und Hilde auch freitags). Nicht beim Großhandel bestellbar.
+- **Bewohner:** persönliche Wetterreaktionen, Veranstaltungserinnerungen (`erlebt:…`), Erinnerungen `probiert:frikadelle` und `empfiehlt:frikadelle`, Geldbörse je Besuch, Haushalte (Ein-Personen-Haushalte) mit gemeinsamen Erinnerungen.
+- **Spielstand:** Version 4 (`specialties`, `households`), Migration 3 → 4; Datum, Wetter und Veranstaltungen werden nicht gespeichert.
 
 ## 6. Prüfergebnisse (2026-11-14)
 Strikte Trennung: **implementiert** ist in Abschnitt 5 beschrieben, **automatisiert getestet** steht hier, **manuell geprüft** wurde nichts (siehe Abschnitt 9).
