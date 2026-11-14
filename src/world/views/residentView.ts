@@ -2,6 +2,8 @@ import { Group } from 'three';
 import { NPC_RADIUS } from '../../game/balance';
 import type { Game } from '../../game/game';
 import { createResident, type ResidentAnimation, type ResidentFigure } from '../assets/residents';
+import { RESIDENT_MODELS, createGlbResident, loadResidentModel } from '../assets/residents/glbResident';
+import { log } from '../../core/log';
 import type { Circle } from '../collision';
 import type { Materials } from '../materials';
 
@@ -92,6 +94,31 @@ export function createResidentView(game: Game, materials: Materials): ResidentVi
       speed: 0,
       snap: true,
     });
+  }
+
+  // Residents with a GLB model (Auftrag 04.5 prototype) swap their procedural figure once the file is loaded; in Node
+  // (tests) and when loading fails the procedural figure stays.
+  let disposed = false;
+  if (typeof window !== 'undefined' && typeof fetch === 'function') {
+    for (const e of entries) {
+      const def = game.content.npcs[e.id];
+      const model = def ? RESIDENT_MODELS[def.assetId] : undefined;
+      if (!def || !model) continue;
+      loadResidentModel(`${import.meta.env.BASE_URL}${model.url}`)
+        .then((gltf) => {
+          if (disposed) return;
+          const next = createGlbResident(def.assetId, gltf, model.walkSpeed);
+          const old = e.figure.root;
+          next.root.name = old.name;
+          next.root.visible = old.visible;
+          next.root.position.copy(old.position);
+          next.root.rotation.copy(old.rotation);
+          root.remove(old);
+          root.add(next.root);
+          e.figure = next;
+        })
+        .catch((error: unknown) => log.warn(`resident model ${model.url} not loaded, keeping the procedural figure`, error));
+    }
   }
 
   let snapAll = true;
@@ -189,6 +216,7 @@ export function createResidentView(game: Game, materials: Materials): ResidentVi
     },
 
     dispose() {
+      disposed = true;
       offReplaced();
     },
   };
