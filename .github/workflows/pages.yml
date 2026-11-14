@@ -1,6 +1,5 @@
-# Builds the game and publishes it with GitHub Pages (static site, no server).
-# Requires Settings → Pages → Source: "GitHub Actions". Which branches may deploy is controlled in
-# Settings → Environments → github-pages → Deployment branches (by default only the default branch).
+# Builds the game, runs its unit tests, and publishes it with GitHub Pages (static site, no server).
+# The branch filter includes the active development branch as well as the default branch.
 name: Pages
 
 on:
@@ -27,8 +26,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm test
       - run: npm run build
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
