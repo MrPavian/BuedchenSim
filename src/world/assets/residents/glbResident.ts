@@ -5,7 +5,7 @@ import type { ResidentAnimation, ResidentFigure } from './kit';
 
 /**
  * Residents that have a hand-checked GLB model (Auftrag 04.5, character prototype). The model is built by
- * `tools/characters/build_resident.py` (Blender) and served from `public/`. Contract of the file: one skinned figure,
+ * `tools/characters/build_mh_resident.py` (Blender, from CC0 MakeHuman data) and served from `public/`. Contract of the file: one skinned figure,
  * 1 unit = 1 m, pivot at the feet, front +Z, clips named "idle", "walk" (one stride cycle) and "talk".
  * Residents without an entry keep their procedural figure.
  */
