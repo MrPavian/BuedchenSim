@@ -22,7 +22,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // The documentation screenshots of Auftrag 01-03 (docs/screenshots/auftrag-0[123]-*.png) are frozen: the Phase-3 and view
 // screenshots of this script go to a temporary directory outside the repository. Only the Auftrag-04 series is written to the repo.
 const shotDir = mkdtempSync(path.join(os.tmpdir(), 'buedchensim-shots-'));
-const shotDir04 = path.join(root, 'docs', 'screenshots', 'auftrag-04');
+// The Auftrag-04 screenshots in docs/screenshots/auftrag-04/ are frozen documentation (handed over after Auftrag 04);
+// the R13 section still captures and checks them, but writes to the temp directory. BC_SHOTS04_DOCS=1 writes to docs again.
+const shotDir04 = process.env.BC_SHOTS04_DOCS === '1' ? path.join(root, 'docs', 'screenshots', 'auftrag-04') : shotDir;
 mkdirSync(shotDir04, { recursive: true });
 
 // CLI: `--only economy` runs only the economy/UI flow (no old sections, no screenshots), `--only residents` only the
@@ -338,6 +340,7 @@ try {
    */
   const residentsAway = async () => {
     await page.evaluate(() => {
+      /* global structuredClone */
       const { game } = window.__buedchen;
       const st = structuredClone(game.state);
       const exitPos = (npcId) => {

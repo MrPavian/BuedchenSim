@@ -17,8 +17,8 @@ export function createIceCup(asset: AssetDef, product: ProductDef, m: Materials)
     ],
     14,
   );
-  const rim = new CylinderGeometry(r, r * 0.98, 0.07 * H, 14).translate(0, 0.655 * H, 0);
-  const scoop = new SphereGeometry(1, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2).scale(r * 0.9, 0.3 * H, r * 0.9).translate(0, 0.69 * H, 0);
+  const rim = new CylinderGeometry(r, r * 0.98, 0.07 * H, 10).translate(0, 0.655 * H, 0);
+  const scoop = new SphereGeometry(1, 10, 4, 0, Math.PI * 2, 0, Math.PI / 2).scale(r * 0.9, 0.3 * H, r * 0.9).translate(0, 0.69 * H, 0);
   const b = new ProductBuilder()
     .add(mat.waffle('#d9a864'), cone)
     .add(mat.plain(product.label.accentColor), rim)
@@ -38,7 +38,7 @@ export function createPastry(asset: AssetDef, product: ProductDef, m: Materials)
   const dark = new Color(mix(product.label.primaryColor, '#000000', 0.45));
   const flat = h < 0.5 * Math.min(w, d);
   if (flat) {
-    const geometry = new BoxGeometry(w, h, d, 14, 1, 12);
+    const geometry = new BoxGeometry(w, h, d, 6, 1, 5);
     const pos = geometry.getAttribute('position');
     for (let i = 0; i < pos.count; i += 1) {
       const x = pos.getX(i);
@@ -60,7 +60,7 @@ export function createPastry(asset: AssetDef, product: ProductDef, m: Materials)
     });
     return new ProductBuilder().add(mat.vertexColored(), geometry).build(asset.assetId);
   }
-  const geometry = new SphereGeometry(1, 26, 16).scale(w / 2, 0.6 * h, d / 2).translate(0, 0.4 * h, 0);
+  const geometry = new SphereGeometry(1, 12, 8).scale(w / 2, 0.6 * h, d / 2).translate(0, 0.4 * h, 0);
   const pos = geometry.getAttribute('position');
   for (let i = 0; i < pos.count; i += 1) if (pos.getY(i) < 0) pos.setY(i, 0);
   geometry.computeVertexNormals();

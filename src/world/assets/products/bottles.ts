@@ -10,7 +10,8 @@ import { getProductMaterials } from './materials';
  * bounding box is exact. The label is a wrapped band whose centre faces +Z.
  */
 
-const SEGMENTS = 14;
+/** Radial segments: 8 keep a round silhouette at the 4–10 px a bottle or can covers from the game camera (was 14). */
+const SEGMENTS = 8;
 
 function fit<T extends { scale(x: number, y: number, z: number): T }>(geometry: T, asset: AssetDef): T {
   const { width, depth } = asset.size;

@@ -104,6 +104,17 @@ function wrapAngle(a: number): number {
   return Math.atan2(Math.sin(a), Math.cos(a));
 }
 
+/** Outdoor light rig (one place to tune; see docs/VISUAL-BASELINE.md). */
+export const LIGHT = {
+  skyColor: 0xdcebf5,
+  groundColor: 0x8c7f68,
+  hemisphere: 0.85,
+  ambient: 0.06,
+  sunColor: 0xffe2b4,
+  sun: 3.3,
+  shadowRadius: 2.5,
+} as const;
+
 export function createWorld(game: Game, container: HTMLElement): World {
   const layout = game.content.layout;
   const renderer = createRenderer(container);
@@ -114,9 +125,10 @@ export function createWorld(game: Game, container: HTMLElement): World {
   scene.fog = new Fog(palette.sky, 20, 62);
 
   // --- Lighting: soft sky/ground fill, one warm sun with shadows; the kiosk brings its own lamps (K-001-H).
-  scene.add(new HemisphereLight(0xdcebf5, 0x8c7f68, 1.15));
-  scene.add(new AmbientLight(0xffffff, 0.15));
-  const sun = new DirectionalLight(0xffe7bf, 2.5);
+  // Auftrag 04.5: less flat fill and a stronger, warm sun so forms read from the camera (VISUAL-BASELINE.md, Licht).
+  scene.add(new HemisphereLight(LIGHT.skyColor, LIGHT.groundColor, LIGHT.hemisphere));
+  scene.add(new AmbientLight(0xffffff, LIGHT.ambient));
+  const sun = new DirectionalLight(LIGHT.sunColor, LIGHT.sun);
   sun.position.set(-9, 17, 11);
   sun.target.position.set(0, 0, 0);
   sun.castShadow = true;
@@ -125,6 +137,7 @@ export function createWorld(game: Game, container: HTMLElement): World {
   Object.assign(sun.shadow.camera, { left: -extent, right: extent, top: extent, bottom: -extent, near: 1, far: 60 });
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.03;
+  sun.shadow.radius = LIGHT.shadowRadius;
   scene.add(sun, sun.target);
 
   // --- Ground (far plane hides the void beyond the layout areas), kiosk, furniture.

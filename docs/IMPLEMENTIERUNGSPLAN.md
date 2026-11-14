@@ -172,7 +172,9 @@ Umfang:
 
 **Abnahme:** Style-Zielbild ist in der echten Anwendung überprüft; Vorher-/Nachher-Screenshots und Performancewerte sind dokumentiert; bestehende Funktionen bleiben intakt; die Style-Regeln sind verbindliche Grundlage für Phase 5.
 
-**Status:** vorbereitet, Umsetzung steht aus.
+**Status (2026-11-14): umgesetzt mit Auftrag 04.5.** Ergebnisse in [VISUAL-BASELINE.md](VISUAL-BASELINE.md) (Ist-Zustand, Messwerte, verbindliche Style-Spezifikation) und im [Abschlussbericht](PHASE-04-5-ABSCHLUSSBERICHT.md).
+- Umgesetzt: Neutral-Tone-Mapping, neu gewichtetes und gebündeltes Licht, nachgezogene Palette, schlankere Warenmodelle (−57 % Dreiecke bei vollen Regalen), zusammengeführte Figurenteile (rund ein Drittel weniger Draw Calls je Bewohner), Messwerkzeug `scripts/visual-shots.mjs`, Vorher/Nachher-Screenshots.
+- Offen: Prüfung auf echter Grafikhardware (Bildrate, GPU-Last); lesbare Schrift auf Flaschen und Dosen; Hervorhebung ausgewählter Waren; Horizont und Umgebung (Phase 6).
 
 ## Phase 5 – Das lebendige Viertel
 **Ziel:** Kalender, Wettervorhersage, Veranstaltungen, dynamische Nachfrage, Bewohnerverhalten und eine eigene Kiosk-Spezialität zu einer zusammenhängenden Viertelsimulation verbinden.

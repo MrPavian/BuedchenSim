@@ -1,0 +1,86 @@
+{
+  "date": "2026-11-14T07:00:17.847Z",
+  "renderer": "Headless Chromium 153.0.8010.12, SwiftShader (Software-Rendering)",
+  "views": {
+    "aussen": {
+      "note": "Außenansicht: Fassade, Schild, Markise, Fenster, Eingang, Gehweg; Günter am Fenster, Marlene und Jonas am Eck",
+      "stockedUnits": 203,
+      "stats": {
+        "calls": 485,
+        "triangles": 106008,
+        "geometries": 170,
+        "textures": 20,
+        "lights": 6
+      },
+      "stock": 203,
+      "residentsVisible": 3,
+      "frames": 16,
+      "frameMsMedian": 250.79999999998836,
+      "frameMsP95": 523.1000000000058
+    },
+    "innen": {
+      "note": "Innenraum: Theke, Regale, Kühlschrank, Truhe, Zeitschriftenständer voll bestückt; Spieler im Gang",
+      "stockedUnits": 1573,
+      "stats": {
+        "calls": 272,
+        "triangles": 440088,
+        "geometries": 205,
+        "textures": 40,
+        "lights": 6
+      },
+      "stock": 1573,
+      "residentsVisible": 0,
+      "frames": 15,
+      "frameMsMedian": 251.80000000001746,
+      "frameMsP95": 1277
+    },
+    "regale": {
+      "note": "Bestückte Regale aus der Spielkamera: Wandregale, Mittelregal, Theke",
+      "stockedUnits": 1573,
+      "stats": {
+        "calls": 272,
+        "triangles": 440088,
+        "geometries": 205,
+        "textures": 40,
+        "lights": 6
+      },
+      "stock": 1573,
+      "residentsVisible": 0,
+      "frames": 9,
+      "frameMsMedian": 539.2000000000116,
+      "frameMsP95": 1075.2000000000116
+    },
+    "bewohner": {
+      "note": "Bewohner im Viertel: Günter, Marlene und Derya an der Hofbank, Jonas auf dem Gehweg",
+      "stockedUnits": 203,
+      "stats": {
+        "calls": 559,
+        "triangles": 110124,
+        "geometries": 210,
+        "textures": 40,
+        "lights": 6
+      },
+      "stock": 203,
+      "residentsVisible": 4,
+      "frames": 8,
+      "frameMsMedian": 558.3000000000175,
+      "frameMsP95": 866.3999999999942
+    },
+    "detail": {
+      "note": "Detail Materialien: Ausschnitt der Fassade (Klinker, Putzband, Schild, Markise, Fensterbank, Tür) aus der Außenansicht",
+      "stockedUnits": 203,
+      "stats": {
+        "calls": 303,
+        "triangles": 93116,
+        "geometries": 210,
+        "textures": 40,
+        "lights": 6
+      },
+      "stock": 203,
+      "residentsVisible": 0,
+      "frames": 13,
+      "frameMsMedian": 261,
+      "frameMsP95": 556.1999999999825
+    }
+  }
+}

@@ -12,6 +12,7 @@ import {
   type Material,
   type Object3D,
 } from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Materials } from '../../materials';
 
 /**
@@ -282,9 +283,50 @@ export interface FigureInit {
  * Wraps a built rig into a `ResidentFigure`: walk cycle driven by distance walked (so legs match the speed),
  * breathing and weight shift when standing, gesturing and nodding while talking. Pure scalar math per frame.
  */
+/**
+ * Merges the meshes that hang on the same rig group and share a material into one mesh (child transforms baked into
+ * the geometry). The limbs still move as before – only static parts of one group are combined – but a figure needs
+ * about a third of the draw calls (Auftrag 04.5: four residents cost ~180 draw calls incl. the shadow pass before).
+ */
+export function mergeStaticParts(root: Object3D): void {
+  const parents: Object3D[] = [];
+  root.traverse((o) => {
+    if (o.children.some((c) => (c as Mesh).isMesh)) parents.push(o);
+  });
+  for (const parent of parents) {
+    const byMaterial = new Map<Material, Mesh[]>();
+    for (const child of parent.children) {
+      const mesh = child as Mesh;
+      if (!mesh.isMesh || Array.isArray(mesh.material)) continue;
+      const list = byMaterial.get(mesh.material) ?? [];
+      list.push(mesh);
+      byMaterial.set(mesh.material, list);
+    }
+    for (const [material, meshes] of byMaterial) {
+      if (meshes.length < 2) continue;
+      const parts = meshes.map((mesh) => {
+        mesh.updateMatrix();
+        const g = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
+        for (const name of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(name)) g.deleteAttribute(name);
+        return g.applyMatrix4(mesh.matrix);
+      });
+      const geometry = mergeGeometries(parts, false);
+      for (const g of parts) g.dispose();
+      if (!geometry) continue;
+      const merged = new Mesh(geometry, material);
+      merged.name = meshes[0]!.name;
+      merged.castShadow = meshes.some((m) => m.castShadow);
+      merged.receiveShadow = false;
+      for (const mesh of meshes) parent.remove(mesh);
+      parent.add(merged);
+    }
+  }
+}
+
 export function finishFigure(init: FigureInit): ResidentFigure {
   const { rig, style: s, kit, seed } = init;
   for (const mesh of kit.meshes) mesh.receiveShadow = false;
+  mergeStaticParts(rig.root);
   let phase = seed * 1.7;
   let time = seed * 3.1;
   let walkW = 0;

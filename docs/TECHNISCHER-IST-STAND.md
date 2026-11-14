@@ -1,6 +1,6 @@
 # Technischer Ist-Stand
 
-**Stand:** 2026-11-14 · nach [Auftrag 04](auftraege/04-bewohner-und-soziale-bindung.md)
+**Stand:** 2026-11-14 · nach [Auftrag 04](auftraege/04-bewohner-und-soziale-bindung.md) und [Auftrag 04.5](auftraege/04-5-visual-identity-und-graphics-foundation.md) (visuelle Basis: [VISUAL-BASELINE.md](VISUAL-BASELINE.md), [Abschlussbericht](PHASE-04-5-ABSCHLUSSBERICHT.md))
 
 Dieses Dokument enthält nur geprüfte Fakten und trennt durchgehend **implementiert**, **automatisiert getestet** (Vitest, Headless-Browserprüfung) und **manuell geprüft** (nichts davon ist bisher geschehen). Entscheidungen stehen in [ARCHITEKTUR-ENTSCHEIDUNGEN.md](ARCHITEKTUR-ENTSCHEIDUNGEN.md), Verträge in [MODUL-UND-DATENVERTRAEGE.md](MODUL-UND-DATENVERTRAEGE.md), die Inhalte der Bewohner und Geschichten in [BEWOHNER-UND-GESCHICHTEN.md](BEWOHNER-UND-GESCHICHTEN.md), die Schritte für die Prüfung auf echter Grafikhardware in [PRUEFANLEITUNG-MANUELL.md](PRUEFANLEITUNG-MANUELL.md).
 
@@ -41,6 +41,8 @@ TypeScript 7 wurde nicht gewählt, weil typescript-eslint 8.72.2 nur TypeScript 
 | `npm run lint` | ESLint inklusive Schichtenregel |
 | `npm run test` | Vitest |
 | `npm run check:browser` | baut, startet die Anwendung in Chromium, prüft sie mit echten Tastendrücken und schreibt Screenshots nach `docs/screenshots/` (Laufzeit in der Entwicklungsumgebung mit Software-Rendering: bis Auftrag 03 rund 11–12 Minuten; Auftrag 04: rund 20 Minuten); mit `-- --only economy` läuft nur der Wirtschaftsabschnitt |
+
+`node scripts/visual-shots.mjs --out <Ordner> [--scale 2] [--only aussen,innen]` erzeugt die Referenzansichten von Auftrag 04.5 mit Messwerten (`metrics.json`).
 
 `check:browser` braucht einen zu Playwright 1.63.0 passenden Chromium. Auf einem frischen Rechner einmalig `npx playwright install chromium` ausführen.
 
@@ -85,6 +87,15 @@ docs/PRODUKTKATALOG.md         Produktkatalog und Warenplätze aus den echten Da
 Tests liegen als `*.test.ts` neben dem Code.
 
 ## 5. Implementierte Funktionen
+**Visuelle Basis (Auftrag 04.5)**
+Gemessen und begründet in [VISUAL-BASELINE.md](VISUAL-BASELINE.md); dort steht auch die verbindliche Style-Spezifikation für neue Assets.
+- Renderer: Tone Mapping „Khronos PBR Neutral“ bei Belichtung 1,0 (`src/world/renderer.ts`); vorher kein Tone Mapping.
+- Licht neu gewichtet und an einer Stelle gebündelt (`LIGHT` in `src/world/world.ts`): Halbkugellicht 0,85 (vorher 1,15), Umgebungslicht 0,06 (0,15), Sonne 3,3 (2,5) in wärmerem Ton, weichere Schatten (Radius 2,5); Innenlampe 11 (14).
+- Palette: Wiese, Grundfläche und Asphalt nachgezogen (`src/world/materials.ts`).
+- Waren schlanker unterteilt (Flaschen und Dosen 8 statt 14 Segmente, Tüten und Stieleis 4 × 6 statt 8 × 14 × 2, Backwaren und Eisbecher gröber): bei voll bestückten Regalen 187.748 statt 440.088 Dreiecke (−57 %), Maße unverändert.
+- Bewohnerfiguren: statische Teile je Gelenkgruppe und Material zusammengeführt (`mergeStaticParts` in `src/world/assets/residents/kit.ts`): rund ein Drittel weniger Draw Calls je Figur, Animation unverändert.
+- Reproduzierbare Referenzansichten und Messwerte: `node scripts/visual-shots.mjs --out <Ordner>`; Bilder vorher/nachher unter `docs/screenshots/auftrag-04-5/`.
+
 **Bewohner, Dialoge und Geschichten (Auftrag 04)**
 Ausführlich mit allen Tabellen, Ausgängen und Texten: [BEWOHNER-UND-GESCHICHTEN.md](BEWOHNER-UND-GESCHICHTEN.md). Typen und Verträge: [MODUL-UND-DATENVERTRAEGE.md, Abschnitt 16](MODUL-UND-DATENVERTRAEGE.md). Hier die Kurzfassung des Implementierten.
 

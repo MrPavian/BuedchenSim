@@ -18,7 +18,8 @@ export function buildLighting(ctx: KioskContext, awning: AwningInfo | null): Poi
   const fp = kiosk.footprint;
   const lights: PointLight[] = [];
 
-  const interior = new PointLight(0xffc27a, 14, 8, 2);
+  // Auftrag 04.5: 11 instead of 14 – with tone mapping the lamp no longer blows out what is right below it.
+  const interior = new PointLight(0xffc27a, 11, 8, 2);
   interior.name = 'kiosk.light.interior';
   interior.position.set(0, kiosk.height - 1.0, 0);
   ctx.fixed.add(interior);

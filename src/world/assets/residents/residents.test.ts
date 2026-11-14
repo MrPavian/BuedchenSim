@@ -39,7 +39,7 @@ describe('resident figures', () => {
       expect(s.box.min.y, id).toBeGreaterThanOrEqual(-0.02);
       expect(s.box.min.y, id).toBeLessThanOrEqual(0.03);
       expect(Math.abs((s.box.min.x + s.box.max.x) / 2), id).toBeLessThan(0.15);
-      expect(s.meshes, id).toBeGreaterThanOrEqual(25);
+      expect(s.meshes, id).toBeGreaterThanOrEqual(8);
       expect(s.triangles, id).toBeLessThan(2600);
       expect(figure.headHeight, id).toBeGreaterThan(figure.height - 0.3);
     }
@@ -71,20 +71,25 @@ describe('resident figures', () => {
     expect(byId['N-003']!.x).toBeGreaterThan(byId['N-006']!.x - 0.5);
   });
 
-  it('shares geometries between figures of one material set (no per-figure copies of the unit shapes)', () => {
+  it('merges static parts per rig group and material: few meshes (draw calls) per figure, limbs stay separate', () => {
     const m = createMaterials();
-    const geometries = new Set<unknown>();
-    let meshes = 0;
     for (const id of IDS) {
-      createResident(id, m).root.traverse((o) => {
-        if ((o as Mesh).isMesh) {
-          geometries.add((o as Mesh).geometry);
-          meshes += 1;
-        }
+      const figure = createResident(id, m);
+      let meshes = 0;
+      const perParent = new Map<unknown, Set<unknown>>();
+      figure.root.traverse((o) => {
+        const mesh = o as Mesh;
+        if (!mesh.isMesh) return;
+        meshes += 1;
+        const mats = perParent.get(mesh.parent) ?? new Set();
+        // At most one mesh per material on each group: everything that could be merged was merged.
+        expect(mats.has(mesh.material), `${id}: two meshes with one material on one group`).toBe(false);
+        mats.add(mesh.material);
+        perParent.set(mesh.parent, mats);
       });
+      expect(meshes, `${id} meshes`).toBeLessThanOrEqual(24);
+      expect(meshes, `${id} meshes`).toBeGreaterThanOrEqual(8);
     }
-    expect(geometries.size).toBeLessThanOrEqual(8);
-    expect(meshes).toBeGreaterThan(100);
   });
 
   it('walks, idles and talks: the pose changes, scales with speed and creates no objects per update', () => {

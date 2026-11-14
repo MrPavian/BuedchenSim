@@ -27,10 +27,10 @@ export const palette = {
   signBoard: 0x25483f,
   sidewalk: 0xbdb8ae,
   curb: 0xd2cec4,
-  asphalt: 0x4a4d52,
+  asphalt: 0x585b60, // Auftrag 04.5: lighter, tone mapping darkened it
   roadLine: 0xe8e2c8,
-  yard: 0x84946a,
-  base: 0x7f8b66,
+  yard: 0x7d935f, // Auftrag 04.5: a little fresher, still muted (urban lawn, not golf course)
+  base: 0x78895d,
   marker: 0xffc94d,
   player: { jacket: 0x2f6bc9, pants: 0x2d3446, skin: 0xf1c8a2, cap: 0xe2502e, shoe: 0x2a2a2a },
 } as const;
@@ -161,7 +161,8 @@ export function createMaterials(): Materials {
     placeholder: lambert(0xd05fd0),
     placeholderFront: lambert(0xf2ead2),
     placeholderTints: new Map(),
-    marker: new MeshBasicMaterial({ color: palette.marker, transparent: true }),
+    // UI colour (interaction yellow): exempt from tone mapping so it stays exactly the reserved signal colour.
+    marker: new MeshBasicMaterial({ color: palette.marker, transparent: true, toneMapped: false }),
     playerJacket: lambert(palette.player.jacket),
     playerPants: lambert(palette.player.pants),
     playerSkin: lambert(palette.player.skin),

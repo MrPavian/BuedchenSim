@@ -29,7 +29,7 @@ Danach die angezeigte Adresse im Desktop-Browser öffnen. Steuerung: **WASD** od
 | `npm run check:browser` | Prüfung der laufenden Szene in Chromium mit Screenshots (mehrere Minuten); benötigt einmalig `npx playwright install chromium` |
 
 ## Projektstand
-Phase 4 ist umgesetzt ([Auftrag 04](docs/auftraege/04-bewohner-und-soziale-bindung.md)): Das Viertel hat **vier wiederkehrende Bewohner**. Vor Phase 5 ist Auftrag 04.5 als visueller Qualitätsschritt vorbereitet. Phase 3 ([Auftrag 03](docs/auftraege/03-waren-wirtschaftskreislauf-und-spieltag.md)) lieferte darunter den Wirtschaftskreislauf.
+Phase 4 ist umgesetzt ([Auftrag 04](docs/auftraege/04-bewohner-und-soziale-bindung.md)): Das Viertel hat **vier wiederkehrende Bewohner**. Vor Phase 5 hat [Auftrag 04.5](docs/auftraege/04-5-visual-identity-und-graphics-foundation.md) die visuelle Basis festgelegt: wärmeres, plastischeres Licht mit Tone Mapping, schlankere Waren- und Figurenmodelle und eine verbindliche Style-Spezifikation ([VISUAL-BASELINE.md](docs/VISUAL-BASELINE.md), Vorher/Nachher-Bilder unter [docs/screenshots/auftrag-04-5/](docs/screenshots/auftrag-04-5/README.md)). Phase 3 ([Auftrag 03](docs/auftraege/03-waren-wirtschaftskreislauf-und-spieltag.md)) lieferte darunter den Wirtschaftskreislauf.
 
 **Bewohner und soziale Bindung (Auftrag 04):**
 - **Vier Bewohner** mit eigenen Profilen und Figuren (Günter Wollny, Derya Aksoy, Jonas Pietrek, Marlene Hoffmann; alle Namen frei erfunden): Sie kommen nach Tagesroutinen (Tageszeit und Wochentag) über Gehweg, Ecke und Hof zum Kiosk, warten, gehen wieder und laufen weder durch Wände noch durch den Spieler. Routinen und Wünsche sind aus einem gespeicherten Weltseed abgeleitet; ein Neuladen ändert keine Entscheidung.
@@ -83,9 +83,9 @@ Weitere Screenshots aus der laufenden Anwendung: [Warenverwaltung](docs/screensh
 - **Offen:** O-5 Hosting und Lizenz.
 
 ## Nächster Schritt
-Phase 4 – **Bewohner, Kundenverhalten und soziale Bindung** ist mit [Auftrag 04](docs/auftraege/04-bewohner-und-soziale-bindung.md) umgesetzt (Prüfstand siehe oben). Vor Phase 5 folgt der visuelle Qualitätsschritt [Auftrag 04.5 – Visual Identity & Graphics Foundation](docs/auftraege/04-5-visual-identity-und-graphics-foundation.md). Grafik wird damit bereits während der Entwicklung gezielt verbessert; die vollständige Detailpolitur bleibt später.
+Phase 4 – **Bewohner, Kundenverhalten und soziale Bindung** ist mit [Auftrag 04](docs/auftraege/04-bewohner-und-soziale-bindung.md) umgesetzt (Prüfstand siehe oben). Der visuelle Qualitätsschritt [Auftrag 04.5 – Visual Identity & Graphics Foundation](docs/auftraege/04-5-visual-identity-und-graphics-foundation.md) ist umgesetzt ([Abschlussbericht](docs/PHASE-04-5-ABSCHLUSSBERICHT.md)); neue Grafik folgt ab jetzt den Regeln in [VISUAL-BASELINE.md](docs/VISUAL-BASELINE.md). Die vollständige Detailpolitur bleibt später.
 
-Die Spezifikation für Phase 5 ist bereits vorbereitet: [Auftrag 05 – Das lebendige Viertel](docs/auftraege/05-das-lebendige-viertel.md). Sie verbindet Kalender und Jahreszeiten, Wettervorhersage, fünf erste Veranstaltungen, dynamische Nachfrage, NPC-Reaktionen und die Spezialität **Frikadelle im Brötchen**. Die Umsetzung steht ausdrücklich noch aus und setzt die technische Bestandsaufnahme nach Auftrag 04 voraus. Auftrag 04.5 legt davor die visuelle Grundlage fest.
+Die Spezifikation für Phase 5 ist bereits vorbereitet: [Auftrag 05 – Das lebendige Viertel](docs/auftraege/05-das-lebendige-viertel.md). Sie verbindet Kalender und Jahreszeiten, Wettervorhersage, fünf erste Veranstaltungen, dynamische Nachfrage, NPC-Reaktionen und die Spezialität **Frikadelle im Brötchen**. Die Umsetzung steht ausdrücklich noch aus und setzt die technische Bestandsaufnahme nach Auftrag 04 voraus. Die visuelle Grundlage dafür steht mit Auftrag 04.5.
 
 ## Projekt-Dokumentation
 Die Art-Direction, Produktionsplanung, Regionen, fiktive Produktwelt, Claude-Code-Prompts und Three.js-Asset-Standards liegen unter [docs/artwork-prompts](docs/artwork-prompts/README.md).

@@ -130,6 +130,7 @@ export function createPlayerFigure(m: Materials): PlayerFigure {
     depthFunc: GreaterDepth,
     depthWrite: false,
     fog: false,
+    toneMapped: false, // signal colour of the x-ray silhouette, not part of the lit scene
   });
   const silhouette = buildRig(geometries, () => silhouetteMaterial, SILHOUETTE_RENDER_ORDER, false);
   silhouette.body.name = 'player.silhouette';

@@ -83,7 +83,8 @@ export function luminance(css: string): number {
  * w x h x d (pivot = bottom centre, front +Z); the front face UVs span the whole texture.
  */
 export function pillowGeometry(w: number, h: number, d: number, crimp = 0.16, sideEdge = 0.22): BoxGeometry {
-  const geometry = new BoxGeometry(w, h, d, 8, 14, 2);
+  // 4 x 6 subdivisions keep the pillow bulge readable at game-camera distance (was 8 x 14 x 2: 5x the triangles).
+  const geometry = new BoxGeometry(w, h, d, 4, 6, 1);
   const pos = geometry.getAttribute('position');
   for (let i = 0; i < pos.count; i += 1) {
     const nx = Math.abs(pos.getX(i)) / (w / 2);
