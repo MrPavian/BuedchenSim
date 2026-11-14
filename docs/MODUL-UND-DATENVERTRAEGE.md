@@ -793,6 +793,7 @@ Nicht im Zustand: das offene Gespräch (Sitzung, Knoten, Hinweis), Laufzeitzähl
 | `NPC_BLOCKED_WAIT_SECONDS` | 4 | Wartezeit vor der Suche nach einer Ausweichroute (spieltempo-skaliert) |
 | `NPC_DEADLOCK_SECONDS` | 20 | Blockadezeit durch einen Bewohner, nach der der ausweichpflichtige (höhere ID) durch ihn hindurchgeht |
 | `NPC_MAX_STEP_SECONDS` | 1/30 | längster Simulationsteilschritt |
+| `NPC_MAX_TICK_SECONDS` | 5 | höchste Simulationsdauer der Bewohner je `game.tick` (größere Zeitschritte werden gekappt) |
 | `NPC_TALK_RADIUS` | 1,8 | Reichweite zum Ansprechen (m) |
 | `NPC_TALK_MAX_ANGLE` | 75° (in Radiant) | größte Abweichung der Blickrichtung des Spielers |
 | `SHUTTER_PATIENCE_MINUTES` | 30 | Geduld eines Kunden vor geschlossener Klappe (Spielminuten) |
@@ -816,7 +817,7 @@ Alle Ablehnungen sind `{ ok: false, reason }`; eine abgelehnte Aktion ändert ni
 | `game.npcs.talk(npcId)` | öffnet ein Gespräch: bei `waiting` mit offenem Wunsch das Kundengespräch, sonst das Gespräch mit der höchsten Priorität, dessen Bedingungen gelten; Tagesgruß (+1, einmal je Tag), `lastTalk`, Blick zum Spieler, Status `talking`; Signale `npc.status.changed`, `dialogue.opened` | `unknown_npc`; `npc_away`; `dialogue_already_open`; `nothing_to_say` |
 | `game.dialogue.current()` | die offene Sitzung als `DialogueView` oder `null` | – |
 | `game.dialogue.choose(optionId)` | wendet die Effekte der Antwort atomar und in Reihenfolge an, geht zum Folgeknoten oder beendet; liefert `{ ok: true, ended, transaction? }` | `no_dialogue`; `unknown_option`; `option_unavailable` (Bedingungen der Antwort gelten nicht; im Kundengespräch auch „Bis gleich.“ vor der Entscheidung). Im Kundengespräch zusätzlich: `no_wish`, `wish_already_resolved` und jeder Grund von `completeSale` (`day_not_open`, `kiosk_closed`, `age_check_required`, `customer_underage`, `insufficient_stock`, `unknown_customer`, bei defekten Daten `invalid_quantity` oder `unknown_product`) |
-| `game.dialogue.close()` | beendet die Sitzung, merkt ein Geschichtsgespräch als gesehen, Bewohner läuft weiter oder wartet; Signal `dialogue.closed` | `no_dialogue` |
+| `game.dialogue.close()` | beendet die Sitzung vorzeitig, **ohne** das Gespräch als gesehen zu vermerken (erst eine Schlussantwort über `choose` vermerkt es), Bewohner läuft weiter oder wartet; Signal `dialogue.closed` | `no_dialogue` |
 | `game.getInteractionTarget()` | `InteractionTarget \| null`: der nächste sichtbare Bewohner in Reichweite, den der Spieler ansieht (`kind: 'npc'`, `action: 'npc.talk'`, `pointId` = Bewohner-ID, `npcId`), sonst der Kiosk-Punkt | – |
 | `game.getAvailableInteraction()` | wie bisher der Kiosk-Punkt, aber `null`, solange ein Bewohner anvisiert ist | – |
 | `game.interact()` | Bewohner in Reichweite: wie `npcs.talk`; sonst wie in 15.4 | `nothing_in_range`; die Gründe von `talk` |

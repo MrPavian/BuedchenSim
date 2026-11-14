@@ -148,7 +148,6 @@ Umgesetzt:
 
 Offene Restpunkte aus Phase 4:
 - Browserprüfung dieses Auftrags und Screenshots: [[BROWSERCHECK]], [[SCREENSHOTS]].
-- Vorzeitiges Schließen verbraucht einmalige Gespräche (Günters `paket-bitte` und die Fotoszenen): ein Geschichtsstrang kann dadurch unwiederbringlich enden (Rückfall zu klären).
 - Vorlieben (`likes`/`dislikes`) und die Beziehungen der Bewohner untereinander haben keine Spielwirkung; Beziehungen zum Spieler wirken nur auf Gespräche.
 - Kunden warten bei offener Klappe bis zum Ende ihres Routinefensters; Geschichtsgespräche entstehen nicht am Fenster, solange ein Wunsch offen ist.
 - Der Ständer in Geschichte B hat kein eigenes Modell; das Paket ist kein sichtbarer Gegenstand.

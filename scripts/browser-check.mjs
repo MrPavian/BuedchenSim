@@ -8,7 +8,8 @@
 //  - crashes, closed pages and lost WebGL contexts are reported as FAIL lines, the PASS/FAIL list is
 //    always printed and server and browser are always stopped.
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
 import path from 'node:path';
@@ -18,18 +19,24 @@ const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const shotDir = path.join(root, 'docs', 'screenshots');
-mkdirSync(shotDir, { recursive: true });
+// The documentation screenshots of Auftrag 01-03 (docs/screenshots/auftrag-0[123]-*.png) are frozen: the Phase-3 and view
+// screenshots of this script go to a temporary directory outside the repository. Only the Auftrag-04 series is written to the repo.
+const shotDir = mkdtempSync(path.join(os.tmpdir(), 'buedchensim-shots-'));
+const shotDir04 = path.join(root, 'docs', 'screenshots', 'auftrag-04');
+mkdirSync(shotDir04, { recursive: true });
 
-// CLI: `--only economy` runs only the economy/UI flow (no old sections, no screenshots), `--only shots` only the four
-// auftrag-03 screenshots; without the flag everything runs (also via env BC_ONLY).
+// CLI: `--only economy` runs only the economy/UI flow (no old sections, no screenshots), `--only residents` only the
+// residents section (Auftrag 04, incl. its screenshots), `--only shots` only the screenshot sections (E13, R13); without
+// the flag everything runs (also via env BC_ONLY). BC_NOBUILD=1 skips the build (development only).
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx >= 0 ? process.argv[onlyIdx + 1] : (process.env.BC_ONLY ?? null);
-if (only !== null && !['economy', 'shots'].includes(only)) throw new Error(`unknown --only ${only} (economy | shots)`);
+if (only !== null && !['economy', 'shots', 'residents'].includes(only)) throw new Error(`unknown --only ${only} (economy | residents | shots)`);
 const runOld = only === null;
 const runEconomy = only === null || only === 'economy';
 const runShots = only === null || only === 'shots';
+const runResidents = only === null || only === 'residents';
 
+const startedAt = Date.now();
 const results = [];
 const record = (name, ok, info = '') => {
   results.push({ name, ok });
@@ -62,11 +69,13 @@ let pageGone = null; // reason string once the main page crashed or closed unexp
 let expectClose = false;
 
 try {
-  const build = spawnSync(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), 'build'], {
-    cwd: root,
-    stdio: 'inherit',
-  });
-  if (build.status !== 0) throw new Error('Build failed');
+  if (!process.env.BC_NOBUILD) {
+    const build = spawnSync(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), 'build'], {
+      cwd: root,
+      stdio: 'inherit',
+    });
+    if (build.status !== 0) throw new Error('Build failed');
+  }
 
   const port = await freePort();
   server = spawn(
@@ -322,6 +331,29 @@ try {
     if (res.timedOut) console.log(`info: walkTo (${f(target.x)}, ${f(target.z)}) timed out after ${res.ms} ms at (${f(end.x)}, ${f(end.z)})`);
     return end;
   };
+  /**
+   * Phase 1-3 sections predate the residents (Auftrag 04). Their clock runs, so from 06:30 a resident may stand at the
+   * window, and a resident in range takes priority over the kiosk points (game rule). These sections therefore send all
+   * residents home and pause the clock before they test door/shutter interactions (setup via the debug hook only).
+   */
+  const residentsAway = async () => {
+    await page.evaluate(() => {
+      const { game } = window.__buedchen;
+      const st = structuredClone(game.state);
+      const exitPos = (npcId) => {
+        const def = game.content.npcs[npcId];
+        const place = game.content.layout.nav.places.find((p) => p.id === def.homeExitPlaceId);
+        const wp = game.content.layout.nav.waypoints.find((w) => w.id === place.spots[0].waypointId);
+        return { x: wp.position.x, z: wp.position.z };
+      };
+      for (const [id, n] of Object.entries(st.npcs)) {
+        Object.assign(n, { status: 'away', position: exitPos(id), placeId: null, spotIndex: null, route: [], routineId: null, wish: null, waitingSince: null });
+      }
+      st.calendar.paused = true;
+      game.load(st);
+    });
+  };
+
   const walkVia = async (points, finalTol = 0.12) => {
     let p = await pos();
     for (let i = 0; i < points.length; i += 1) p = await walkTo(points[i], 30000, i === points.length - 1 ? finalTol : 0.2);
@@ -388,8 +420,8 @@ try {
 
   // Sections: each one is isolated; an exception becomes a FAIL line, all keys are released afterwards.
   const section = async (name, fn) => {
-    // economy sections are named 'E…' (E13 = screenshots); everything else is an old section
-    if (name.startsWith('E13') ? !runShots : name.startsWith('E') ? !runEconomy : !runOld) return;
+    // economy sections are named 'E…' (E13 = screenshots), resident sections 'R…' (R13 = screenshots); everything else is an old section
+    if (name.startsWith('E13') ? !runShots : name.startsWith('E') ? !runEconomy : name.startsWith('R13') ? !(runShots || runResidents) : name.startsWith('R') ? !runResidents : !runOld) return;
     if (pageGone) {
       record(`${name}: übersprungen`, false, pageGone);
       return;
@@ -406,7 +438,7 @@ try {
   // Layout data from the page (serialisable) for the independent geometry in this script.
   const data = await page.evaluate(() => {
     const c = window.__buedchen.game.content;
-    return JSON.parse(JSON.stringify({ layout: c.layout, assets: c.assets, products: c.products, stockSlots: c.stockSlots }));
+    return JSON.parse(JSON.stringify({ layout: c.layout, assets: c.assets, products: c.products, stockSlots: c.stockSlots, npcs: c.npcs }));
   });
   const placements = data.layout.placements;
   const placementOf = (id) => placements.find((p) => p.id === id);
@@ -660,6 +692,7 @@ try {
 
   await section('9c Front + Klappenmarker außen', async () => {
     // Front of the kiosk at the sales window: figure unoccluded, marker visible with shutter open and closed.
+    await residentsAway();
     const sw = data.layout.interactionPoints.find((p) => p.id === 'interaction.shutter');
     await walkVia([{ x: -6, z: 0.6 }, { x: -6, z: 3.4 }, { x: sw.position.x, z: 2.9 }]);
     await settled(false);
@@ -671,6 +704,7 @@ try {
   });
 
   await section('9c Innen + Klappenmarker innen', async () => {
+    await residentsAway();
     await walkVia([{ x: 2.0, z: 3.2 }, { x: 2.0, z: 0.8 }]);
     const counter = footprint(placementOf('placement.counter'));
     const shelf = footprint(placementOf('placement.middle-shelf'));
@@ -748,10 +782,10 @@ try {
   // ---------------------------------------------------------------- screenshots (deviceScaleFactor 2)
   // Each in a fresh context that starts from a save file: the pose is set via localStorage, everything else is the real app.
   // Software-GL at deviceScaleFactor 2 occasionally needs very long for one frame: retry the capture itself.
-  const capture = async (p, file) => {
+  const capture = async (p, file, dir = shotDir) => {
     for (let attempt = 1; ; attempt += 1) {
       try {
-        await p.screenshot({ path: path.join(shotDir, file), timeout: 60000 });
+        await p.screenshot({ path: path.join(dir, file), timeout: 60000 });
         return;
       } catch (error) {
         if (attempt >= 3) throw error;
@@ -860,11 +894,12 @@ try {
     }, patch);
     await reload(false);
   };
-  const newEcoPage = async (label, scale = 1) => {
+  const newEcoPage = async (label, scale = 1, extraInit = null) => {
     ecoCtx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: scale });
     page = await ecoCtx.newPage();
     watch(page, label);
     await page.addInitScript(initScript);
+    if (extraInit) await page.addInitScript(extraInit);
     await page.goto(url);
     await page.waitForFunction(() => window.__buedchen?.game, null, { timeout: 15000 });
     await waitSteps(10, 15000);
@@ -1349,7 +1384,7 @@ try {
     record('E11c v1-Spielstand lädt: Position, Tür und Klappe bleiben, Wirtschaft mit Anfangswerten (Tag 1, 06:00, 300,00 €, leer)', Math.hypot(s.player.position.x + 3.5, s.player.position.z + 0.3) < 0.05 && s.kiosk.doorOpen === true && s.kiosk.shutterOpen === true && s.economy.cashCents === START_CASH && Object.keys(s.economy.storage).length === 0 && Object.keys(s.economy.shelves).length === 0 && s.economy.pendingDelivery === null && s.economy.lastReport === null && s.calendar.day === 1 && s.calendar.minute >= 360 && s.calendar.minute < 375 && s.calendar.phase === 'open' && noticeShown && (await txt('hud-day')) === 'Mo · Tag 1' && (await txt('hud-cash')) === eur(START_CASH) && (await attr('hud-status', 'data-open')) === 'true', `Tag ${s.calendar.day}, ${await txt('hud-clock')}, ${await txt('hud-cash')}, Hinweis ${noticeShown}`);
     await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('buedchensim.save.slot1')));
-    record('E11d Nach dem Laden wird im aktuellen Format (schemaVersion 2) gespeichert', stored.schemaVersion === 2 && stored.state.economy?.cashCents === START_CASH && stored.state.calendar?.day === 1, `schemaVersion ${stored.schemaVersion}`);
+    record('E11d Nach dem Laden wird im aktuellen Format (schemaVersion 3) gespeichert', stored.schemaVersion === 3 && stored.state.economy?.cashCents === START_CASH && stored.state.calendar?.day === 1, `schemaVersion ${stored.schemaVersion}`);
   });
 
   // ---------------------------------------------------------------- E14 place-bound panels away from the place / state replacement
@@ -1469,6 +1504,876 @@ try {
     await closeEcoCtx();
   });
 
+  // ================================================================ residents / social flow (Auftrag 04)
+  // Drives the REAL UI (real key presses, clicks on data-testids). The debug hook is used to read state and to set up
+  // situations (clock, story state, residents placed at a place) through game.load; every dialogue choice, every sale and
+  // every interaction trigger goes through the UI. Residents arrive through their real routines in R1/R2/R3/R8/R9.
+  const NPC_RADIUS = 0.3; // NPC_RADIUS in src/game/balance.ts
+  const G = 'npc.guenter';
+  const D = 'npc.derya';
+  const J = 'npc.jonas';
+  const M = 'npc.marlene';
+  const NPC_IDS = [G, D, J, M];
+  const npcName = (id) => data.npcs[id].name;
+  const ROUTINE = { [G]: 'g.morgen', [D]: 'd.broetchen', [J]: 'j.di', [M]: 'm.werktag' };
+  const COUNTER = { x: -1.0, z: 0.95, h: 0 }; // behind the counter at the sales window, facing south
+  const STOCK = {
+    'slot.counter.1': { productId: 'product.pottbaecker-broetchen', quantity: 6 },
+    'slot.counter.2': { productId: 'product.zechenhof-drehtabak-30', quantity: 5 },
+    'slot.counter.3': { productId: 'product.pottbaecker-streuselteilchen', quantity: 4 },
+    'slot.magazine-rack.1': { productId: 'product.halden-echo-lokalblatt', quantity: 5 },
+    'slot.wall-shelf-north.1': { productId: 'product.puettbraeu-pils', quantity: 10 },
+    'slot.wall-shelf-north.2': { productId: 'product.ruhrbrause-wasser-still', quantity: 10 },
+    'slot.wall-shelf-north.3': { productId: 'product.naschwerk-vollmilch', quantity: 10 },
+    'slot.fridge.1': { productId: 'product.zechenblitz-energy', quantity: 5 },
+    'slot.fridge.2': { productId: 'product.ruhrbrause-zitronenlimo', quantity: 5 },
+    'slot.freezer.1': { productId: 'product.eiskumpel-wassereis-brause', quantity: 5 },
+  };
+  const weekdayOfDay = (day) => (((day - 1) % 7) + 7) % 7;
+  const nav = data.layout.nav;
+  const wpPos = Object.fromEntries(nav.waypoints.map((w) => [w.id, w.position]));
+  const segments = nav.edges.map(([a, b]) => [wpPos[a], wpPos[b]]);
+  const distToSegment = (p, [a, b]) => {
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const len2 = dx * dx + dz * dz;
+    const t = len2 === 0 ? 0 : Math.min(1, Math.max(0, ((p.x - a.x) * dx + (p.z - a.z) * dz) / len2));
+    return Math.hypot(p.x - (a.x + t * dx), p.z - (a.z + t * dz));
+  };
+  const distToNav = (p) => Math.min(...segments.map((sg) => distToSegment(p, sg)));
+  const distToRect = (p, r) => Math.hypot(p.x - Math.min(Math.max(p.x, r.minX), r.maxX), p.z - Math.min(Math.max(p.z, r.minZ), r.maxZ));
+  /** Footprints a resident must stay out of: the kiosk and every colliding free-standing placement (gated ones only with their flag). */
+  const blockersFor = (flags) => [
+    data.layout.kiosk.footprint,
+    ...placements
+      .filter((p) => p.on === undefined && (p.collides ?? data.assets[p.assetId].collides) && (p.requiresFlag === undefined || flags[p.requiresFlag]))
+      .map(footprint),
+  ];
+
+  /** In-page helpers (survive reloads through the init script). */
+  const resLib = () => {
+    const R = (window.__r = {});
+    const game = () => window.__buedchen.game;
+    const away = (n) => {
+      n.status = 'away'; n.placeId = null; n.spotIndex = null; n.route = []; n.routineId = null; n.wish = null; n.waitingSince = null;
+      n.doneToday = { day: 0, routineIds: [] };
+    };
+    const base = (spec) => {
+      const g = game();
+      const s = window.structuredClone(g.state);
+      const places = new Map(g.content.layout.nav.places.map((p) => [p.id, p]));
+      const wp = new Map(g.content.layout.nav.waypoints.map((w) => [w.id, w.position]));
+      if (spec.seed !== undefined) s.world.seed = spec.seed;
+      const c = s.calendar;
+      if (spec.day !== undefined) c.day = spec.day;
+      if (spec.minute !== undefined) c.minute = spec.minute;
+      c.phase = 'open';
+      c.paused = spec.paused ?? true;
+      c.speed = spec.speed ?? 1;
+      if (spec.shutter !== undefined) s.kiosk.shutterOpen = spec.shutter;
+      if (spec.door !== undefined) s.kiosk.doorOpen = spec.door;
+      if (spec.player) { s.player.position = { x: spec.player.x, z: spec.player.z }; s.player.heading = spec.player.h ?? 0; }
+      if (spec.flags) Object.assign(s.story.flags, spec.flags);
+      if (spec.quests) for (const [k, v] of Object.entries(spec.quests)) s.story.quests[k] = v;
+      if (spec.shelves) s.economy.shelves = window.structuredClone(spec.shelves);
+      if (spec.cash !== undefined) s.economy.cashCents = spec.cash;
+      for (const [id, n] of Object.entries(s.npcs)) {
+        const o = spec.npcs?.[id];
+        if (!o) { away(n); continue; }
+        const place = places.get(o.place);
+        const spotIndex = o.spot === undefined ? 0 : o.spot;
+        const spot = spotIndex === null ? place.spots[0] : place.spots[spotIndex];
+        const pos = o.pos ?? (o.from ? wp.get(o.from) : wp.get(spot.waypointId));
+        n.position = { x: pos.x, z: pos.z };
+        n.heading = o.heading ?? spot.heading;
+        n.placeId = o.place;
+        n.spotIndex = spotIndex;
+        n.routineId = o.routine ?? null;
+        n.route = o.route ?? [];
+        n.status = o.status ?? (n.route.length > 0 ? 'walking' : 'at_place');
+        n.waitingSince = null;
+        n.doneToday = { day: c.day, routineIds: [] };
+        n.wish = null;
+        if (o.wish) {
+          const w = g.content.npcs[id].wishes.find((x) => x.id === o.wish);
+          n.wish = { wishId: w.id, lines: w.lines.map((l) => ({ ...l })), ageChecked: false, resolved: null };
+          n.status = 'waiting';
+        }
+        if (o.rel !== undefined) n.relationship = o.rel;
+        for (const m of o.memories ?? []) if (!n.memories.includes(m)) n.memories.push(m);
+        if (o.lastTalk) n.lastTalk = o.lastTalk;
+      }
+      return s;
+    };
+    R.arrange = (spec) => {
+      const r = game().load(base(spec));
+      return r;
+    };
+    /** First day (1..28) on which the routine entry starts for the seed, using the game's own simulation. */
+    R.findEntryDay = (seed, flags, npcId, entryId) => {
+      const g = game();
+      const entry = g.content.npcs[npcId].routine.find((e) => e.id === entryId);
+      for (let day = 1; day <= 28; day += 1) {
+        g.load(base({ seed, day, minute: entry.from, paused: false, speed: 4, flags, player: { x: -1, z: 0.95, h: 0 }, shutter: true }));
+        for (let i = 0; i < 4; i += 1) g.tick(0.05);
+        const n = g.state.npcs[npcId];
+        if (n.status !== 'away' && n.routineId === entryId) return day;
+      }
+      return null;
+    };
+    /** Simulates each day 06:00-22:00 at speed 4 (the game's own ticks): when most residents are in the world at the same time, and when somebody uses the bench. */
+    R.crowd = (seed, flags) => {
+      const g = game();
+      let best = { count: 0, day: 0, minute: 0 };
+      let bench = null;
+      for (let day = 1; day <= 28; day += 1) {
+        g.load(base({ seed, day, minute: 360, paused: false, speed: 4, flags, player: { x: -1, z: 0.95, h: 0 }, shutter: true }));
+        for (let i = 0; i < 950; i += 1) {
+          g.tick(0.25);
+          const list = Object.entries(g.state.npcs).filter(([, n]) => n.status !== 'away');
+          if (list.length > best.count) best = { count: list.length, day, minute: Math.floor(g.state.calendar.minute) };
+          if (!bench) {
+            const b = list.find(([, n]) => n.placeId === 'place.yard-bench' && n.status === 'at_place');
+            if (b) bench = { npcId: b[0], day, minute: Math.floor(g.state.calendar.minute) };
+          }
+        }
+      }
+      return { best, bench };
+    };
+    /** Per-frame recorder of the residents (state pose, displayed pose, screen position). */
+    R.mon = (on) => {
+      if (!on) {
+        const m = window.__mon;
+        if (!m) return [];
+        m.run = false;
+        return m.samples;
+      }
+      const m = (window.__mon = { run: true, samples: [] });
+      const loop = () => {
+        if (!m.run) return;
+        const g = game();
+        const info = window.__buedchen.world.getResidentInfo();
+        const row = { t: window.__buedchen.world.getSimStats().seconds, day: g.state.calendar.day, min: g.state.calendar.minute, n: {} };
+        for (const i of info) {
+          const n = g.state.npcs[i.npcId];
+          row.n[i.npcId] = {
+            vis: i.visible, vx: i.position.x, vz: i.position.z, an: i.animation, sx: i.screen ? i.screen.x : null, sy: i.screen ? i.screen.y : null,
+            status: n.status, x: n.position.x, z: n.position.z, place: n.placeId, spot: n.spotIndex, wish: n.wish !== null && n.wish.resolved === null,
+          };
+        }
+        if (m.samples.length < 12000) m.samples.push(row);
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+      return [];
+    };
+  };
+
+  // --- Node-side helpers
+  const arrange = async (spec) => {
+    const r = await page.evaluate((spec) => window.__r.arrange(spec), spec);
+    if (!r.ok) throw new Error(`arrange: ${r.reason}`);
+    await waitSteps(4);
+  };
+  const dlg = () => page.evaluate(() => {
+    const v = window.__buedchen.game.dialogue.current();
+    return v ? JSON.parse(JSON.stringify(v)) : null;
+  });
+  const npcState = async (id) => (await st()).npcs[id];
+  const names = (id) => `Mit ${npcName(id)} sprechen`;
+  const waitPrompt = async (text, timeout = 8000) => {
+    const ok = await waitUntil(async () => ((await promptText()) === text ? true : null), timeout);
+    if (!ok) throw new Error(`Prompt ${JSON.stringify(text)} erscheint nicht (aktuell ${JSON.stringify(await promptText())})`);
+  };
+  /** Dialogue options as drawn: id, shortcut key, text. */
+  const optionsDom = () => page.evaluate(() => [...document.querySelectorAll('[data-testid^="dialogue-option-"]')].map((b) => ({ id: b.dataset.testid.slice('dialogue-option-'.length), key: b.querySelector('kbd')?.textContent ?? null, text: b.textContent })));
+  /** Chooses an option through the UI (`via` 'click' | 'key') and waits until the conversation moved on (node changed or ended) and the 250 ms lock is over. */
+  const chooseOption = async (optionId, via = 'click') => {
+    const before = await dlg();
+    const opts = await optionsDom();
+    const o = opts.find((x) => x.id === optionId);
+    if (!o) throw new Error(`Option ${optionId} fehlt (vorhanden: ${opts.map((x) => x.id).join(', ')})`);
+    if (via === 'key') {
+      if (!(await ensureFocus())) throw new Error('kein Fokus');
+      await page.keyboard.press(String(o.key));
+    } else await tid(`dialogue-option-${optionId}`).click();
+    await waitUntil(async () => {
+      const now = await dlg();
+      return now === null || now.nodeId !== before.nodeId || now.dialogueId !== before.dialogueId ? true : null;
+    }, 4000);
+    await sleep(300);
+  };
+  const closeDialogueIfOpen = async () => {
+    if (await dlg()) {
+      await page.keyboard.press('Escape');
+      await gone('panel-dialogue', 4000);
+    }
+  };
+  /** Opens the conversation with the real E key (or a click on the prompt). */
+  const openTalk = async (npcId, via = 'key') => {
+    await waitPrompt(names(npcId));
+    if (via === 'click') await page.locator('.ui-prompt').click();
+    else await pressE();
+    if (!(await vis('panel-dialogue', 5000))) throw new Error('Dialogpanel öffnet nicht');
+  };
+  /** Sets up the resident at the sales window (clock paused), talks to him through the UI and plays the options. */
+  const say = async (npcId, dialogueId, options, day, opt = {}) => {
+    await arrange({ day, minute: opt.minute ?? 600, paused: true, shutter: true, door: true, player: COUNTER, npcs: { [npcId]: { place: 'place.kiosk-window', spot: 1, routine: ROUTINE[npcId] } } });
+    await openTalk(npcId, opt.open ?? 'key');
+    const v = await dlg();
+    if (v?.dialogueId !== dialogueId) throw new Error(`${npcId}: erwartet ${dialogueId}, bekommen ${v?.dialogueId}`);
+    for (const o of options) await chooseOption(o, opt.via ?? 'click');
+    await closeDialogueIfOpen();
+    await gone('panel-dialogue', 4000);
+  };
+  const rel = async (id) => (await npcState(id)).relationship;
+  const quest = async (id) => (await st()).story.quests[id] ?? null;
+  const flagOf = async (id) => (await st()).story.flags[id] === true;
+  const gated = () => page.evaluate(() => window.__buedchen.world.getGatedPlacements());
+  const SEED = 7;
+  const days = {}; // npcId -> day on which the routine starts (found with the game's own logic)
+  let foundSeed = SEED;
+
+  if (runResidents) {
+    await newEcoPage('res', 1, resLib);
+    await waitSteps(5, 15000);
+  }
+
+  // ---------------------------------------------------------------- R0 preparation: days on which every resident's routine passes its chance roll
+  await section('R0 Vorbereitung', async () => {
+    let ok = false;
+    for (const seed of [SEED, 8, 9, 10, 11, 12, 13, 14]) {
+      const found = {};
+      for (const id of NPC_IDS) found[id] = await page.evaluate(([seed, id, entry]) => window.__r.findEntryDay(seed, {}, id, entry), [seed, id, ROUTINE[id]]);
+      if (NPC_IDS.every((id) => found[id] !== null)) {
+        Object.assign(days, found);
+        foundSeed = seed;
+        ok = true;
+        break;
+      }
+    }
+    record('R0 Für jede Routine (Günter Morgen, Derya Brötchen, Jonas Dienstag, Marlene Werktag) findet die Spiellogik einen Tag, an dem der Zufallswurf des gespeicherten Seeds gelingt', ok, `Seed ${foundSeed}, Tage ${JSON.stringify(days)}`);
+    await arrange({ seed: foundSeed, day: 1, minute: 360, paused: true, shutter: true, door: true, player: COUNTER, shelves: STOCK });
+    const s0 = await st();
+    const info0 = await page.evaluate(() => window.__buedchen.world.getResidentInfo());
+    record('R0b Ausgangslage geladen: Seed im Spielstand, alle vier Bewohner abwesend und nicht gezeichnet', s0.world.seed === foundSeed && NPC_IDS.every((id) => s0.npcs[id].status === 'away') && info0.length === 4 && info0.every((i) => !i.visible), `Seed ${s0.world.seed}`);
+  });
+
+  // ---------------------------------------------------------------- R1 residents appear at their scheduled times (real routines at 4x)
+  const entryOf = (id) => data.npcs[id].routine.find((e) => e.id === ROUTINE[id]);
+  const runs = {};
+  const wishOf = {};
+  await section('R1 Auftritte', async () => {
+    for (const id of NPC_IDS) {
+      const entry = entryOf(id);
+      // load paused, let the world settle (everybody away and not drawn), then let the clock run
+      await arrange({ seed: foundSeed, day: days[id], minute: entry.from, paused: true, speed: 4, shutter: true, door: true, player: COUNTER, shelves: STOCK });
+      const pre = await page.evaluate((id) => ({ status: window.__buedchen.game.state.npcs[id].status, speed: window.__buedchen.game.state.calendar.speed, visible: window.__buedchen.world.getResidentInfo().find((i) => i.npcId === id).visible }), id);
+      const s0 = { npcs: { [id]: { status: pre.status } }, calendar: { speed: pre.speed } };
+      const initial = { visible: pre.visible };
+      await page.evaluate(() => {
+        window.__buedchen.game.state.calendar.paused = false;
+      });
+      await page.evaluate(() => window.__r.mon(true));
+      const reached = await waitUntil(async () => {
+        const n = await npcState(id);
+        return n.status === 'waiting' ? n : null;
+      }, 90000, 100);
+      await waitSteps(60); // one more simulated second standing at the window (idle animation after the walk)
+      const samples = await page.evaluate(() => window.__r.mon(false));
+      runs[id] = samples;
+      const first = samples.find((r) => r.n[id].vis);
+      const last = samples[samples.length - 1];
+      const n = await npcState(id);
+      const spotPos = wpPos[nav.places.find((p) => p.id === 'place.kiosk-window').spots[n.spotIndex ?? 0].waypointId];
+      const info = (await page.evaluate(() => window.__buedchen.world.getResidentInfo())).find((i) => i.npcId === id);
+      const hudSpeed4 = (await attr('hud-speed-4', 'aria-pressed')) === 'true';
+      const speed4 = hudSpeed4 && s0.calendar.speed === 4;
+      wishOf[id] = n.wish?.wishId ?? null;
+      record(
+        `R1 ${npcName(id)} erscheint zur Routine ${entry.id} (Tag ${days[id]}, ab ${Math.floor(entry.from / 60)}:${String(entry.from % 60).padStart(2, '0')}) und geht zum Verkaufsfenster, Tempo 4×`,
+        speed4 && s0.npcs[id].status === 'away' && initial && !initial.visible && first !== undefined &&
+          first.min >= entry.from && first.min < entry.to && entry.weekdays.includes(weekdayOfDay(first.day)) &&
+          reached !== null && n.placeId === 'place.kiosk-window' && Math.hypot(n.position.x - spotPos.x, n.position.z - spotPos.z) < 0.05 &&
+          info?.visible === true && info.screen !== null && last.n[id].vis && n.status === 'waiting',
+        `Wochentag ${first && entry.weekdays.includes(weekdayOfDay(first.day))}, Position ${Math.hypot(n.position.x - spotPos.x, n.position.z - spotPos.z).toFixed(3)}, letzter Frame sichtbar ${last.n[id].vis}, Anfang unsichtbar ${initial && !initial.visible}, HUD 4× ${hudSpeed4}, Zeit ${first && first.min >= entry.from && first.min < entry.to}, Bildschirm ${info?.screen !== null}, vorher away/unsichtbar, sichtbar ab ${first ? `${Math.floor(first.min / 60)}:${String(Math.floor(first.min % 60)).padStart(2, '0')}` : '-'}, Platz ${n.placeId} Spot ${n.spotIndex}, Status ${n.status}, ${samples.length} Frames`,
+      );
+    }
+  });
+
+  // ---------------------------------------------------------------- R2 visible, collision-free routes
+  await section('R2 Wege', async () => {
+    const blockers = blockersFor({});
+    const summary = [];
+    let good = 0;
+    for (const id of NPC_IDS) {
+      const samples = (runs[id] ?? []).filter((r) => r.n[id].vis);
+      let path = 0;
+      let screenTravel = 0;
+      let maxEdge = 0;
+      let maxViewEdge = 0;
+      let minBlock = Infinity;
+      let minBlockView = Infinity;
+      let moved = 0;
+      let walking = 0;
+      const walkAn = new Map();
+      const tail = samples.filter((r) => r.n[id].status === 'waiting').slice(-5).map((r) => r.n[id].an);
+      for (let i = 0; i < samples.length; i += 1) {
+        const a = samples[i].n[id];
+        for (const b of blockers) {
+          minBlock = Math.min(minBlock, distToRect({ x: a.x, z: a.z }, b));
+          minBlockView = Math.min(minBlockView, distToRect({ x: a.vx, z: a.vz }, b));
+        }
+        if (a.status === 'walking') {
+          walking += 1;
+          walkAn.set(a.an, (walkAn.get(a.an) ?? 0) + 1);
+          maxEdge = Math.max(maxEdge, distToNav({ x: a.x, z: a.z }));
+          maxViewEdge = Math.max(maxViewEdge, distToNav({ x: a.vx, z: a.vz }));
+        }
+        if (i > 0) {
+          const p = samples[i - 1].n[id];
+          const d = Math.hypot(a.x - p.x, a.z - p.z);
+          path += d;
+          if (d > 1e-4) moved += 1;
+          if (a.sx !== null && p.sx !== null) screenTravel += Math.hypot(a.sx - p.sx, a.sy - p.sy);
+        }
+      }
+      const walkMode = [...walkAn.entries()].sort((x, y) => y[1] - x[1])[0]?.[0];
+      const stillMode = tail.sort((x, y) => tail.filter((v) => v === y).length - tail.filter((v) => v === x).length)[0];
+      const animOk = walkMode !== undefined && stillMode !== undefined && walkMode !== stillMode;
+      const ok = path > 3 && screenTravel > 80 && moved >= 5 && walking >= 5 && maxEdge < 0.06 && maxViewEdge < 0.35 && minBlock >= NPC_RADIUS - 0.02 && minBlockView >= NPC_RADIUS - 0.1 && animOk;
+      if (ok) good += 1;
+      summary.push(`${npcName(id).split(' ')[0]}: ${f(path)} m, ${Math.round(screenTravel)} px, Kante ${f(maxEdge)}/${f(maxViewEdge)}, Abstand Hindernis ${f(minBlock)}, Gehen=${walkMode} Stehen=${stillMode}`);
+    }
+    record(`R2 Mindestens zwei Bewohner gehen sichtbar (Bildposition ändert sich, Gehanimation) auf den Wegekanten (≤ 6 cm Zustand, ≤ 35 cm gezeichnet) und nie in Kiosk/Möbeln (${good} von 4 erfüllen alles)`, good >= 2, summary.join(' | '));
+  });
+
+  // ---------------------------------------------------------------- R3 several residents at once: no overlap, never the same spot, outside the furniture
+  await section('R3 Gleichzeitig', async () => {
+    for (const flags of [{}, { 'yard.bench': true }]) {
+      const label = flags['yard.bench'] ? 'mit Hofbank' : 'ohne Hofbank';
+      const found = await page.evaluate(([seed, flags]) => window.__r.crowd(seed, flags), [foundSeed, flags]);
+      const target = found.best;
+      await arrange({ seed: foundSeed, day: target.day, minute: Math.max(360, target.minute - 25), paused: false, speed: 4, flags, shutter: true, door: true, player: COUNTER, shelves: STOCK });
+      await page.evaluate(() => window.__r.mon(true));
+      const reachedCount = await waitUntil(async () => {
+        const s = await st();
+        return NPC_IDS.filter((id) => s.npcs[id].status !== 'away').length >= Math.min(target.count, 3) ? true : null;
+      }, 60000, 100);
+      await waitSteps(60);
+      const samples = await page.evaluate(() => window.__r.mon(false));
+      const blockers = blockersFor(flags);
+      let maxVisible = 0;
+      let sameSpot = 0;
+      let overlap = 0;
+      let inside = 0;
+      let minPair = Infinity;
+      for (const row of samples) {
+        const vis = NPC_IDS.filter((id) => row.n[id].vis);
+        maxVisible = Math.max(maxVisible, vis.length);
+        const seen = new Set();
+        for (const id of vis) {
+          const a = row.n[id];
+          if (a.spot !== null && a.status !== 'walking') {
+            const key = `${a.place}#${a.spot}`;
+            if (seen.has(key)) sameSpot += 1;
+            seen.add(key);
+          }
+          for (const b of blockers) if (distToRect({ x: a.x, z: a.z }, b) < NPC_RADIUS - 0.02) inside += 1;
+          for (const other of vis) {
+            if (other <= id) continue;
+            const d = Math.hypot(a.x - row.n[other].x, a.z - row.n[other].z);
+            minPair = Math.min(minPair, d);
+            if (d <= 0.3) overlap += 1;
+          }
+        }
+      }
+      record(
+        `R3 ${label}: Tag ${target.day} ab ${Math.floor((target.minute - 25) / 60)}:${String((target.minute - 25) % 60).padStart(2, '0')} (Spiellogik-Suche: bis zu ${target.count} gleichzeitig) – im Browser ≥ 3 zugleich sichtbar, nie zwei auf demselben Platz-Spot, nie näher als 0,3 m, nie in Kiosk/Möbeln${flags['yard.bench'] ? '/Bank' : ''}`,
+        reachedCount !== null && maxVisible >= Math.min(target.count, 3) && maxVisible >= 3 && sameSpot === 0 && overlap === 0 && inside === 0,
+        `max gleichzeitig ${maxVisible}, kleinster Abstand ${f(minPair)} m, gleicher Spot ${sameSpot}, in Hindernis ${inside}, ${samples.length} Frames`,
+      );
+      if (flags['yard.bench']) {
+        // somebody uses the bench: replay up to the moment, check the standing position at the bench spot
+        const b = found.bench;
+        if (!b) {
+          record('R3b Mit Hofbank nutzt ein Bewohner den Bankplatz (Spiellogik-Suche über 28 Tage)', false, 'kein Bankbesuch gefunden');
+        } else {
+          await arrange({ seed: foundSeed, day: b.day, minute: Math.max(360, b.minute - 25), paused: false, speed: 4, flags, shutter: true, door: true, player: COUNTER, shelves: STOCK });
+          const at = await waitUntil(async () => {
+            const n = await npcState(b.npcId);
+            return n.status === 'at_place' && n.placeId === 'place.yard-bench' ? n : null;
+          }, 60000, 100);
+          await waitSteps(30);
+          const n = await npcState(b.npcId);
+          const place = nav.places.find((p) => p.id === 'place.yard-bench');
+          const spot = place.spots[n.spotIndex ?? 0];
+          const sp = wpPos[spot.waypointId];
+          const benchRect = footprint(placementOf('placement.yard-bench'));
+          const info = (await page.evaluate(() => window.__buedchen.world.getResidentInfo())).find((i) => i.npcId === b.npcId);
+          record(
+            `R3b ${npcName(b.npcId)} steht mit der Hofbank am Bankplatz (Tag ${b.day}), an der Spot-Position, ohne die Bank zu durchdringen`,
+            at !== null && Math.hypot(n.position.x - sp.x, n.position.z - sp.z) < 0.05 && Math.abs(n.heading - spot.heading) < 0.05 && distToRect(n.position, benchRect) >= NPC_RADIUS - 0.02 && info?.visible === true,
+            `Spot ${n.spotIndex} (${f(sp.x)}/${f(sp.z)}), Abstand zur Bank ${f(distToRect(n.position, benchRect))} m, Tag ${b.day}`,
+          );
+        }
+      }
+    }
+  });
+
+  const freshGame = async () => {
+    await page.evaluate(() => window.__buedchen.game.reset());
+    await arrange({ seed: foundSeed, day: 1, minute: 600, paused: true, shutter: true, door: true, player: COUNTER, shelves: STOCK });
+  };
+  const gatedVisible = async (id) => (await gated()).find((g) => g.id === id)?.visible ?? null;
+  const journalState = async () =>
+    page.evaluate(() => ({
+      people: [...document.querySelectorAll('[data-testid^="journal-person-"]')].map((n) => n.dataset.testid.slice('journal-person-'.length)),
+      quests: [...document.querySelectorAll('[data-testid^="journal-quest-"]')].map((n) => n.dataset.testid.slice('journal-quest-'.length)),
+      noPeople: !!document.querySelector('[data-testid="journal-no-people"]'),
+      noActive: !!document.querySelector('[data-testid="journal-no-active"]'),
+      text: document.querySelector('[data-testid="panel-journal"]')?.textContent ?? '',
+    }));
+  /** Opens the journal (HUD button or J), reads it, closes it with Escape. */
+  const readJournal = async (via) => {
+    if (via === 'key') {
+      if (!(await ensureFocus())) throw new Error('kein Fokus');
+      await page.keyboard.press('KeyJ');
+    } else await tid('hud-open-journal').click();
+    if (!(await vis('panel-journal', 4000))) throw new Error('Notizbuch öffnet nicht');
+    const j = await journalState();
+    await page.keyboard.press('Escape');
+    await gone('panel-journal', 3000);
+    return j;
+  };
+
+  // ---------------------------------------------------------------- R4 interaction at the sales window
+  await section('R4 Interaktion', async () => {
+    await freshGame();
+    const j0 = await readJournal('click');
+    record('R4a Notizbuch (HUD-Knopf) im neuen Spiel: keine Personen, keine Geschichten (nichts Ungestartetes)', j0.noPeople && j0.noActive && j0.people.length === 0 && j0.quests.length === 0, JSON.stringify(j0.people));
+    await arrange({ day: 2, minute: 600, paused: true, shutter: true, door: true, player: COUNTER, npcs: { [M]: { place: 'place.kiosk-window', spot: 1, routine: ROUTINE[M] } } });
+    await waitPrompt(names(M));
+    const promptBox = await page.evaluate(() => {
+      const r = document.querySelector('.ui-prompt').getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    });
+    const target = await page.evaluate(() => window.__buedchen.game.getInteractionTarget());
+    const info = (await page.evaluate(() => window.__buedchen.world.getResidentInfo())).find((i) => i.npcId === M);
+    record('R4b Hinter der Theke, Marlene wartet am Fenster: Prompt „Mit Marlene Hoffmann sprechen“ sichtbar, Ziel ist die Bewohnerin, sie ist gezeichnet', promptBox && target?.kind === 'npc' && target.npcId === M && info?.visible === true && info.screen !== null, `Prompt ${JSON.stringify(await promptText())}`);
+    const r0 = await rel(M);
+    await pressE();
+    const opened = await vis('panel-dialogue');
+    const v = await dlg();
+    const opts = await optionsDom();
+    const name = await txt('dialogue-name');
+    const text = await txt('dialogue-text');
+    const tier = await txt('dialogue-tier');
+    record('R4c E öffnet das Dialogpanel: Name, Beziehungsstufe, Text und 2–4 Optionen mit Tasten 1…n', opened && (await panelOpen()) === 'dialogue' && name === npcName(M) && tier.length > 0 && text === norm(v.text) && v.dialogueId === 'dialogue.marlene.erstes-mal' && opts.length >= 2 && opts.length <= 4 && opts.every((o, i) => o.key === String(i + 1)) && (await promptText()) === null, `${name}, ${tier}, Optionen ${opts.map((o) => `${o.key}:${o.id}`).join(' ')}`);
+    const before = await pos();
+    for (const k of ['KeyS', 'KeyD']) await page.keyboard.down(k);
+    await waitSteps(60);
+    const mid = await pos();
+    for (const k of ['KeyS', 'KeyD']) await page.keyboard.up(k);
+    await waitSteps(3);
+    record('R4d Bei offenem Dialog bewegen gehaltene Tasten den Spieler nicht', Math.hypot(mid.x - before.x, mid.z - before.z) < 0.001, `Δ=${f(Math.hypot(mid.x - before.x, mid.z - before.z))} m`);
+    await chooseOption('aushang', 'key');
+    const afterKey = await st();
+    const v2 = await dlg();
+    record('R4e Option per Taste 1: Beziehung steigt, Erinnerung „marlene:aushang“ gespeichert, Folgeknoten sichtbar', afterKey.npcs[M].relationship >= r0 + 3 && afterKey.npcs[M].memories.includes('marlene:aushang') && afterKey.story.effectKeys.includes('k.marlene.aushang') && v2?.nodeId === 'aushang' && (await txt('dialogue-text')) === norm(v2.text), `Beziehung ${r0} → ${afterKey.npcs[M].relationship}`);
+    await chooseOption('bye', 'click');
+    const closed = await gone('panel-dialogue', 4000);
+    const run = await hold(['KeyD'], (p, b) => p.x - b.x > 0.3, 4000);
+    record('R4f Option per Klick beendet das Gespräch: Panel zu, kein Dialog offen, Spieler bewegt sich wieder', closed && (await dlg()) === null && (await panelOpen()) === null && run.dx > 0.25, `Δx=${f(run.dx)}`);
+    // second conversation: opened by clicking the prompt, closed with Escape
+    await arrange({ day: 2, minute: 600, paused: true, shutter: true, door: true, player: COUNTER, npcs: { [M]: { place: 'place.kiosk-window', spot: 1, routine: ROUTINE[M] } } });
+    await openTalk(M, 'click');
+    const v3 = await dlg();
+    const optsClick = await optionsDom();
+    await page.keyboard.press('Escape');
+    const closedEsc = await gone('panel-dialogue', 4000);
+    const q = await quest('quest.hof');
+    record('R4g Klick auf den Prompt öffnet das Gespräch (Beschwerde-Dialog, 2 Optionen); Escape schließt es ohne Folgen (Geschichte nicht gestartet)', v3?.dialogueId === 'dialogue.marlene.hof-beschwerde' && optsClick.length === 2 && closedEsc && (await dlg()) === null && q === null && (await promptText()) === names(M), `Dialog ${v3?.dialogueId}, Optionen ${optsClick.map((o) => o.id).join('/')}`);
+  });
+
+  const hearBothSides = async () => {
+    await say(M, 'dialogue.marlene.erstes-mal', ['aushang', 'bye'], 2);
+    await say(M, 'dialogue.marlene.hof-beschwerde', ['verstehen', 'bye'], 2);
+    await say(D, 'dialogue.derya.erstes-mal', ['werkstatt', 'bye'], 3);
+    await say(D, 'dialogue.derya.hof-seite', ['zuhoeren', 'verstanden', 'bye'], 3);
+  };
+
+  // ---------------------------------------------------------------- R5 story A: compromise (bench), memory, reload
+  await section('R5 Hofgeschichte Kompromiss', async () => {
+    await freshGame();
+    const benchRect = footprint(placementOf('placement.yard-bench'));
+    // control run: without the bench the player walks straight through its future footprint
+    await arrange({ player: { x: -5.6, z: 1.4, h: Math.PI } });
+    const free = await hold(['KeyW'], (p) => p.z < -1.2, 6000);
+    record('R5a Ohne Flag yard.bench: Bank nicht gezeichnet, Spieler läuft durch ihren späteren Platz (Kontrolllauf)', (await gatedVisible('placement.yard-bench')) === false && free.after.z < -1.0, `z=${f(free.after.z)}, gated ${JSON.stringify(await gated())}`);
+
+    await say(M, 'dialogue.marlene.erstes-mal', ['aushang', 'bye'], 2);
+    const rBefore = await rel(M);
+    await say(M, 'dialogue.marlene.hof-beschwerde', ['verstehen', 'bye'], 2);
+    const s1 = await st();
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('buedchensim.save.slot1')));
+    record('R5b Dialogoption „Das klingt anstrengend“ verändert den Spielstand: Geschichte Schritt „beschwerde“, Erinnerung, Beziehung +3 – und steht im gespeicherten Spielstand (Schema 3)', s1.story.quests['quest.hof']?.step === 'beschwerde' && s1.npcs[M].memories.includes('marlene:hof-beschwerde') && s1.npcs[M].relationship >= rBefore + 3 && stored.schemaVersion === 3 && stored.state.story.quests['quest.hof']?.step === 'beschwerde' && stored.state.npcs[M].memories.includes('marlene:hof-beschwerde'), `Beziehung ${rBefore} → ${s1.npcs[M].relationship}`);
+
+    const j1 = await readJournal('key');
+    record('R5c Notizbuch (Taste J): Marlene als bekannte Person, „Krach im Hinterhof“ aktiv, „Ein Paket für Günter“ (ungestartet) fehlt, Jonas/Günter/Derya noch nicht getroffen', j1.people.length === 1 && j1.people[0] === M && j1.quests.length === 1 && j1.quests[0] === 'quest.hof' && j1.text.includes(npcName(M)) && j1.text.includes('Krach im Hinterhof') && !j1.text.includes('Ein Paket für Günter'), `Personen ${j1.people.join(',')}, Geschichten ${j1.quests.join(',')}`);
+
+    await say(D, 'dialogue.derya.erstes-mal', ['werkstatt', 'bye'], 3);
+    await say(D, 'dialogue.derya.hof-seite', ['zuhoeren', 'verstanden', 'bye'], 3);
+    const q2 = await quest('quest.hof');
+    const before = { d: await rel(D), m: await rel(M) };
+    // the decision: key press on the compromise option (only offered with trust in both)
+    await arrange({ day: 3, minute: 600, paused: true, shutter: true, door: true, player: COUNTER, npcs: { [D]: { place: 'place.kiosk-window', spot: 1, routine: ROUTINE[D] } } });
+    await openTalk(D);
+    const decide = await dlg();
+    const decideOpts = (await optionsDom()).map((o) => o.id);
+    await chooseOption('vermitteln', 'key');
+    await chooseOption('bye', 'key');
+    await gone('panel-dialogue', 4000);
+    const s2 = await st();
+    record('R5d Geschichte A, Entscheidung „Kompromiss“ (per Taste): Dialog bietet vier Optionen, Ausgang kompromiss, Flag yard.bench, Erinnerungen, Beziehungen Derya +5 / Marlene +5', q2?.step === 'gegenseite' && decide.dialogueId === 'dialogue.derya.hof-entscheidung' && decideOpts.join() === 'vermitteln,derya,marlene,raushalten' && s2.story.quests['quest.hof'].outcome === 'kompromiss' && s2.story.flags['yard.bench'] === true && s2.npcs[D].memories.includes('derya:hof-kompromiss') && s2.npcs[M].memories.includes('marlene:hof-kompromiss') && s2.npcs[D].relationship - before.d === 5 && s2.npcs[M].relationship - before.m === 5, `Optionen ${decideOpts.join('/')}, Δ Derya ${s2.npcs[D].relationship - before.d}, Δ Marlene ${s2.npcs[M].relationship - before.m}`);
+
+    // bench in the scene and in the way
+    await waitUntil(async () => ((await gatedVisible('placement.yard-bench')) === true ? true : null), 5000);
+    await arrange({ player: { x: -5.6, z: 1.4, h: Math.PI } });
+    const run = await holdUntilStopped(['KeyW'], benchRect);
+    const tr = await page.evaluate(() => window.__buedchen.world.getPlacementTransform('placement.yard-bench'));
+    record('R5e Nach dem Kompromiss: Bank E-004 gezeichnet (getGatedPlacements) und der Spielerkreis stoppt an ihrem Footprint', (await gatedVisible('placement.yard-bench')) === true && tr !== null && Math.abs(tr.x + 5.6) < 0.01 && run.stopped && run.pos.z > benchRect.maxZ && run.min >= PLAYER_RADIUS - 0.01 && run.finalDist <= PLAYER_RADIUS + 0.02, `Spieler endet bei z=${f(run.pos.z)}, Bankkante z=${f(benchRect.maxZ)}, Abstand ${f(run.finalDist)}`);
+
+    // later visit: the decision is remembered, also after a reload
+    await arrange({ day: 4, minute: 600, paused: true, shutter: true, door: true, player: COUNTER, npcs: { [M]: { place: 'place.kiosk-window', spot: 1, routine: ROUTINE[M] } } });
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    await reload(false);
+    const afterReload = await st();
+    await waitPrompt(names(M), 10000);
+    await pressE();
+    await vis('panel-dialogue');
+    const memo = await dlg();
+    const memoText = await txt('dialogue-text');
+    const memoOpts = await optionsDom();
+    record('R5f Nach Reload: Entscheidung, Flag und Erinnerungen sind da, die Bank wird gezeichnet, und Marlene erinnert sich beim nächsten Besuch (Dialog „nachklang-kompromiss“ nennt die Bank)', afterReload.story.quests['quest.hof'].outcome === 'kompromiss' && afterReload.story.flags['yard.bench'] === true && afterReload.npcs[M].memories.includes('marlene:hof-kompromiss') && (await gatedVisible('placement.yard-bench')) === true && memo.dialogueId === 'dialogue.marlene.nachklang-kompromiss' && /Bank/.test(memoText), `Dialog ${memo.dialogueId}: „${memoText.slice(0, 70)}…“`);
+    await chooseOption(memoOpts[0].id);
+    await closeDialogueIfOpen();
+    await gone('panel-dialogue', 3000);
+    const j2 = await readJournal('click');
+    record('R5g Notizbuch nach der Entscheidung: Geschichte „Krach im Hinterhof“ abgeschlossen (Ausgang-Text), Marlene und Derya als bekannte Personen', j2.people.includes(M) && j2.people.includes(D) && !j2.people.includes(J) && j2.text.includes('Bank') && j2.quests.join() === 'quest.hof', `Personen ${j2.people.join(',')}`);
+  });
+
+  // ---------------------------------------------------------------- R6 story A: second outcome (siding with Derya)
+  await section('R6 Hofgeschichte Derya', async () => {
+    await freshGame();
+    await hearBothSides();
+    const before = { d: await rel(D), m: await rel(M) };
+    await say(D, 'dialogue.derya.hof-entscheidung', ['derya', 'bye'], 3);
+    const s = await st();
+    record('R6a Geschichte A, zweiter Ausgang „derya“ über die UI: Derya +6, Marlene −8, keine Bank (Flag aus, nicht gezeichnet), Erinnerung bei Marlene', s.story.quests['quest.hof'].outcome === 'derya' && s.npcs[D].relationship - before.d === 6 && s.npcs[M].relationship - before.m === -8 && s.story.flags['yard.bench'] !== true && (await gatedVisible('placement.yard-bench')) === false && s.npcs[M].memories.includes('marlene:hof-uebergangen'), `Δ Derya ${s.npcs[D].relationship - before.d}, Δ Marlene ${s.npcs[M].relationship - before.m}`);
+    await arrange({ day: 4, minute: 600, paused: true, shutter: true, door: true, player: COUNTER, npcs: { [M]: { place: 'place.kiosk-window', spot: 1, routine: ROUTINE[M] } } });
+    await openTalk(M);
+    const v = await dlg();
+    await closeDialogueIfOpen();
+    record('R6b Spätere Reaktion unterscheidet sich vom Kompromiss: Marlene zeigt „nachklang-derya“', v?.dialogueId === 'dialogue.marlene.nachklang-derya', v?.dialogueId);
+  });
+
+  // ---------------------------------------------------------------- R7 story B: parcel for Günter (photo / refusal)
+  await section('R7 Paketgeschichte', async () => {
+    await freshGame();
+    record('R7a Vor der Geschichte: Foto I-013 nicht auf der Theke, Flag kiosk.photo aus', (await gatedVisible('placement.kiosk-photo')) === false && !(await flagOf('kiosk.photo')), JSON.stringify(await gated()));
+    await say(G, 'dialogue.guenter.erstes-mal', ['zusagen', 'bye'], 2);
+    await say(G, 'dialogue.guenter.paket-bitte', ['anbieten', 'bye'], 2);
+    await say(J, 'dialogue.jonas.erstes-mal', ['rad', 'bye'], 2);
+    await say(J, 'dialogue.jonas.paket', ['annehmen', 'bye'], 2);
+    const mid = await st();
+    await say(G, 'dialogue.guenter.paket-uebergabe', ['uebergeben', 'bye'], 3);
+    const cash = (await st()).economy.cashCents;
+    await say(G, 'dialogue.guenter.foto-offen', ['zeigen', 'aufhaengen', 'bye'], 4);
+    const s = await st();
+    await waitUntil(async () => ((await gatedVisible('placement.kiosk-photo')) === true ? true : null), 5000);
+    const photo = placementOf('placement.kiosk-photo');
+    const tr = await page.evaluate(() => window.__buedchen.world.getPlacementTransform('placement.kiosk-photo'));
+    record('R7b Geschichte B bis zum Ende über die UI (6 Gespräche, 3 Figuren): Jonas legt das Paket ab (Flag parcel.at-kiosk), Günter übernimmt es, Ausgang „foto“, Flag kiosk.photo, keine Geldprämie', mid.story.flags['parcel.at-kiosk'] === true && s.story.flags['parcel.at-kiosk'] !== true && s.story.quests['quest.paket'].outcome === 'foto' && s.story.flags['kiosk.photo'] === true && s.economy.cashCents === cash && s.npcs[G].memories.includes('guenter:foto-geschenkt') && s.npcs[J].memories.includes('jonas:paket-abgegeben'), `Quest ${JSON.stringify(s.story.quests['quest.paket'])}`);
+    record('R7c Das gerahmte Foto steht auf der Theke (gezeichnet, an der Platzierung, auf Thekenhöhe)', (await gatedVisible('placement.kiosk-photo')) === true && tr !== null && Math.abs(tr.x - photo.position.x) < 0.01 && Math.abs(tr.z - photo.position.z) < 0.01 && Math.abs(tr.y - baseHeight(photo)) < 0.01 && tr.y > 0.5, `y=${tr ? f(tr.y) : '-'} (Soll ${f(baseHeight(photo))})`);
+    const j = await readJournal('click');
+    record('R7d Notizbuch: „Ein Paket für Günter“ abgeschlossen (Foto), Günter und Jonas bekannt, „Krach im Hinterhof“ (ungestartet) fehlt', j.quests.join() === 'quest.paket' && j.text.includes('Foto') && j.people.includes(G) && j.people.includes(J) && !j.people.includes(M) && !j.text.includes('Krach im Hinterhof'), `Personen ${j.people.join(',')}, Geschichten ${j.quests.join(',')}`);
+    // second outcome
+    await freshGame();
+    await say(G, 'dialogue.guenter.erstes-mal', ['offen', 'bye'], 2);
+    const r = await rel(G);
+    await say(G, 'dialogue.guenter.paket-bitte', ['absagen', 'bye'], 2);
+    const s2 = await st();
+    record('R7e Geschichte B, zweiter Ausgang „abgelehnt“ über die UI: Beziehung −3, kein Foto (Flag aus, nicht gezeichnet), Notizbuch führt die Geschichte als abgeschlossen', s2.story.quests['quest.paket'].outcome === 'abgelehnt' && s2.npcs[G].relationship === r - 3 && !s2.story.flags['kiosk.photo'] && (await gatedVisible('placement.kiosk-photo')) === false && (await readJournal('key')).quests.join() === 'quest.paket', `Beziehung ${r} → ${s2.npcs[G].relationship}`);
+  });
+
+  // ---------------------------------------------------------------- R8 wishes, sale exactly once, age limit
+  const shelfOf = (e, pid) => Object.values(e.shelves).filter((s) => s.productId === pid).reduce((a, s) => a + s.quantity, 0);
+  const wishDef = (id, wishId) => data.npcs[id].wishes.find((w) => w.id === wishId);
+  /** Presses/clicks an option without waiting for the node to change (a refused sale keeps the node). */
+  const act = async (optionId, via = 'click') => {
+    const o = (await optionsDom()).find((x) => x.id === optionId);
+    if (!o) throw new Error(`Option ${optionId} fehlt`);
+    if (via === 'key') {
+      if (!(await ensureFocus())) throw new Error('kein Fokus');
+      await page.keyboard.press(String(o.key));
+    } else if (via === 'dblclick') await tid(`dialogue-option-${optionId}`).dblclick();
+    else await tid(`dialogue-option-${optionId}`).click();
+    await sleep(500);
+  };
+  await section('R8 Wunsch und Verkauf', async () => {
+    await freshGame();
+    const wishes = NPC_IDS.map((id) => [id, wishOf[id]]).filter(([id, w]) => w !== null && data.npcs[id].wishes.some((x) => x.id === w));
+    record('R8a Alle vier Bewohner haben bei ihrem Auftritt (R1) einen Warenwunsch geäußert (npc.wish, Wunsch aus den eigenen Wünschen)', wishes.length === 4 && wishes.length >= 2, wishes.map(([id, w]) => `${npcName(id).split(' ')[0]}: ${w}`).join(', '));
+
+    for (const [id, via] of [[G, 'key'], [D, 'dblclick']]) {
+      const entry = entryOf(id);
+      await arrange({ seed: foundSeed, day: days[id], minute: entry.from, paused: false, speed: 4, shutter: true, door: true, player: COUNTER, shelves: STOCK });
+      const arrived = await waitUntil(async () => ((await npcState(id)).status === 'waiting' ? true : null), 90000, 100);
+      await tid('hud-pause').click(); // real pause button: nothing moves while we serve
+      await waitUntil(async () => ((await st()).calendar.paused ? true : null), 3000);
+      await openTalk(id);
+      const v = await dlg();
+      const w = wishDef(id, v.customer?.wishId);
+      const e0 = await eco();
+      const lineChecks = [];
+      for (const l of w.lines) {
+        const row = await txt(`customer-line-${l.productId}`);
+        lineChecks.push(row.includes(`${l.quantity} ×`) && row.includes(String(shelfOf(e0, l.productId))));
+      }
+      const total = w.lines.reduce((a, l) => a + l.quantity * P[l.productId].suggestedPriceCents, 0);
+      const sellKey = (await optionsDom()).find((o) => o.id === 'sell').key;
+      record(`R8b ${npcName(id)} am Fenster: Prompt, Kundenansicht mit Wunschtext „${w.text.slice(0, 30)}…“, Waren, Regalbestand und Summe ${eur(total)}`, arrived !== null && v.dialogueId === 'dialogue.customer' && (await txt('dialogue-text')) === norm(w.text) && lineChecks.every(Boolean) && (await txt('customer-total')) === eur(total) && v.customer.totalCents === total, `Zeilen ${w.lines.map((l) => `${l.quantity}×${l.productId.split('.')[1]}`).join(', ')}`);
+      const n0 = e0.transactions.length;
+      if (via === 'key') {
+        await page.keyboard.press(sellKey);
+        await page.keyboard.press(sellKey); // second activation right away: must not sell again
+      } else await tid('dialogue-option-sell').dblclick();
+      await waitUntil(async () => ((await eco()).transactions.length > n0 ? true : null), 4000);
+      await sleep(700);
+      const e1 = await eco();
+      const tx = e1.transactions[e1.transactions.length - 1];
+      const stockOk = w.lines.every((l) => shelfOf(e1, l.productId) === shelfOf(e0, l.productId) - l.quantity);
+      record(`R8c ${npcName(id)}: Verkauf über die Dialogoption (${via === 'key' ? 'Taste zweimal schnell' : 'Doppelklick'}) ändert Kasse und Regalbestand genau einmal; Transaktion trägt die npcId`, e1.transactions.length === n0 + 1 && e1.cashCents === e0.cashCents + total && stockOk && tx.npcId === id && (await txt('hud-cash')) === eur(e1.cashCents) && (await dlg()) !== null, `Kasse ${eur(e0.cashCents)} → ${eur(e1.cashCents)}, Transaktionen ${n0} → ${e1.transactions.length}, npcId ${tx.npcId}`);
+      await closeDialogueIfOpen();
+    }
+
+    // Jonas (17) and the tobacco
+    await arrange({ day: 6, minute: 660, paused: true, shutter: true, door: true, player: COUNTER, shelves: STOCK, npcs: { [J]: { place: 'place.kiosk-window', spot: 1, routine: 'j.sa', wish: 'wish.jonas-tabak' } } });
+    await openTalk(J);
+    const w = wishDef(J, 'wish.jonas-tabak');
+    const e0 = await eco();
+    const ageLine = await txt('customer-age');
+    const vJ = await dlg();
+    await act('sell', 'key');
+    const msg1 = await messageText('dialogue-message');
+    const eA = await eco();
+    await act('checkId', 'click');
+    const age = await txt('customer-age');
+    await act('sell', 'click');
+    const msg2 = await messageText('dialogue-message');
+    const e1 = await eco();
+    const vAfter = await dlg();
+    record('R8d Jonas (17) will Drehtabak: Wunschtext, Hinweis „ab 18“; Verkauf ohne Ausweisprüfung wird sichtbar abgelehnt', vJ.dialogueId === 'dialogue.customer' && (await txt('dialogue-text')).length > 0 && ageLine.includes('18') && msg1 !== null && /Altersprüfung/.test(msg1) && eA.cashCents === e0.cashCents && eA.transactions.length === e0.transactions.length, `Alter: ${ageLine}; Meldung ${JSON.stringify(msg1)}`);
+    record('R8e Nach der Ausweisprüfung zeigt die Ansicht „17 Jahre“; der Verkauf wird mit sichtbarer Meldung abgelehnt; Kasse, Regalbestand und Transaktionen bleiben unverändert', /17 Jahre/.test(age) && msg2 !== null && /Zu jung/.test(msg2) && e1.cashCents === e0.cashCents && shelfOf(e1, 'product.zechenhof-drehtabak-30') === shelfOf(e0, 'product.zechenhof-drehtabak-30') && e1.transactions.length === e0.transactions.length && vAfter?.customer?.revealedAge === 17 && w.lines[0].productId === 'product.zechenhof-drehtabak-30', `${age}; Meldung ${JSON.stringify(msg2)}; Kasse ${eur(e1.cashCents)}`);
+    await closeDialogueIfOpen();
+  });
+
+  // ---------------------------------------------------------------- R9 reload keeps relationships, routine state, story progress and flags
+  await section('R9 Reload Routinen', async () => {
+    await freshGame();
+    await say(D, 'dialogue.derya.erstes-mal', ['werkstatt', 'bye'], 2);
+    await say(M, 'dialogue.marlene.erstes-mal', ['aushang', 'bye'], 2);
+    await say(M, 'dialogue.marlene.hof-beschwerde', ['verstehen', 'bye'], 2);
+    const entry = entryOf(D);
+    await arrange({ seed: foundSeed, day: days[D], minute: entry.from, paused: false, speed: 1, shutter: true, door: true, player: COUNTER });
+    const walking = await waitUntil(async () => {
+      const n = await npcState(D);
+      return n.status === 'walking' && n.route.length > 0 && Math.hypot(n.position.x + 10.2, n.position.z + 6.3) > 3 ? n : null;
+    }, 60000, 100);
+    await tid('hud-pause').click();
+    await waitUntil(async () => ((await st()).calendar.paused ? true : null), 3000);
+    await waitSteps(5);
+    const pick = (s) => JSON.stringify({ cal: s.calendar, npcs: s.npcs, story: s.story, seed: s.world.seed, kiosk: s.kiosk, cash: s.economy.cashCents });
+    const a = await st();
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    await reload(false);
+    const b = await st();
+    const info = (await page.evaluate(() => window.__buedchen.world.getResidentInfo())).find((i) => i.npcId === D);
+    record('R9a Reload mitten im Weg: Deryas Position, Weg, Routine, Platz und alle Beziehungen/Erinnerungen, Geschichte (Schritt „beschwerde“), Uhr und Seed stimmen exakt überein; sie wird an derselben Stelle gezeichnet', walking !== null && pick(a) === pick(b) && b.story.quests['quest.hof']?.step === 'beschwerde' && b.npcs[D].status === 'walking' && b.npcs[D].routineId === ROUTINE[D] && info?.visible === true && Math.hypot(info.position.x - b.npcs[D].position.x, info.position.z - b.npcs[D].position.z) < 0.2, `Derya ${f(b.npcs[D].position.x)}/${f(b.npcs[D].position.z)}, Rest-Weg ${b.npcs[D].route.length} Punkte, Beziehungen D ${b.npcs[D].relationship} M ${b.npcs[M].relationship}`);
+    await tid('hud-speed-4').click();
+    await tid('hud-pause').click();
+    const arrived = await waitUntil(async () => {
+      const n = await npcState(D);
+      return n.placeId === 'place.kiosk-window' && (n.status === 'waiting' || n.status === 'at_place') ? n : null;
+    }, 60000, 100);
+    record('R9b Nach dem Reload läuft die Routine weiter: Derya erreicht das Verkaufsfenster und äußert ihren Wunsch', arrived !== null && (await npcState(D)).spotIndex !== null, `Status ${arrived?.status}`);
+  });
+
+  if (runResidents) {
+    const lost = pageGone ? null : ctxLostTotal + (await page.evaluate(() => window.__ctxLost).catch(() => 0));
+    record('R12 WebGL-Kontext im Bewohner-Abschnitt nie verloren (alle Seitenladungen)', lost === 0, lost === null ? 'nicht lesbar' : `${lost} Ereignisse`);
+    await closeEcoCtx();
+  }
+
+  // ---------------------------------------------------------------- R13 screenshots Auftrag 04 (deviceScaleFactor 2) -> docs/screenshots/auftrag-04/
+  await section('R13 Screenshots Auftrag 04', async () => {
+    await newEcoPage('shots04', 2, resLib);
+    await waitSteps(10, 15000);
+    const settle = async (inside) => {
+      const t0 = (await simStats()).seconds;
+      await page.waitForFunction((t) => window.__buedchen.world.getSimStats().seconds > t + 2, t0, { timeout: 40000 });
+      await page.waitForFunction((inside) => window.__buedchen.world.getKioskVisibility().roof === !inside, inside, { timeout: 40000 });
+      await page.waitForFunction(() => document.querySelectorAll('.ui-notice').length === 0, null, { timeout: 40000 });
+      await sleep(800);
+    };
+    const shot = async (file, name, inside, checks) => {
+      await settle(inside);
+      const extra = await checks();
+      await capture(page, file, shotDir04);
+      record(`Screenshot auftrag-04/${file} geschrieben (${name})`, extra.ok, extra.info);
+    };
+    const infoOf = async (id) => (await page.evaluate(() => window.__buedchen.world.getResidentInfo())).find((i) => i.npcId === id);
+    const base = { seed: foundSeed, shutter: true, shelves: STOCK, cash: 30000 };
+
+    // 01: residents in the quarter (outside): Günter walks along the sidewalk, Jonas waits at the corner, Marlene at the window
+    await page.evaluate(() => window.__buedchen.game.reset());
+    await arrange({
+      ...base, day: 2, minute: 870, paused: false, speed: 1, door: false, player: { x: 0.6, z: 2.45, h: Math.PI },
+      npcs: {
+        [G]: { place: 'place.corner', spot: 0, routine: 'g.ecke', from: 'wp.a-1', route: ['wp.a-2', 'wp.a-3', 'wp.a-4', 'wp.a-5', 'wp.a-6', 'wp.a-7', 'wp.a-8', 'wp.a-9', 'wp.corner-1'] },
+        [J]: { place: 'place.corner', spot: 2, routine: 'j.di' },
+        [M]: { place: 'place.kiosk-window', spot: 0, routine: ROUTINE[M] },
+      },
+    });
+    await waitUntil(async () => ((await npcState(G)).position.x > -3.2 ? true : null), 40000, 50);
+    await shot('01-bewohner-im-viertel.png', 'Günter geht über den Gehweg, Jonas am Eck, Marlene am Verkaufsfenster; Außenansicht', false, async () => {
+      const gi = await infoOf(G);
+      const ji = await infoOf(J);
+      const mi = await infoOf(M);
+      const visible = [gi, ji, mi].filter((i) => i?.visible && i.screen !== null).length;
+      return { ok: visible === 3 && gi.animation !== (await infoOf(J)).animation, info: `${visible} Bewohner im Bild, Günter ${gi.animation} bei x=${f(gi.position.x)}, Jonas ${ji.animation}, Marlene ${mi.animation}` };
+    });
+
+    // 02: customer at the sales window, player behind the counter, prompt visible
+    await arrange({ ...base, day: 2, minute: 440, paused: true, door: true, player: COUNTER, npcs: { [G]: { place: 'place.kiosk-window', spot: 1, routine: ROUTINE[G], wish: 'wish.guenter-echo' } } });
+    await waitPrompt(names(G));
+    await shot('02-kunde-am-fenster.png', 'Günter wartet am Fenster, Spieler hinter der Theke, Prompt „Mit Günter Wollny sprechen“', true, async () => {
+      const gi = await infoOf(G);
+      return { ok: gi.visible && gi.screen !== null && (await promptText()) === names(G) && (await panelOpen()) === null, info: `Prompt ${JSON.stringify(await promptText())}` };
+    });
+
+    // 03: story dialogue (Marlene's complaint)
+    await page.evaluate(() => window.__buedchen.game.reset());
+    await arrange({ ...base, day: 2, minute: 600, paused: true, door: true, player: COUNTER });
+    await say(M, 'dialogue.marlene.erstes-mal', ['aushang', 'bye'], 2);
+    await arrange({ ...base, day: 2, minute: 600, paused: true, door: true, player: COUNTER, npcs: { [M]: { place: 'place.kiosk-window', spot: 1, routine: ROUTINE[M] } } });
+    await openTalk(M);
+    await shot('03-dialog.png', 'Marlenes Beschwerde über den Sägelärm mit zwei Antwortoptionen', true, async () => {
+      const v = await dlg();
+      const opts = await optionsDom();
+      return { ok: v.dialogueId === 'dialogue.marlene.hof-beschwerde' && opts.length >= 2 && opts.length <= 4 && (await panelOpen()) === 'dialogue', info: `${v.dialogueId}, Optionen ${opts.map((o) => o.id).join('/')}` };
+    });
+    await page.keyboard.press('Escape');
+    await gone('panel-dialogue', 4000);
+
+    // 04: customer view
+    await arrange({ ...base, day: 2, minute: 440, paused: true, door: true, player: COUNTER, npcs: { [G]: { place: 'place.kiosk-window', spot: 1, routine: ROUTINE[G], wish: 'wish.guenter-echo' } } });
+    await openTalk(G);
+    await shot('04-kundenwunsch.png', 'Günters Wunsch (Echo + 2 Brötchen) mit Zeilen, Regalbestand und Summe', true, async () => {
+      const v = await dlg();
+      const rows = await page.locator('[data-testid^="customer-line-"]').count();
+      return { ok: v.dialogueId === 'dialogue.customer' && rows >= 2 && (await txt('customer-total')) === eur(270) && (await optionsDom()).some((o) => o.id === 'sell'), info: `${rows} Zeilen, Summe ${await txt('customer-total')}` };
+    });
+    await page.keyboard.press('Escape');
+    await gone('panel-dialogue', 4000);
+
+    // 05: age limit
+    await arrange({ ...base, day: 6, minute: 660, paused: true, door: true, player: COUNTER, npcs: { [J]: { place: 'place.kiosk-window', spot: 1, routine: 'j.sa', wish: 'wish.jonas-tabak' } } });
+    await openTalk(J);
+    await act('checkId', 'click');
+    await act('sell', 'click');
+    await shot('05-altersgrenze.png', 'Jonas (17) will Drehtabak: Ausweis „17 Jahre“, Verkauf abgelehnt', true, async () => {
+      const age = await txt('customer-age');
+      const msg = await messageText('dialogue-message');
+      return { ok: /17 Jahre/.test(age) && msg !== null && /Zu jung/.test(msg) && (await eco()).transactions.length === 0, info: `${age}; ${msg}` };
+    });
+    await page.keyboard.press('Escape');
+    await gone('panel-dialogue', 4000);
+
+    await page.evaluate(() => window.__buedchen.game.reset());
+    // 06: consequence of story A: the bench with residents
+    await arrange({
+      ...base, day: 4, minute: 1010, paused: true, door: false, player: { x: -5.4, z: 3.9, h: Math.PI },
+      flags: { 'yard.bench': true }, quests: { 'quest.hof': { step: 'entscheidung', outcome: 'kompromiss' } },
+      npcs: {
+        [M]: { place: 'place.yard-bench', spot: 0, routine: 'm.hof-bank', heading: 0.9 },
+        [G]: { place: 'place.yard-bench', spot: 2, routine: 'g.bank', heading: -0.9 },
+      },
+    });
+    await shot('06-folge-hofbank.png', 'Hofbank (Flag yard.bench) mit Marlene und Günter am Bankplatz', false, async () => {
+      const vis3 = await Promise.all([M, G].map(infoOf));
+      const gp = (await gated()).find((x) => x.id === 'placement.yard-bench');
+      return { ok: gp?.visible === true && vis3.every((i) => i.visible && i.screen !== null), info: `Bank gezeichnet=${gp?.visible}, ${vis3.filter((i) => i.screen).length} Bewohner im Bild` };
+    });
+
+    await page.evaluate(() => window.__buedchen.game.reset());
+    // 07: consequence of story B: the photo on the counter
+    await arrange({
+      ...base, day: 6, minute: 600, paused: true, door: true, player: COUNTER,
+      flags: { 'kiosk.photo': true }, quests: { 'quest.paket': { step: 'uebergeben', outcome: 'foto' } },
+      npcs: { [G]: { place: 'place.kiosk-window', spot: 2, routine: ROUTINE[G] } },
+    });
+    await shot('07-folge-foto.png', 'Gerahmtes Foto I-013 auf der Theke (Flag kiosk.photo), Günter am Fenster', true, async () => {
+      const gp = (await gated()).find((x) => x.id === 'placement.kiosk-photo');
+      return { ok: gp?.visible === true, info: `Foto gezeichnet=${gp?.visible}` };
+    });
+
+    await page.evaluate(() => window.__buedchen.game.reset());
+    // 08: journal
+    await arrange({
+      ...base, day: 6, minute: 600, paused: true, door: true, player: COUNTER,
+      flags: { 'kiosk.photo': true },
+      quests: { 'quest.hof': { step: 'gegenseite', outcome: null }, 'quest.paket': { step: 'uebergeben', outcome: 'foto' } },
+      npcs: {
+        [G]: { place: 'place.exit-west', spot: 0, status: 'away', rel: 52, lastTalk: { day: 5, minute: 600 }, memories: ['served:wish.guenter-echo', 'guenter:foto-geschenkt'] },
+        [M]: { place: 'place.exit-hof', spot: 0, status: 'away', rel: 38, lastTalk: { day: 4, minute: 600 }, memories: ['marlene:hof-beschwerde'] },
+      },
+    });
+    await page.evaluate(() => {
+      const s = window.__buedchen.game.state;
+      for (const n of Object.values(s.npcs)) { n.status = 'away'; n.placeId = null; n.spotIndex = null; }
+    });
+    await tid('hud-open-journal').click();
+    await vis('panel-journal');
+    await shot('08-notizbuch.png', 'Notizbuch mit zwei bekannten Personen, einer laufenden und einer abgeschlossenen Geschichte', true, async () => {
+      const j = await journalState();
+      return { ok: j.people.length === 2 && j.quests.length === 2 && j.text.includes('Krach im Hinterhof'), info: `Personen ${j.people.join(',')}, Geschichten ${j.quests.join(',')}` };
+    });
+    await page.keyboard.press('Escape');
+    await gone('panel-journal', 3000);
+
+    await page.evaluate(() => window.__buedchen.game.reset());
+    // 09: the four figures together
+    await arrange({
+      ...base, day: 6, minute: 600, paused: true, door: false, player: { x: 0.9, z: 3.9, h: Math.PI / 2 },
+      npcs: {
+        [G]: { place: 'place.corner', spot: 0, routine: 'g.ecke', pos: { x: 3.2, z: 2.9 }, heading: 0 },
+        [D]: { place: 'place.corner', spot: 1, routine: 'd.bank', pos: { x: 4.1, z: 2.9 }, heading: 0 },
+        [J]: { place: 'place.corner', spot: 2, routine: 'j.di', pos: { x: 5.0, z: 2.9 }, heading: 0 },
+        [M]: { place: 'place.yard-bench', spot: 0, routine: 'm.hof-bank', pos: { x: 5.9, z: 2.9 }, heading: 0 },
+      },
+    });
+    await shot('09-figuren.png', 'Günter, Derya, Jonas und Marlene nebeneinander, dem Betrachter zugewandt', false, async () => {
+      const all = await Promise.all(NPC_IDS.map(infoOf));
+      return { ok: all.every((i) => i.visible && i.screen !== null), info: all.map((i) => `${i.npcId.split('.')[1]} ${Math.round(i.screen?.x ?? -1)}/${Math.round(i.screen?.y ?? -1)}`).join(' ') };
+    });
+    const lost = pageGone ? null : ctxLostTotal + (await page.evaluate(() => window.__ctxLost).catch(() => 0));
+    record('R14 WebGL-Kontext im Screenshot-Abschnitt Auftrag 04 nie verloren', lost === 0, lost === null ? 'nicht lesbar' : `${lost} Ereignisse`);
+    await closeEcoCtx();
+  });
+
 } catch (error) {
   record('Unerwarteter Fehler im Check-Skript', false, pageGone ?? (error instanceof Error ? error.stack : String(error)));
 } finally {
@@ -1480,6 +2385,6 @@ try {
   const failed = results.filter((r) => !r.ok);
   console.log('\n--- Ergebnis ---');
   for (const r of results) console.log(`${r.ok ? 'PASS' : 'FAIL'}  ${r.name}`);
-  console.log(`\n${results.length - failed.length}/${results.length} Checks bestanden`);
+  console.log(`\n${results.length - failed.length}/${results.length} Checks bestanden (Laufzeit ${Math.round((Date.now() - startedAt) / 1000)} s)`);
   process.exitCode = failed.length === 0 ? 0 : 1;
 }
