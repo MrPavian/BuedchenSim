@@ -32,11 +32,12 @@ mkdirSync(shotDir04, { recursive: true });
 // the flag everything runs (also via env BC_ONLY). BC_NOBUILD=1 skips the build (development only).
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx >= 0 ? process.argv[onlyIdx + 1] : (process.env.BC_ONLY ?? null);
-if (only !== null && !['economy', 'shots', 'residents'].includes(only)) throw new Error(`unknown --only ${only} (economy | residents | shots)`);
+if (only !== null && !['economy', 'shots', 'residents', 'p5'].includes(only)) throw new Error(`unknown --only ${only} (economy | residents | shots | p5)`);
 const runOld = only === null;
 const runEconomy = only === null || only === 'economy';
 const runShots = only === null || only === 'shots';
 const runResidents = only === null || only === 'residents';
+const runP5 = only === null || only === 'p5'; // Auftrag 05 sections (names starting with 'P5'), incl. their screenshots
 
 const startedAt = Date.now();
 const results = [];
@@ -424,7 +425,7 @@ try {
   // Sections: each one is isolated; an exception becomes a FAIL line, all keys are released afterwards.
   const section = async (name, fn) => {
     // economy sections are named 'E…' (E13 = screenshots), resident sections 'R…' (R13 = screenshots); everything else is an old section
-    if (name.startsWith('E13') ? !runShots : name.startsWith('E') ? !runEconomy : name.startsWith('R13') ? !(runShots || runResidents) : name.startsWith('R') ? !runResidents : !runOld) return;
+    if (name.startsWith('P5') ? !runP5 : name.startsWith('E13') ? !runShots : name.startsWith('E') ? !runEconomy : name.startsWith('R13') ? !(runShots || runResidents) : name.startsWith('R') ? !runResidents : !runOld) return;
     if (pageGone) {
       record(`${name}: übersprungen`, false, pageGone);
       return;
@@ -976,7 +977,8 @@ try {
   let pxBefore = null;
   let pxControl = 0;
 
-  if (runEconomy) await newEcoPage('eco');
+  // The weather of a new game depends on its random seed: particles stay off in the economy flow so that its pixel comparisons are not disturbed by rain or snow.
+  if (runEconomy) await newEcoPage('eco', 1, () => { try { localStorage.setItem('buedchensim.settings.weatherEffects', 'off'); } catch { /* ignore */ } });
 
   // ---------------------------------------------------------------- E1 HUD at the start
   await section('E1 HUD', async () => {
@@ -1387,7 +1389,7 @@ try {
     record('E11c v1-Spielstand lädt: Position, Tür und Klappe bleiben, Wirtschaft mit Anfangswerten (Tag 1, 06:00, 300,00 €, leer)', Math.hypot(s.player.position.x + 3.5, s.player.position.z + 0.3) < 0.05 && s.kiosk.doorOpen === true && s.kiosk.shutterOpen === true && s.economy.cashCents === START_CASH && Object.keys(s.economy.storage).length === 0 && Object.keys(s.economy.shelves).length === 0 && s.economy.pendingDelivery === null && s.economy.lastReport === null && s.calendar.day === 1 && s.calendar.minute >= 360 && s.calendar.minute < 375 && s.calendar.phase === 'open' && noticeShown && (await txt('hud-day')) === 'Mo · Tag 1' && (await txt('hud-cash')) === eur(START_CASH) && (await attr('hud-status', 'data-open')) === 'true', `Tag ${s.calendar.day}, ${await txt('hud-clock')}, ${await txt('hud-cash')}, Hinweis ${noticeShown}`);
     await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('buedchensim.save.slot1')));
-    record('E11d Nach dem Laden wird im aktuellen Format (schemaVersion 3) gespeichert', stored.schemaVersion === 3 && stored.state.economy?.cashCents === START_CASH && stored.state.calendar?.day === 1, `schemaVersion ${stored.schemaVersion}`);
+    record('E11d Nach dem Laden wird im aktuellen Format (schemaVersion 4) gespeichert', stored.schemaVersion === 4 && stored.state.economy?.cashCents === START_CASH && stored.state.calendar?.day === 1, `schemaVersion ${stored.schemaVersion}`);
   });
 
   // ---------------------------------------------------------------- E14 place-bound panels away from the place / state replacement
@@ -1430,7 +1432,9 @@ try {
       const per = 4;
       const extra = 2;
       const byKind = {};
-      for (const p of Object.values(c.products)) (byKind[p.storage] ??= []).push(p);
+      // Ingredients never go on shelves and recipe outputs (the specialty) cannot be ordered: both stay out of the shelf plan.
+      const isOutput = (p) => (c.recipes ?? []).some((r) => r.productId === p.id);
+      for (const p of Object.values(c.products)) if (p.storage !== 'ingredient' && !isOutput(p)) (byKind[p.storage] ??= []).push(p);
       const counters = {};
       const assign = [];
       for (const slot of c.stockSlots) {
@@ -1441,7 +1445,7 @@ try {
       }
       const need = {};
       for (const a of assign) need[a.productId] = (need[a.productId] ?? 0) + per;
-      for (const p of Object.values(c.products)) need[p.id] = (need[p.id] ?? 0) + extra;
+      for (const p of Object.values(c.products)) if (!isOutput(p)) need[p.id] = (need[p.id] ?? 0) + extra;
       const errors = [];
       const fallbacks = [];
       const note = (label, r) => { if (!r.ok) errors.push(`${label}: ${r.reason}`); return r.ok; };
@@ -1633,7 +1637,8 @@ try {
         g.load(base({ seed, day, minute: 360, paused: false, speed: 4, flags, player: { x: -1, z: 0.95, h: 0 }, shutter: true }));
         for (let i = 0; i < 950; i += 1) {
           g.tick(0.25);
-          const list = Object.entries(g.state.npcs).filter(([, n]) => n.status !== 'away');
+          // the four residents of Auftrag 04 only (event guests of Auftrag 05 come on top)
+          const list = Object.entries(g.state.npcs).filter(([id, n]) => ['npc.guenter', 'npc.derya', 'npc.jonas', 'npc.marlene'].includes(id) && n.status !== 'away');
           if (list.length > best.count) best = { count: list.length, day, minute: Math.floor(g.state.calendar.minute) };
           if (!bench) {
             const b = list.find(([, n]) => n.placeId === 'place.yard-bench' && n.status === 'at_place');
@@ -1759,7 +1764,7 @@ try {
     await arrange({ seed: foundSeed, day: 1, minute: 360, paused: true, shutter: true, door: true, player: COUNTER, shelves: STOCK });
     const s0 = await st();
     const info0 = await page.evaluate(() => window.__buedchen.world.getResidentInfo());
-    record('R0b Ausgangslage geladen: Seed im Spielstand, alle vier Bewohner abwesend und nicht gezeichnet', s0.world.seed === foundSeed && NPC_IDS.every((id) => s0.npcs[id].status === 'away') && info0.length === 4 && info0.every((i) => !i.visible), `Seed ${s0.world.seed}`);
+    record('R0b Ausgangslage geladen: Seed im Spielstand, alle vier Bewohner (und die Ereignisgäste) abwesend und nicht gezeichnet', s0.world.seed === foundSeed && NPC_IDS.every((id) => s0.npcs[id].status === 'away') && info0.filter((i) => NPC_IDS.includes(i.npcId)).length === 4 && info0.length === Object.keys(s0.npcs).length && info0.every((i) => !i.visible), `Seed ${s0.world.seed}`);
   });
 
   // ---------------------------------------------------------------- R1 residents appear at their scheduled times (real routines at 4x)
@@ -2021,7 +2026,7 @@ try {
     const s1 = await st();
     await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('buedchensim.save.slot1')));
-    record('R5b Dialogoption „Das klingt anstrengend“ verändert den Spielstand: Geschichte Schritt „beschwerde“, Erinnerung, Beziehung +3 – und steht im gespeicherten Spielstand (Schema 3)', s1.story.quests['quest.hof']?.step === 'beschwerde' && s1.npcs[M].memories.includes('marlene:hof-beschwerde') && s1.npcs[M].relationship >= rBefore + 3 && stored.schemaVersion === 3 && stored.state.story.quests['quest.hof']?.step === 'beschwerde' && stored.state.npcs[M].memories.includes('marlene:hof-beschwerde'), `Beziehung ${rBefore} → ${s1.npcs[M].relationship}`);
+    record('R5b Dialogoption „Das klingt anstrengend“ verändert den Spielstand: Geschichte Schritt „beschwerde“, Erinnerung, Beziehung +3 – und steht im gespeicherten Spielstand (Schema 4)', s1.story.quests['quest.hof']?.step === 'beschwerde' && s1.npcs[M].memories.includes('marlene:hof-beschwerde') && s1.npcs[M].relationship >= rBefore + 3 && stored.schemaVersion === 4 && stored.state.story.quests['quest.hof']?.step === 'beschwerde' && stored.state.npcs[M].memories.includes('marlene:hof-beschwerde'), `Beziehung ${rBefore} → ${s1.npcs[M].relationship}`);
 
     const j1 = await readJournal('key');
     record('R5c Notizbuch (Taste J): Marlene als bekannte Person, „Krach im Hinterhof“ aktiv, „Ein Paket für Günter“ (ungestartet) fehlt, Jonas/Günter/Derya noch nicht getroffen', j1.people.length === 1 && j1.people[0] === M && j1.quests.length === 1 && j1.quests[0] === 'quest.hof' && j1.text.includes(npcName(M)) && j1.text.includes('Krach im Hinterhof') && !j1.text.includes('Ein Paket für Günter'), `Personen ${j1.people.join(',')}, Geschichten ${j1.quests.join(',')}`);
@@ -2374,6 +2379,655 @@ try {
     });
     const lost = pageGone ? null : ctxLostTotal + (await page.evaluate(() => window.__ctxLost).catch(() => 0));
     record('R14 WebGL-Kontext im Screenshot-Abschnitt Auftrag 04 nie verloren', lost === 0, lost === null ? 'nicht lesbar' : `${lost} Ereignisse`);
+    await closeEcoCtx();
+  });
+
+  // ================================================================ Auftrag 05 "Das lebendige Viertel"
+  // Calendar, weather, events, guests, specialty. The state is set up through game.load (debug hook, like the R sections);
+  // everything that is asserted about the UI goes through the real HUD/panels, key presses and clicks.
+  const shotDir05 = path.join(root, 'docs', 'screenshots', 'auftrag-05');
+  mkdirSync(shotDir05, { recursive: true });
+  const STORAGE_SPOT = { x: 1.75, z: -1.0, h: Math.PI }; // standing spot at the back storage (opens the goods panel with E)
+  const FOOT = 'event.fussballspieltag';
+  const HEAT = 'event.hitzewelle';
+  const XMAS = 'event.weihnachtszeit';
+  const FRIDAY_EVENT = 'event.frikadellenfreitag';
+  const OLE = 'npc.ole';
+  const SPEC = 'specialty.frikadelle';
+  const SPEC_PRODUCT = 'product.frikadelle-im-broetchen';
+  const MASSE = 'product.zur-glocke-frikadellenmasse';
+  const BROETCHEN = 'product.pottbaecker-broetchen';
+  const SENF = 'product.pottgold-senf';
+  const ZWIEBELN = 'product.pottgold-roestzwiebeln';
+  const PILS5 = 'product.puettbraeu-pils';
+  const CULT_FLAGS = { 'specialty.frikadelle.tried': true, 'specialty.frikadelle.sign': true, 'specialty.frikadelle.cult': true };
+  const CULT_STATE = { stage: 3, fame: 75, recipeLevel: 3, batchesProduced: 9, stockQuality: 80, sold: 30, satisfactionSum: 2400, ratings: 30, buyers: { 'npc.guenter': 5, 'npc.derya': 4, 'npc.jonas': 3, 'npc.marlene': 4 }, recommendations: 3 };
+
+  /** In-page helpers of the Auftrag-05 sections (survive reloads through the init script). */
+  const p5Lib = () => {
+    const P = (window.__p = {});
+    const game = () => window.__buedchen.game;
+    P.state = (spec) => {
+      const g = game();
+      const s = window.structuredClone(g.state);
+      const places = new Map(g.content.layout.nav.places.map((p) => [p.id, p]));
+      const wp = new Map(g.content.layout.nav.waypoints.map((w) => [w.id, w.position]));
+      if (spec.seed !== undefined) s.world.seed = spec.seed;
+      const c = s.calendar;
+      if (spec.day !== undefined) c.day = spec.day;
+      if (spec.minute !== undefined) c.minute = spec.minute;
+      c.phase = 'open';
+      c.paused = spec.paused ?? true;
+      c.speed = spec.speed ?? 1;
+      s.kiosk.shutterOpen = spec.shutter ?? true;
+      s.kiosk.doorOpen = spec.door ?? false;
+      const p = spec.player ?? { x: 0.9, z: 3.6, h: Math.PI };
+      s.player.position = { x: p.x, z: p.z };
+      s.player.heading = p.h ?? Math.PI;
+      if (spec.flags) Object.assign(s.story.flags, spec.flags);
+      if (spec.storage) s.economy.storage = { ...spec.storage };
+      if (spec.shelves) s.economy.shelves = window.structuredClone(spec.shelves);
+      if (spec.cash !== undefined) s.economy.cashCents = spec.cash;
+      if (spec.specialty) Object.assign(s.specialties['specialty.frikadelle'], window.structuredClone(spec.specialty));
+      for (const [id, n] of Object.entries(s.npcs)) {
+        const o = spec.npcs?.[id];
+        if (o) {
+          const place = places.get(o.place);
+          const spot = place.spots[o.spot ?? 0];
+          const pos = wp.get(spot.waypointId);
+          Object.assign(n, { position: { x: pos.x, z: pos.z }, heading: spot.heading, placeId: o.place, spotIndex: o.spot ?? 0, routineId: o.routine ?? null, route: [], status: 'at_place', waitingSince: null, wish: null, doneToday: { day: c.day, routineIds: [] } });
+        } else if (spec.away !== false) {
+          const def = g.content.npcs[id];
+          const place = places.get(def.homeExitPlaceId);
+          const pos = wp.get(place.spots[0].waypointId);
+          Object.assign(n, { status: 'away', position: { x: pos.x, z: pos.z }, placeId: null, spotIndex: null, route: [], routineId: null, wish: null, waitingSince: null, doneToday: { day: 0, routineIds: [] } });
+        }
+      }
+      return s;
+    };
+    P.setup = (spec) => {
+      if (spec.fresh) game().reset();
+      return game().load(P.state(spec));
+    };
+    /** First (seed, day) at which the weather has the wanted condition; loops over the seeds, days are looked up without playing. */
+    P.scan = (seeds, days, conditions) => {
+      for (const seed of seeds) {
+        P.setup({ seed, day: days[0] });
+        for (const d of days) if (conditions.includes(game().weather.onDay(d).condition)) return { seed, day: d };
+      }
+      return null;
+    };
+    /** First of `days` on which the routine entry starts for the seed (the game's own logic), like the residents section. */
+    P.findEntryDay = (seed, npcId, entryId, days) => {
+      const g = game();
+      const entry = g.content.npcs[npcId].routine.find((e) => e.id === entryId);
+      for (const day of days) {
+        P.setup({ seed, day, minute: entry.from, paused: false, speed: 4 });
+        for (let i = 0; i < 4; i += 1) g.tick(0.05);
+        const n = g.state.npcs[npcId];
+        if (n.status !== 'away' && n.routineId === entryId) return day;
+      }
+      return null;
+    };
+    /** Free-standing summary of what a reload must keep. */
+    P.digest = () => {
+      const g = game();
+      const s = g.state;
+      const day = s.calendar.day;
+      return JSON.stringify({
+        cal: s.calendar,
+        seed: s.world.seed,
+        weatherNow: g.weather.environment(),
+        weatherDay: g.weather.onDay(day),
+        forecast: g.weather.forecast(),
+        events: g.events.current().map((e) => [e.def.id, e.status, e.occurrence.startDay]),
+        storage: s.economy.storage,
+        shelves: s.economy.shelves,
+        specialty: s.specialties,
+        flags: s.story.flags,
+        cash: s.economy.cashCents,
+      });
+    };
+  };
+
+  const setup = async (spec) => {
+    await page.evaluate(() => { if (window.__buedchen.ui.currentPanel()) window.dispatchEvent(new window.KeyboardEvent('keydown', { code: 'Escape', key: 'Escape', bubbles: true })); });
+    const r = await page.evaluate((spec) => window.__p.setup(spec), spec);
+    if (!r.ok) throw new Error(`setup: ${r.reason}`);
+    await waitSteps(4);
+  };
+  const atm = () => page.evaluate(() => window.__buedchen.world.getAtmosphere());
+  /** Waits until the atmosphere shows the weather the game state has (it eases/snaps over a few frames). */
+  const atmSettled = async () => {
+    const want = await page.evaluate(() => window.__buedchen.game.weather.environment().weather.condition);
+    await waitUntil(async () => ((await atm()).weather === want ? true : null), 15000);
+    await waitUntil(async () => {
+      const a = await atm();
+      return a.precipitation === 'none' || a.particles > 0 || a.effects === 'off' ? true : null;
+    }, 10000);
+    return atm();
+  };
+  const digest = () => page.evaluate(() => window.__p.digest());
+  const stateKey = async () => JSON.stringify(await st());
+  const openCalendarByClick = async () => {
+    await tid('hud-date').click();
+    return vis('calendar-today', 4000);
+  };
+  const closePanel = async () => {
+    if (!(await ensureFocus())) throw new Error('kein Fokus');
+    await page.keyboard.press('Escape');
+    await waitUntil(async () => ((await panelOpen()) === null ? true : null), 3000);
+  };
+  const isDrawn = async (id) => (await gated()).find((x) => x.id === id)?.visible === true;
+
+  let runP5Page = false;
+  if (runP5) {
+    runP5Page = true;
+    await newEcoPage('p5', 1, p5Lib);
+    await waitSteps(5, 15000);
+  }
+
+  // ---------------------------------------------------------------- P5a HUD: date, season, weather
+  await section('P5a HUD Datum', async () => {
+    await setup({ fresh: true, seed: 7, day: 1, minute: 8 * 60 });
+    await waitUntil(async () => (/Sommer/.test(await txt('hud-date')) ? true : null), 4000);
+    const summer = await txt('hud-date');
+    const dayText = await txt('hud-day');
+    await setup({ seed: 7, day: 190, minute: 8 * 60 });
+    await waitUntil(async () => (/Winter/.test(await txt('hud-date')) ? true : null), 4000);
+    const winter = await txt('hud-date');
+    record('P5a HUD zeigt Datum, Jahreszeit und Wetter: Tag 1 = „7. Juni 2027 · Sommer“ mit Temperatur, Tag 190 im Winter (Dezember 2027)', summer.startsWith('7. Juni 2027 · Sommer') && /\d+ °C/.test(summer) && dayText === 'Mo · Tag 1' && /Dezember 2027 · Winter/.test(winter), `${summer} | ${winter}`);
+  });
+
+  // ---------------------------------------------------------------- P5b calendar panel
+  await section('P5b Kalender', async () => {
+    await setup({ seed: 7, day: 1, minute: 8 * 60 });
+    const before = await stateKey();
+    const opened = await openCalendarByClick();
+    const panel = await panelOpen();
+    const rows = await page.locator('[data-testid^="calendar-day-"]').count();
+    const sure = await page.locator('[data-testid="calendar-days"] [data-sure="true"]').count();
+    const tendency = await page.locator('[data-testid="calendar-days"] [data-sure="false"]').count();
+    const reliability = await page.evaluate(() => [...document.querySelectorAll('[data-testid="calendar-days"] [data-sure]')].map((n) => n.textContent));
+    const events = await page.locator('[data-testid^="calendar-event-"]').count();
+    const eventStatus = await page.evaluate(() => [...document.querySelectorAll('[data-testid^="calendar-event-"]')].map((n) => `${n.dataset.testid.slice(15)}:${n.dataset.status}`));
+    const effects = await Promise.all(['full', 'reduced', 'off'].map((l) => vis(`calendar-effects-${l}`, 1500)));
+    const today = await txt('calendar-today');
+    const now = await txt('calendar-weather-now');
+    await closePanel();
+    const afterClick = await stateKey();
+    await page.keyboard.press('KeyK');
+    const viaKey = await vis('calendar-today', 4000);
+    const panelKey = await panelOpen();
+    await page.keyboard.press('KeyK');
+    await gone('calendar-today', 3000);
+    const afterKey = await stateKey();
+    record(
+      'P5b Kalenderfenster (Klick auf das Datum und Taste K): 7 Tage mit Vorhersage (3 sicher, 4 Tendenz), Wetter jetzt, Ereignisliste und Effekt-Schalter; Öffnen und Schließen ändert keinen Spielstand',
+      opened && viaKey && panel === 'calendar' && panelKey === 'calendar' && rows === 7 && sure === 3 && tendency === 4 && reliability.slice(0, 3).every((t) => /sicher/.test(t)) && reliability.slice(3).every((t) => /Tendenz/.test(t)) &&
+        events >= 1 && effects.every(Boolean) && /Juni 2027/.test(today) && now.length > 5 && afterClick === before && afterKey === before,
+      `${rows} Tage, ${sure} sicher/${tendency} Tendenz, ${events} Ereignisse (${eventStatus.join(', ')}), ${today}, ${now}`,
+    );
+  });
+
+  // ---------------------------------------------------------------- P5c weather: deterministic, rain, effects setting
+  await section('P5c Wetter', async () => {
+    const found = await page.evaluate(() => window.__p.scan([7], Array.from({ length: 120 }, (_, i) => i + 1), ['light-rain', 'heavy-rain']));
+    if (!found) throw new Error('kein Regentag in 120 Tagen');
+    await setup({ seed: found.seed, day: found.day, minute: 14 * 60 });
+    const a1 = await digest();
+    const diffSeeds = await page.evaluate(() => {
+      const g = window.__buedchen.game;
+      const chain = (seed) => { window.__p.setup({ seed, day: 1 }); return Array.from({ length: 60 }, (_, i) => g.weather.onDay(i + 1).condition).join(','); };
+      const c7 = chain(7);
+      const c7again = chain(7);
+      const c8 = chain(8);
+      return { same: c7 === c7again, differs: c7 !== c8 };
+    });
+    await setup({ seed: found.seed, day: found.day, minute: 14 * 60 });
+    const a2 = await digest(); // same seed/day after a fresh load of the state
+    await reload(true);
+    const a3 = await digest();
+    const forecastAfter = await page.evaluate(() => JSON.stringify(window.__buedchen.game.weather.forecast()));
+    const wx = await page.evaluate(() => window.__buedchen.game.weather.environment().weather);
+    const atmo = await atmSettled();
+    record('P5c Wetter ist deterministisch: gleicher Seed und Tag liefern dasselbe Wetter und dieselbe Vorhersage (nach erneutem Laden des Spielstands und nach dem Neuladen der Seite); ein anderer Seed gibt eine andere Wetterfolge', a1 === a2 && a2 === a3 && diffSeeds.same && diffSeeds.differs && forecastAfter.length > 20, `Seed ${found.seed}, Tag ${found.day}: ${wx.condition} ${wx.low}–${wx.high} °C`);
+    record('P5c Regentag: die Atmosphäre meldet Regen mit sichtbaren Partikeln, Wetter und Jahreszeit passen zum Spielzustand', (atmo.precipitation === 'rain' || atmo.precipitation === 'heavy-rain') && atmo.particles > 0 && atmo.weather === wx.condition && atmo.effects === 'full' && atmo.target.paved < 1, `${atmo.weather}, ${atmo.precipitation}, ${atmo.particles} Partikel, Pflaster ${atmo.target.paved}`);
+    // Effects 'off' is a device setting: no particles, game state unchanged.
+    await setup({ seed: found.seed, day: found.day, minute: 14 * 60 });
+    await atmSettled();
+    const before = await stateKey();
+    await page.keyboard.press('KeyK');
+    await vis('calendar-today', 4000);
+    await tid('calendar-effects-off').click();
+    const off = await waitUntil(async () => { const a = await atm(); return a.effects === 'off' && a.particles === 0 ? a : null; }, 5000);
+    const pressedOff = await attr('calendar-effects-off', 'aria-pressed');
+    const stateOff = await stateKey();
+    await tid('calendar-effects-reduced').click();
+    const reduced = await waitUntil(async () => { const a = await atm(); return a.effects === 'reduced' && a.particles > 0 ? a : null; }, 5000);
+    await tid('calendar-effects-full').click();
+    const full = await waitUntil(async () => { const a = await atm(); return a.effects === 'full' && a.particles > (reduced?.particles ?? 0) ? a : null; }, 5000);
+    await closePanel();
+    const stateEnd = await stateKey();
+    record('P5c Effekt-Einstellung „Aus“ blendet die Wetterpartikel aus, „Reduziert“ zeigt weniger als „Voll“; der Spielstand bleibt dabei unverändert (Wetter und Licht bleiben)', off !== null && pressedOff === 'true' && stateOff === before && stateEnd === before && reduced !== null && full !== null && off.weather === full.weather, `aus ${off?.particles}, reduziert ${reduced?.particles}, voll ${full?.particles}`);
+  });
+
+  // ---------------------------------------------------------------- P5d winter
+  await section('P5d Winter', async () => {
+    const found = await page.evaluate(() => window.__p.scan(Array.from({ length: 40 }, (_, i) => 7 + i), Array.from({ length: 24 }, (_, i) => 178 + i), ['snow']));
+    if (!found) throw new Error('kein Schneetag im Dezember (Seeds 7-12)');
+    await setup({ seed: found.seed, day: found.day, minute: 14 * 60 });
+    const atmo = await atmSettled();
+    const decorOk = await waitUntil(async () => ((await atm()).decorations.includes('decor.christmas') ? true : null), 8000);
+    const a = await atm();
+    const env = await page.evaluate(() => window.__buedchen.game.weather.environment());
+    const hud = await txt('hud-date');
+    record('P5d Wintertag im Dezember: Schnee-Atmosphäre (Jahreszeit Winter, Schneefall mit Partikeln, Rasen verschneit, Pflaster heller) und Weihnachtsdekoration', env.season === 'winter' && a.season === 'winter' && a.weather === 'snow' && a.precipitation === 'snow' && a.particles > 0 && a.target.vegetationMix > 0.5 && a.target.paved > 1 && decorOk === true && a.decorations.includes('decor.christmas') && env.eventsToday.includes(XMAS) && /Winter/.test(hud) && atmo.weather === 'snow', `Seed ${found.seed}, Tag ${found.day}, ${hud}, ${a.decorations.join(',')}, ${a.particles} Flocken`);
+    // The decoration belongs to the event: after 24 December it is gone.
+    await setup({ seed: found.seed, day: 203, minute: 14 * 60 });
+    const gone25 = await waitUntil(async () => (!(await atm()).decorations.includes('decor.christmas') ? true : null), 8000);
+    record('P5d Nach dem 24. Dezember ist die Weihnachtsdekoration wieder weg', gone25 === true);
+  });
+
+  // ---------------------------------------------------------------- P5e football match day
+  const e5 = { seed: 7, day: 0 };
+  await section('P5e Fußballspieltag', async () => {
+    let day = null;
+    for (const seed of [7, 8, 9, 10, 11, 12, 13, 14]) {
+      day = await page.evaluate((seed) => window.__p.findEntryDay(seed, 'npc.ole', 'o.vor-dem-spiel', [6, 20, 34, 48]), seed);
+      if (day !== null) { e5.seed = seed; break; }
+    }
+    if (day === null) throw new Error('keine Ole-Tag gefunden');
+    e5.day = day;
+    const entry = data.npcs[OLE].routine.find((r) => r.id === 'o.vor-dem-spiel');
+    // normal day (the Saturday before the match) for comparison
+    await setup({ seed: e5.seed, day: day - 7, minute: 12 * 60 });
+    const normal = await page.evaluate((id) => window.__buedchen.game.demand.forProduct(id).events, PILS5);
+    const normalDecor = (await atm()).decorations;
+    // match day, 11:25, clock running at 4x like R1
+    await setup({ seed: e5.seed, day, minute: entry.from - 5, paused: false, speed: 4 });
+    const pre = await page.evaluate((id) => ({ status: window.__buedchen.game.state.npcs[id].status, visible: window.__buedchen.world.getResidentInfo().find((i) => i.npcId === id)?.visible }), OLE);
+    const reached = await waitUntil(async () => { const n = await npcState(OLE); return n.status === 'waiting' && n.placeId === 'place.kiosk-window' ? n : null; }, 120000, 100);
+    const s1 = await st();
+    const minuteAtWindow = s1.calendar.minute;
+    await waitSteps(30);
+    const info = (await page.evaluate(() => window.__buedchen.world.getResidentInfo())).find((i) => i.npcId === OLE);
+    const decor = await waitUntil(async () => { const a = await atm(); return a.decorations.includes('decor.football') ? a.decorations : null; }, 8000);
+    const bonus = await page.evaluate((id) => window.__buedchen.game.demand.forProduct(id), PILS5);
+    const active = await page.evaluate(() => window.__buedchen.game.weather.environment().activeEvents);
+    await page.evaluate(() => window.__buedchen.game.calendar.pause());
+    await page.keyboard.press('KeyK');
+    await vis('calendar-today', 4000);
+    const evStatus = await attr(`calendar-event-${FOOT}`, 'data-status');
+    await closePanel();
+    record(
+      `P5e Heimspiel-Tag (Tag ${day}): Ole kommt in seinem Zeitfenster (11:30–14:30) zum Verkaufsfenster und wird gezeichnet; Fußball-Dekoration steht; Bierbedarf hat einen Ereignisbonus (+${bonus?.events}, normaler Samstag +${normal}); Kalender zeigt das Ereignis als aktiv`,
+      pre.status === 'away' && pre.visible === false && reached !== null && minuteAtWindow >= entry.from && minuteAtWindow < entry.to + 30 && info?.visible === true && info.screen !== null &&
+        decor !== null && !normalDecor.includes('decor.football') && bonus.events > 0 && bonus.events > normal && active.includes(FOOT) && evStatus === 'active',
+      `Ole ${reached?.status} um ${Math.floor(minuteAtWindow / 60)}:${String(Math.floor(minuteAtWindow % 60)).padStart(2, '0')}, Dekoration ${decor?.join(',')}`,
+    );
+    // After 20:00: event over, bonus gone, Ole's routine does not apply; the decoration stays for the whole event day.
+    await setup({ seed: e5.seed, day, minute: 20 * 60 + 30 });
+    const late = await page.evaluate((id) => ({ events: window.__buedchen.game.demand.forProduct(id).events, active: window.__buedchen.game.weather.environment().activeEvents, today: window.__buedchen.game.weather.environment().eventsToday }), PILS5);
+    const lateDecor = (await atm()).decorations;
+    await setup({ seed: e5.seed, day: day + 1, minute: 8 * 60 });
+    const nextDecor = await waitUntil(async () => (!(await atm()).decorations.includes('decor.football') ? (await atm()).decorations : null), 8000);
+    record('P5e Nach 20:00: Ereignis vorbei (nicht mehr aktiv), der Ereignisbonus des Spiels ist weg; die Dekoration gilt den ganzen Ereignistag und ist am nächsten Tag weg', !late.active.includes(FOOT) && late.today.includes(FOOT) && late.events < bonus.events && lateDecor.includes('decor.football') && nextDecor !== null, `Bonus ${late.events} (vorher ${bonus.events}), Dekoration 20:30 ${lateDecor.join(',')}, nächster Tag ${nextDecor?.join(',') || 'keine'}`);
+    // Ole's second appearance (corner) needs the same event: outside the window nobody is sent.
+    await setup({ seed: e5.seed, day, minute: 20 * 60 + 40, paused: false, speed: 4 });
+    await waitSteps(120);
+    const away = (await npcState(OLE)).status === 'away';
+    record('P5e Nach dem Spiel kommt Ole nicht mehr (Routine verlangt ein aktives Ereignis)', away);
+  });
+
+  // ---------------------------------------------------------------- P5f specialty production and sale
+  const f5 = {};
+  await section('P5f Spezialität', async () => {
+    const ING = { [MASSE]: 2, [BROETCHEN]: 12, [SENF]: 2, [ZWIEBELN]: 2 };
+    await setup({ fresh: true, seed: 7, day: 3, minute: 9 * 60, player: STORAGE_SPOT, door: true, storage: ING, cash: 50000 });
+    await waitUntil(async () => ((await promptText()) !== null ? true : null), 6000);
+    await pressE();
+    const open = await vis('panel-goods', 5000);
+    const tabShown = await vis('goods-tab-specialty', 3000);
+    await tid('goods-tab-specialty').click();
+    const box = await vis(`specialty-${SPEC}`, 3000);
+    const stageBefore = await txt('specialty-stage');
+    const possible = await txt('specialty-possible');
+    await tid('specialty-batches-2').click();
+    const optionalChecked = await tid('specialty-optional').isChecked();
+    await tid('specialty-start').click();
+    const running = await vis('specialty-running', 4000);
+    const progress0 = Number(await attr('specialty-progress', 'aria-valuenow'));
+    const s1 = await st();
+    f5.started = { storage: s1.economy.storage, production: s1.specialties[SPEC].production };
+    // let the clock run at 4x until the batches are finished (2 x 40 game minutes)
+    await page.evaluate(() => { const c = window.__buedchen.game.calendar; c.setSpeed(4); c.resume(); });
+    // The open panel redraws on calendar changes, not every minute: halfway through, reopen it to read the progress shown.
+    await waitUntil(async () => { const s = await st(); return s.specialties[SPEC].production && s.calendar.minute >= 9 * 60 + 40 ? true : null; }, 60000, 100);
+    await page.evaluate(() => window.__buedchen.game.calendar.pause());
+    await waitSteps(3);
+    await closePanel();
+    await pressE();
+    await vis('panel-goods', 5000);
+    await tid('goods-tab-specialty').click();
+    const midway = await waitUntil(async () => { const v = Number(await attr('specialty-progress', 'aria-valuenow')); return v > 0 && v < 100 ? v : null; }, 4000);
+    await closePanel();
+    await page.evaluate(() => window.__buedchen.game.calendar.resume());
+    const done = await waitUntil(async () => ((await st()).economy.storage[SPEC_PRODUCT] === 12 ? true : null), 90000, 100);
+    await page.evaluate(() => window.__buedchen.game.calendar.pause());
+    await waitSteps(3);
+    const s2 = await st();
+    await pressE();
+    await vis('panel-goods', 5000);
+    await tid('goods-tab-specialty').click();
+    const finishedText = await waitUntil(async () => { const t = await txt('specialty-finished'); return /12 im Lager/.test(t) ? t : null; }, 4000);
+    const flagTried = s2.story.flags['specialty.frikadelle.tried'] === true;
+    record(
+      'P5f Spezialität: Lager mit Zutaten, Waren-Fenster am Lager öffnet den Reiter „Spezialität“, Herstellung über den Knopf (2 Chargen, mit Röstzwiebeln) startet, Fortschritt wird angezeigt, Zutaten werden verbraucht',
+      open && tabShown && box && running && optionalChecked && f5.started.production !== null && (f5.started.storage[MASSE] ?? 0) === 0 && (f5.started.storage[BROETCHEN] ?? 0) === 0 && (f5.started.storage[ZWIEBELN] ?? 0) === 0 && /2/.test(possible) && midway !== null && midway > 0,
+      `Fortschritt ${progress0} % → ${midway} %, möglich: ${possible}, Stufe ${stageBefore}, Produktion ${JSON.stringify(f5.started.production)}`,
+    );
+    record('P5f Nach 80 Spielminuten liegen 12 fertige Stück im Lager (Qualität gesetzt), die Herstellung ist beendet, Flag „probiert“ gesetzt, die Anzeige nennt die fertige Ware', done !== null && s2.specialties[SPEC].production === null && s2.specialties[SPEC].stockQuality > 0 && flagTried && finishedText !== null, `${finishedText}, Qualität ${s2.specialties[SPEC].stockQuality}, Stufe ${s2.specialties[SPEC].stage}`);
+    await closePanel();
+    // Restock to the counter through the economy API and sell to a resident.
+    const restock = await page.evaluate((pid) => {
+      const g = window.__buedchen.game;
+      let left = 12;
+      const used = [];
+      for (const slot of g.content.stockSlots) {
+        if (left === 0) break;
+        if (slot.accepts !== g.content.products[pid].storage || g.state.economy.shelves[slot.id]) continue;
+        for (let q = left; q >= 1; q -= 1) {
+          if (g.economy.restock(slot.id, pid, q).ok) { used.push(`${slot.id}:${q}`); left -= q; break; }
+        }
+      }
+      return { left, used };
+    }, SPEC_PRODUCT);
+    const cashBefore = (await st()).economy.cashCents;
+    const sale = await page.evaluate((pid) => window.__buedchen.game.economy.completeSale({ lines: [{ productId: pid, quantity: 2 }], ageCheckConfirmed: false, customer: { npcId: 'npc.guenter' } }), SPEC_PRODUCT);
+    const s3 = await st();
+    f5.sold = s3.specialties[SPEC].sold;
+    record('P5f Fertige Ware wird über die Wirtschafts-API auf die Theke eingeräumt (Lager 0) und an einen Bewohner verkauft: Verkauf gebucht, Kasse steigt, Verkaufszähler und Rückmeldung der Spezialität entstehen', restock.left === 0 && (s3.economy.storage[SPEC_PRODUCT] ?? 0) === 0 && sale.ok === true && s3.economy.cashCents === cashBefore + 2 * data.products[SPEC_PRODUCT].suggestedPriceCents && s3.specialties[SPEC].sold === 2 && s3.specialties[SPEC].feedback.length >= 1, `Regal ${restock.used.join(' ')}, Verkauf ${JSON.stringify(sale)}, Rückmeldungen ${s3.specialties[SPEC].feedback.length}`);
+    // The feedback shows in the specialty tab.
+    await walkTo({ x: STORAGE_SPOT.x, z: STORAGE_SPOT.z }, 20000);
+    await pressE();
+    await vis('panel-goods', 5000);
+    await tid('goods-tab-specialty').click();
+    const fb = await waitUntil(async () => { const t = await txt('specialty-feedback'); return t.length > 10 && !/Noch keine/.test(t) ? t : null; }, 4000);
+    const q = await txt('specialty-quality');
+    const fame = await attr('specialty-fame', 'aria-valuenow');
+    await closePanel();
+    record('P5f Rückmeldung der Kundschaft erscheint im Reiter „Spezialität“ (Qualität, Bekanntheit, Rückmeldungstext)', fb !== null && /Qualität/.test(q) && Number(fame) >= 0, `${q}, Bekanntheit ${fame}, Rückmeldung: ${fb?.slice(0, 90)}`);
+  });
+
+  // ---------------------------------------------------------------- P5g cult status
+  await section('P5g Kultstatus', async () => {
+    const SIGN = 'placement.frikadelle-sign';
+    const BOARD = 'placement.frikadelle-board';
+    await setup({ fresh: true, seed: 7, day: 12, minute: 12 * 60 });
+    const none = [await isDrawn(SIGN), await isDrawn(BOARD)];
+    const fridayBefore = await page.evaluate((id) => window.__buedchen.game.events.onDay(12).some((e) => e.id === id), FRIDAY_EVENT);
+    await setup({ seed: 7, day: 12, minute: 12 * 60, flags: { 'specialty.frikadelle.tried': true, 'specialty.frikadelle.sign': true }, specialty: { stage: 2, fame: 40, recipeLevel: 2, sold: 10, stockQuality: 70 } });
+    await waitUntil(async () => ((await isDrawn(SIGN)) ? true : null), 5000);
+    const signOnly = [await isDrawn(SIGN), await isDrawn(BOARD)];
+    await setup({ seed: 7, day: 12, minute: 12 * 60, flags: CULT_FLAGS, specialty: CULT_STATE });
+    await waitUntil(async () => ((await isDrawn(BOARD)) ? true : null), 5000);
+    const cult = [await isDrawn(SIGN), await isDrawn(BOARD)];
+    const tSign = await page.evaluate((id) => window.__buedchen.world.getPlacementTransform(id), SIGN);
+    const tBoard = await page.evaluate((id) => window.__buedchen.world.getPlacementTransform(id), BOARD);
+    record('P5g Kultstatus: ohne Flags sind Kundenstopper (I-014) und Kult-Tafel (I-015) nicht in der Szene, mit Stufe 2 nur der Kundenstopper, mit Stufe 3 (Flags + Zustand) beide, an den Layout-Positionen', !none[0] && !none[1] && signOnly[0] && !signOnly[1] && cult[0] && cult[1] && Math.abs(tSign.x + 2.75) < 0.01 && Math.abs(tSign.z - 2.45) < 0.01 && Math.abs(tBoard.x - 0.95) < 0.01 && Math.abs(tBoard.z - 2.11) < 0.01, `ohne ${none}, Stufe 2 ${signOnly}, Stufe 3 ${cult}`);
+    // Frikadellen-Freitag appears in the calendar on a Friday (only with the cult flag).
+    const friday = await page.evaluate(() => ({ ids: window.__buedchen.game.events.onDay(12).map((e) => e.id), weekday: (12 - 1) % 7, names: window.__buedchen.game.events.onDay(12).map((e) => e.name) }), FRIDAY_EVENT);
+    await page.keyboard.press('KeyK');
+    await vis('calendar-today', 4000);
+    const row = await txt('calendar-events-12');
+    const ev = await vis(`calendar-event-${FRIDAY_EVENT}`, 2000);
+    const evStatus = ev ? await attr(`calendar-event-${FRIDAY_EVENT}`, 'data-status') : null;
+    await closePanel();
+    record('P5g Frikadellen-Freitag erscheint im Kalender an einem Freitag (Tag 12) – nur mit gesetztem Kult-Flag; er fehlt ohne Flag', friday.weekday === 4 && friday.ids.includes(FRIDAY_EVENT) && !fridayBefore && ev && /Frikadellen-Freitag/.test(row) && evStatus === 'active', `Tagesreihe: ${row}; Status ${evStatus}`);
+  });
+
+  // ---------------------------------------------------------------- P5h save round trip
+  await section('P5h Speichern', async () => {
+    const found = await page.evaluate(() => window.__p.scan([7], Array.from({ length: 80 }, (_, i) => i + 1), ['light-rain', 'heavy-rain']));
+    await setup({ fresh: true, seed: 7, day: found.day, minute: 10 * 60 + 15, flags: CULT_FLAGS, specialty: CULT_STATE, storage: { [MASSE]: 1, [BROETCHEN]: 6, [SENF]: 1, [SPEC_PRODUCT]: 4, [PILS5]: 5 }, cash: 41234, shelves: { 'slot.counter.1': { productId: SPEC_PRODUCT, quantity: 3 } } });
+    // a production that is still running
+    const started = await page.evaluate(() => window.__buedchen.game.specialty.startProduction('specialty.frikadelle', 1, false));
+    await page.evaluate(() => { const g = window.__buedchen.game; g.state.calendar.minute += 10; });
+    await waitSteps(4);
+    const before = await digest();
+    const bs = await st();
+    await reload(true);
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('buedchensim.save.slot1')));
+    const after = await digest();
+    const as = await st();
+    record('P5h Speichern und Neuladen: Kalender, Wetter (heute und Vorhersage), Ereignisse, Lager, Regal, laufende Herstellung, Spezialitätszustand, Flags und Kasse sind nach dem Neuladen identisch (Schema 4)', started.ok === true && before === after && stored.schemaVersion === 4 && as.specialties[SPEC].production !== null && as.specialties[SPEC].production.readyAt === bs.specialties[SPEC].production.readyAt && as.economy.shelves['slot.counter.1']?.quantity === 3 && as.economy.cashCents === 41234, `Schema ${stored.schemaVersion}, Tag ${as.calendar.day}, ${before.length} Zeichen verglichen`);
+    // the production runs on after the reload and finishes
+    await page.evaluate(() => { const c = window.__buedchen.game.calendar; c.setSpeed(4); c.resume(); });
+    const fin = await waitUntil(async () => { const s = await st(); return s.specialties[SPEC].production === null && s.economy.storage[SPEC_PRODUCT] >= 10 ? s : null; }, 90000, 100);
+    await page.evaluate(() => window.__buedchen.game.calendar.pause());
+    record('P5h Die nach dem Neuladen wiederhergestellte Herstellung läuft weiter und liefert die Ware', fin !== null, `Lager ${fin?.economy.storage[SPEC_PRODUCT]}`);
+  });
+
+  // ---------------------------------------------------------------- P5i scenario "Heißer Samstag mit Heimspiel"
+  await section('P5i Szenario Heißer Samstag', async () => {
+    const SAT = 48;
+    const PILS = PILS5;
+    const BRAUSE = 'product.ruhrbrause-brause-klassik';
+    // The calendar of the Thursday shows the heat wave, the match and the demand outlook (UI), through a state at Thursday.
+    await setup({ fresh: true, seed: 7, day: SAT - 2, minute: 9 * 60, cash: 100000, shutter: false });
+    await page.keyboard.press('KeyK');
+    await vis('calendar-today', 4000);
+    const ui = {
+      row: await txt(`calendar-events-${SAT}`),
+      demand: await txt(`calendar-demand-${SAT}`),
+      heat: await vis(`calendar-event-${HEAT}`, 1500),
+      football: await vis(`calendar-event-${FOOT}`, 1500),
+      sure: await attr(`calendar-weather-${SAT}`, 'data-sure'),
+    };
+    await closePanel();
+    const r = await page.evaluate(({ SAT, PILS, BRAUSE, MASSE, BROETCHEN, SENF, ZWIEBELN, SPEC_PRODUCT, OLE }) => {
+      const g = window.__buedchen.game;
+      const out = {};
+      const setClock = (day, minute) => { g.state.calendar.day = day; g.state.calendar.minute = minute; g.state.calendar.phase = 'open'; };
+      window.__p.setup({ seed: 7, day: SAT - 2, minute: 9 * 60, cash: 100000, shutter: false, paused: false });
+      // 1.-2. Thursday: forecast, calendar, outlook
+      const fc = g.weather.forecast()[2];
+      out.forecast = { condition: fc.condition, high: fc.high };
+      out.eventsSat = g.events.onDay(SAT).map((e) => e.id);
+      out.statuses = Object.fromEntries(g.events.current().map((e) => [e.def.id, e.status]));
+      const groups = g.demand.outlook()[2].groups;
+      out.beer = groups.find((x) => x.label === 'Bier')?.delta ?? 0;
+      out.cold = groups.find((x) => x.label === 'Kaltgetränke')?.delta ?? 0;
+      // 3. order extra drinks and ingredients
+      const cash0 = g.state.economy.cashCents;
+      const order = [[PILS, 24], [BRAUSE, 12], [MASSE, 2], [BROETCHEN, 12], [SENF, 2], [ZWIEBELN, 2]];
+      out.order = g.economy.placeOrder(order.map(([productId, quantity]) => ({ productId, quantity })));
+      out.delivery = g.economy.receiveDelivery();
+      out.orderCents = cash0 - g.state.economy.cashCents;
+      out.orderExpected = order.reduce((s, [id, q]) => s + g.content.products[id].purchasePriceCents * q, 0);
+      // 4. Saturday begins
+      setClock(SAT, 6 * 60);
+      const env = g.weather.environment();
+      out.today = { condition: env.weather.condition === fc.condition, high: env.weather.high === fc.high, events: env.eventsToday };
+      // 6. production
+      setClock(SAT, 9 * 60);
+      out.start = g.specialty.startProduction('specialty.frikadelle', 2, true);
+      setClock(SAT, 9 * 60 + 80);
+      g.tick(1 / 60);
+      out.made = g.state.economy.storage[SPEC_PRODUCT];
+      const restockAll = (pid, quantity) => {
+        let left = quantity;
+        for (const slot of g.content.stockSlots) {
+          if (left === 0) break;
+          if (slot.accepts !== g.content.products[pid].storage || g.state.economy.shelves[slot.id]) continue;
+          for (let q = left; q >= 1; q -= 1) if (g.economy.restock(slot.id, pid, q).ok) { left -= q; break; }
+        }
+        return left;
+      };
+      out.restockLeft = restockAll(SPEC_PRODUCT, 12) + restockAll(PILS, 12);
+      g.state.kiosk.shutterOpen = true;
+      // 5. + 8. the match
+      setClock(SAT, 11 * 60 + 30);
+      const env2 = g.weather.environment();
+      out.active = env2.activeEvents;
+      out.heat = env2.temperature;
+      let t = 0;
+      while (g.state.npcs[OLE].status === 'away' && t < 240 * 60) { g.tick(1 / 60); t += 1; }
+      out.ole = g.state.npcs[OLE].status;
+      out.pilsEvents = g.demand.forProduct(PILS).events;
+      // 7. regulars buy the specialty
+      out.sales = ['npc.guenter', 'npc.derya', 'npc.marlene'].map((npcId) => g.economy.completeSale({ lines: [{ productId: SPEC_PRODUCT, quantity: 1 }], ageCheckConfirmed: false, customer: { npcId } }).ok);
+      const sp = g.state.specialties['specialty.frikadelle'];
+      out.sold = sp.sold;
+      out.feedback = sp.feedback.length;
+      out.memory = g.state.npcs['npc.guenter'].memories.includes('probiert:frikadelle');
+      // 9. after 20:00
+      setClock(SAT, 20 * 60);
+      g.tick(1 / 60);
+      out.after = g.weather.environment().activeEvents;
+      // 10. day close
+      setClock(SAT, 22 * 60);
+      const close = g.economy.closeDay();
+      out.close = close.ok ? { gross: close.report.grossProfitCents === close.report.revenueCents - close.report.costOfGoodsSoldCents, sales: close.report.salesCount === g.state.economy.today.salesCount, revenue: close.report.revenueCents } : { reason: close.reason };
+      return out;
+    }, { SAT, PILS, BRAUSE, MASSE, BROETCHEN, SENF, ZWIEBELN, SPEC_PRODUCT, OLE });
+    await waitSteps(4);
+    record('P5i Szenario „Heißer Samstag mit Heimspiel“ (Seed 7, Tag 48 = Sa 24.7.2027), Donnerstag: Vorhersage zeigt Hitze (≥ 30 °C, sicher), Kalender führt Hitzewelle und Heimspiel, Ausblick meldet mehr Bier- und Kaltgetränkebedarf', r.forecast.condition !== null && r.forecast.high >= 30 && r.eventsSat.includes(FOOT) && r.eventsSat.includes(HEAT) && r.statuses[FOOT] === 'announced' && ['announced', 'active'].includes(r.statuses[HEAT]) && r.beer > 10 && r.cold > 10 && ui.heat && ui.football && /Bier/.test(ui.demand) && /Heimspiel/.test(ui.row) && ui.sure === 'true', `Vorhersage ${r.forecast.condition} ${r.forecast.high} °C, Bier +${r.beer}, Kaltgetränke +${r.cold}, ${ui.row} | ${ui.demand}`);
+    record('P5i Bestellung und Lieferung (Bier, Brause, Zutaten) werden korrekt gebucht; am Samstag ist das Wetter wie vorhergesagt', r.order.ok && r.delivery.ok && r.orderCents === r.orderExpected && r.today.condition && r.today.high && r.today.events.includes(FOOT) && r.today.events.includes(HEAT), `Einkauf ${eur(r.orderCents)}`);
+    record('P5i Herstellung (2 Chargen, 80 Minuten) liefert 12 Frikadellen, ab 11:00 läuft das Heimspiel mit Gästen (Ole erscheint), Bier hat einen Ereignisbonus, Stammkunden kaufen die Spezialität, Rückmeldungen und Erinnerung entstehen', r.start.ok && r.made === 12 && r.restockLeft === 0 && r.active.includes(FOOT) && r.ole !== 'away' && r.pilsEvents > 0 && r.sales.every(Boolean) && r.sold >= 3 && r.feedback >= 3 && r.memory, `Ole ${r.ole}, Bonus ${r.pilsEvents}, verkauft ${r.sold}, Temperatur ${Math.round(r.heat)} °C`);
+    record('P5i Nach 20:00 ist das Heimspiel vorbei; der Tagesabschluss stimmt (Rohgewinn = Umsatz − Wareneinsatz, Verkäufe gezählt)', !r.after.includes(FOOT) && r.close.gross === true && r.close.sales === true && r.close.revenue > 0, `Umsatz ${eur(r.close.revenue ?? 0)}`);
+    // Restart: the closed day with all data survives a reload.
+    const before = await digest();
+    const beforeState = await st();
+    await reload(true);
+    const after = await digest();
+    const afterState = await st();
+    await page.keyboard.press('Escape').catch(() => undefined);
+    record('P5i Neustart nach dem Tagesabschluss: Spielstand, Wetter, Ereignisse, Lager und Spezialität unverändert; Bericht vorhanden', before === after && JSON.stringify(beforeState.economy.lastReport) === JSON.stringify(afterState.economy.lastReport) && afterState.economy.lastReport !== null && afterState.calendar.day === SAT, `Tag ${afterState.calendar.day}`);
+  });
+
+  if (runP5Page) {
+    const lost = pageGone ? null : ctxLostTotal + (await page.evaluate(() => window.__ctxLost).catch(() => 0));
+    record('P5z WebGL-Kontext in den Auftrag-05-Abschnitten nie verloren (alle Seitenladungen)', lost === 0, lost === null ? 'nicht lesbar' : `${lost} Ereignisse`);
+    await closeEcoCtx();
+  }
+
+  // ---------------------------------------------------------------- P5y screenshots Auftrag 05 (deviceScaleFactor 2) -> docs/screenshots/auftrag-05/
+  await section('P5y Screenshots Auftrag 05', async () => {
+    await newEcoPage('shots05', 2, p5Lib);
+    await waitSteps(10, 15000);
+    const settle = async (inside) => {
+      const t0 = (await simStats()).seconds;
+      await page.waitForFunction((t) => window.__buedchen.world.getSimStats().seconds > t + 2, t0, { timeout: 40000 });
+      await page.waitForFunction((inside) => window.__buedchen.world.getKioskVisibility().roof === !inside, inside, { timeout: 40000 });
+      await page.waitForFunction(() => document.querySelectorAll('.ui-notice').length === 0, null, { timeout: 40000 });
+      await atmSettled();
+      await sleep(1000);
+    };
+    const shot = async (file, name, inside, checks) => {
+      await settle(inside);
+      const extra = await checks();
+      await capture(page, file, shotDir05);
+      record(`Screenshot auftrag-05/${file} geschrieben (${name})`, extra.ok, extra.info);
+    };
+    const openCal = async () => {
+      await page.keyboard.press('KeyK');
+      await vis('calendar-today', 4000);
+    };
+    const rows = () => page.locator('[data-testid^="calendar-day-"]').count();
+
+    // 1 calendar panel
+    await setup({ fresh: true, seed: 7, day: 1, minute: 14 * 60 });
+    await openCal();
+    await shot('kalender.png', 'Kalenderfenster: Datum, Jahreszeit, Wetter jetzt, Vorhersage und Ereignisliste', false, async () => ({ ok: (await panelOpen()) === 'calendar' && (await rows()) === 7 && /Juni 2027/.test(await txt('calendar-today')), info: `${await txt('calendar-today')}; ${await txt('calendar-weather-now')}` }));
+    await closePanel();
+
+    // 2 forecast with demand arrows: Thursday before the hot match Saturday
+    await setup({ seed: 7, day: 46, minute: 9 * 60 });
+    await openCal();
+    await tid('calendar-days').scrollIntoViewIfNeeded();
+    await shot('vorhersage.png', 'Vorhersage der nächsten sieben Tage (3 sicher, 4 Tendenz) mit Ereignissen und Bedarfspfeilen, Hitze und Heimspiel am Samstag', false, async () => {
+      const demand = await txt('calendar-demand-48');
+      const sure = await page.locator('[data-testid="calendar-days"] [data-sure="true"]').count();
+      const inView = await tid('calendar-days').evaluate((n) => { const r = n.getBoundingClientRect(); return r.top >= 0 && r.bottom <= window.innerHeight; });
+      return { ok: (await rows()) === 7 && sure === 3 && /↑/.test(demand) && /Heimspiel/.test(await txt('calendar-events-48')) && inView, info: `${demand}; Tage vollständig im Bild ${inView}` };
+    });
+    await closePanel();
+
+    // 3 rain
+    const rain = await page.evaluate(() => window.__p.scan([7], Array.from({ length: 120 }, (_, i) => i + 1), ['heavy-rain']) ?? window.__p.scan([7], Array.from({ length: 120 }, (_, i) => i + 1), ['light-rain']));
+    await setup({ seed: rain.seed, day: rain.day, minute: 14 * 60 });
+    await shot('regen.png', 'Regentag vor dem Büdchen: Regen, nasses Pflaster, trübes Licht', false, async () => {
+      const a = await atm();
+      return { ok: (a.precipitation === 'rain' || a.precipitation === 'heavy-rain') && a.particles > 0 && a.effects === 'full', info: `Tag ${rain.day}: ${a.weather}, ${a.particles} Partikel` };
+    });
+
+    // 4 winter
+    const snow = await page.evaluate(() => window.__p.scan(Array.from({ length: 40 }, (_, i) => 7 + i), Array.from({ length: 24 }, (_, i) => 178 + i), ['snow']));
+    await setup({ seed: snow.seed, day: snow.day, minute: 14 * 60 });
+    await waitUntil(async () => ((await atm()).decorations.includes('decor.christmas') ? true : null), 8000);
+    await shot('winter.png', 'Wintertag im Dezember: Schneefall, verschneiter Rasen, Weihnachtsdekoration am Büdchen', false, async () => {
+      const a = await atm();
+      return { ok: a.season === 'winter' && a.precipitation === 'snow' && a.particles > 0 && a.decorations.includes('decor.christmas'), info: `Tag ${snow.day}: ${a.weather}, ${a.decorations.join(',')}` };
+    });
+
+    // 5 match day with Ole at the window
+    const mseed = e5.day > 0 ? e5.seed : 7;
+    // a dry match Saturday (not the hot one) for the picture
+    const mday = await page.evaluate((seed) => {
+      window.__p.setup({ seed, day: 6 });
+      return [6, 20, 34].find((d) => ['sunny', 'cloudy'].includes(window.__buedchen.game.weather.onDay(d).condition)) ?? 34;
+    }, mseed);
+    await setup({ seed: mseed, day: mday, minute: 13 * 60, npcs: { [OLE]: { place: 'place.kiosk-window', spot: 1, routine: 'o.vor-dem-spiel' } } });
+    await waitUntil(async () => ((await atm()).decorations.includes('decor.football') ? true : null), 8000);
+    await shot('fussballspieltag.png', 'Heimspiel-Tag: Wimpelketten und Vereinsfahne am Büdchen, Ole in Blau-Gold am Verkaufsfenster', false, async () => {
+      const a = await atm();
+      const ole = (await page.evaluate(() => window.__buedchen.world.getResidentInfo())).find((i) => i.npcId === OLE);
+      return { ok: a.decorations.includes('decor.football') && ole?.visible === true && ole.screen !== null, info: `Dekoration ${a.decorations.join(',')}, Ole ${ole?.animation} (${Math.round(ole?.screen?.x ?? -1)}/${Math.round(ole?.screen?.y ?? -1)})` };
+    });
+
+    // 6 production running (inside, goods panel, specialty tab)
+    await setup({ seed: 7, day: 3, minute: 9 * 60, player: STORAGE_SPOT, door: true, storage: { [MASSE]: 2, [BROETCHEN]: 12, [SENF]: 2, [ZWIEBELN]: 2 }, cash: 50000 });
+    await settle(true);
+    await pressE();
+    await vis('panel-goods', 5000);
+    await tid('goods-tab-specialty').click();
+    await tid('specialty-batches-2').click();
+    await tid('specialty-start').click();
+    await vis('specialty-running', 4000);
+    await page.evaluate(() => { const c = window.__buedchen.game.calendar; c.setSpeed(4); c.resume(); });
+    await waitUntil(async () => ((await st()).calendar.minute >= 9 * 60 + 38 ? true : null), 60000, 100);
+    await page.evaluate(() => window.__buedchen.game.calendar.pause());
+    await waitSteps(5);
+    await waitUntil(async () => (Number(await attr('specialty-progress', 'aria-valuenow')) >= 30 ? true : null), 4000);
+    await shot('herstellung.png', 'Reiter „Spezialität“ im Waren-Fenster: Rezept, Zutaten im Lager, laufende Herstellung mit Fortschrittsbalken', true, async () => {
+      const pr = Number(await attr('specialty-progress', 'aria-valuenow'));
+      const run = await txt('specialty-running');
+      return { ok: (await panelOpen()) === 'goods' && pr >= 30 && pr < 100 && /in Arbeit/.test(run), info: `${run}; Fortschritt ${pr} %` };
+    });
+    await closePanel();
+
+    // 7 cult status
+    await setup({ seed: 7, day: 12, minute: 12 * 60 + 20, flags: CULT_FLAGS, specialty: CULT_STATE, player: { x: 0.9, z: 4.3, h: Math.PI } });
+    await waitUntil(async () => ((await isDrawn('placement.frikadelle-board')) ? true : null), 5000);
+    await shot('kultstatus.png', 'Kultstatus der Frikadelle: Kundenstopper (I-014) neben dem Fenster und Kult-Tafel (I-015) vor der Theke', false, async () => {
+      const sign = await isDrawn('placement.frikadelle-sign');
+      const board = await isDrawn('placement.frikadelle-board');
+      return { ok: sign && board, info: `Kundenstopper ${sign}, Kult-Tafel ${board}` };
+    });
+
+    // 8 scenario
+    await setup({ fresh: true, seed: 7, day: 48, minute: 13 * 60, npcs: { [OLE]: { place: 'place.kiosk-window', spot: 1, routine: 'o.vor-dem-spiel' } } });
+    await waitUntil(async () => { const d = (await atm()).decorations; return d.includes('decor.football') && d.includes('decor.heatwave') ? true : null; }, 8000);
+    await shot('szenario-heisser-samstag.png', 'Szenario „Heißer Samstag mit Heimspiel“ (Tag 48): Sonnenschirm der Hitzewelle, Vereinsfahne und Wimpel, Ole am Fenster', false, async () => {
+      const a = await atm();
+      const ole = (await page.evaluate(() => window.__buedchen.world.getResidentInfo())).find((i) => i.npcId === OLE);
+      const env = await page.evaluate(() => window.__buedchen.game.weather.environment());
+      return { ok: a.decorations.includes('decor.football') && a.decorations.includes('decor.heatwave') && env.temperature >= 28 && ole?.visible === true, info: `${a.decorations.join(',')}, ${Math.round(env.temperature)} °C ${a.weather}, Ole ${ole?.visible}` };
+    });
+    const lost = pageGone ? null : ctxLostTotal + (await page.evaluate(() => window.__ctxLost).catch(() => 0));
+    record('P5y WebGL-Kontext im Screenshot-Abschnitt Auftrag 05 nie verloren', lost === 0, lost === null ? 'nicht lesbar' : `${lost} Ereignisse`);
     await closeEcoCtx();
   });
 

@@ -260,21 +260,23 @@ Ausführlich mit allen Tabellen, Ausgängen und Texten: [BEWOHNER-UND-GESCHICHTE
 - **Bewohner:** persönliche Wetterreaktionen, Veranstaltungserinnerungen (`erlebt:…`), Erinnerungen `probiert:frikadelle` und `empfiehlt:frikadelle`, Geldbörse je Besuch, Haushalte (Ein-Personen-Haushalte) mit gemeinsamen Erinnerungen.
 - **Spielstand:** Version 4 (`specialties`, `households`), Migration 3 → 4; Datum, Wetter und Veranstaltungen werden nicht gespeichert.
 
-## 6. Prüfergebnisse (2026-11-14)
+## 6. Prüfergebnisse (2026-11-15, Auftrag 05)
 Strikte Trennung: **implementiert** ist in Abschnitt 5 beschrieben, **automatisiert getestet** steht hier, **manuell geprüft** wurde nichts (siehe Abschnitt 9).
 
 | Befehl | Ergebnis |
 |---|---|
-| `npm run typecheck` | fehlerfrei (eigener Lauf 2026-11-14) |
-| `npm run lint` | fehlerfrei (eigener Lauf 2026-11-14) |
-| `npm run test` | 37 Dateien, 605 Tests bestanden (eigener Lauf 2026-11-14) |
-| `npm run build` | erfolgreich (131 Module), Größen siehe Abschnitt 8 |
-| `npm run check:browser` | 149 von 149 Prüfungen bestanden (zwei Läufe nacheinander am 2026-11-14, 1.287 s und 1.188 s) |
-| `npm audit` | am 2026-11-14 nicht erneut ausgeführt (letzter Lauf 2026-11-12: 0 Hinweise) |
+| `npm run typecheck` | fehlerfrei (eigener Lauf 2026-11-15) |
+| `npm run lint` | fehlerfrei (eigener Lauf 2026-11-15) |
+| `npm run test` | 50 Dateien, 655 Tests bestanden (eigener Lauf 2026-11-15; Phase 4: 37 Dateien, 605 Tests) |
+| `npm run build` | erfolgreich (157 Module; Spielcode 375,78 kB, gzip 124,68 kB) |
+| `npm run check:browser` | 182 von 182 Prüfungen bestanden (vollständiger Lauf 2026-11-15, 1.937 s; neuer Abschnitt P5, siehe [Abschlussbericht Phase 5](PHASE-05-ABSCHLUSSBERICHT.md)) |
+| `npm audit` | am 2026-11-15 nicht erneut ausgeführt (letzter Lauf 2026-11-12: 0 Hinweise) |
 
 **Phase-3-Vorabprüfung (Auftrag 04, Abschnitt 1.1):** Der dokumentierte Phase-3-Stand wurde nicht ungeprüft übernommen. Ein eigener Lauf der Tests am Phase-3-Commit `1247610` (Stand vor Auftrag 04) ergab 23 Dateien und 370 bestandene Tests, die Zahl stimmt also. Die 98 von 98 Browserprüfungen aus Auftrag 03 sind Teil der erweiterten Browserprüfung dieses Auftrags (Ergebnis: alle 98 weiterhin grün, Teil der 149 von 149). Der Vergleich der Quelltexte mit dem Phase-3-Stand zeigt für `economy.ts` und `clock.ts` ausschließlich die Erweiterung um den optionalen Kundenbezug (Abschnitt 5, Kundenkäufe); es wurde kein Phase-3-Fehler gefunden und keiner behoben. Die Bewertung der bekannten Phase-3-Grenzen steht im [Implementierungsplan (Phase 4)](IMPLEMENTIERUNGSPLAN.md).
 
-**Automatisiert getestet mit Vitest (605 Tests in 37 Dateien; 234 mehr als in Phase 3, davon 188 in 14 neuen Dateien; Dateien mit Auftrag-04-Bezug):**
+Die folgende Aufstellung beschreibt den Stand nach Auftrag 04; die Tests aus Auftrag 05 sind im [Abschlussbericht Phase 5](PHASE-05-ABSCHLUSSBERICHT.md) aufgeführt.
+
+**Automatisiert getestet mit Vitest (Stand Auftrag 04: 605 Tests in 37 Dateien; 234 mehr als in Phase 3, davon 188 in 14 neuen Dateien; Dateien mit Auftrag-04-Bezug):**
 - `src/game/npcSim.test.ts` (25): Routinen an Fensterbeginn (eingeschlossen) und -ende (ausgeschlossen), Wochentage (Tag 8 ist wieder ein Montag), Phasen, Bedingungen von Einträgen; deterministische Würfe (gleicher Seed und Tag gleiches Ergebnis, anderer Seed unterscheidet sich, Neuladen mitten am Tag, ein ganzer simulierter Tag identisch); Zustandsfolge away → walking → at_place → waiting → walking → away mit je einem Signal; ein Eintrag läuft nicht zweimal am Tag; Kunde bei geschlossener Klappe wartet und geht mit Erinnerung (einmal); getrennte Standplätze; Durchgang (pass-by); Bewohner überlappen nie und bleiben auf den Kanten; Pause, Tempo, Tagesphasen schicken alle heim; Stehenbleiben vor dem Spieler (kein Durchlaufen, kein Teleport), Umgehungsbahn, Warten bei Blockade, kein Erscheinen auf besetztem Ausgang, Vorrang der niedrigeren ID bei langer Verklemmung.
 - `src/game/customer.test.ts` (18): deterministische Wunschwahl; Kundenablauf (Wunsch, Signal, genau ein Verkauf, Gehen); Ablehnen; gescheiterter Verkauf hält den Wunsch offen; Rückfallzeilen; Schließen ändert nichts; nicht bedienter Kunde geht mit `ignored:`; Altersregeln (Erwachsener braucht die Ausweisprüfung, 17-Jähriger nie die 18er-Ware, `unknown_customer`, `customer_underage` auch bei bestätigter Prüfung); der Kassenverkauf des Spielers bleibt unverändert; Kundeneffekte in Dialogoptionen; Flags steuern Wünsche.
 - `src/game/dialogue.test.ts` (28): Öffnen und Ablehnungsgründe, Priorität, einmalige Gespräche, Status `talking` und Wiederherstellung, Bedingungen und Effekte von Optionen, `seen` erst bei einer Schlussantwort, vorzeitiges Schließen verbraucht kein einmaliges Gespräch (Regression), Beziehung (Schlüssel wirkt einmal, Tagesgruß, Begrenzung, vier Stufen), Quest-Schritte nur vorwärts, Ausgang endgültig, beide Geschichtspfade mit Alternativen, Interaktionsziel (Reichweite, Blick, Vorrang), Laden und Zurücksetzen.
