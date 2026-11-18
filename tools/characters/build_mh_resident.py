@@ -1391,6 +1391,20 @@ def build_actions(rig, P):
     fingers = [f"{n}_0{i}_{s}" for n in ("index", "middle", "ring", "pinky") for i in (1, 2, 3) for s in ("l", "r")]
     thumbs = [f"thumb_0{i}_{s}" for i in (2, 3) for s in ("l", "r")]
 
+    # The MakeHuman bind pose stands with the legs spread (ankles 35-40 cm apart, wider than the hip joints). Leg
+    # adduction (positive = towards the midline, about the forward axis, feet counter-rotated to stay flat) brings the
+    # ankles to a natural width: about 26 cm when standing and 12 cm when walking, where the feet land almost on one line.
+    def adduction(width):
+        out = []
+        for s in ("l", "r"):
+            hip = rig.data.bones[f"thigh_{s}"].head_local
+            ankle = rig.data.bones[f"foot_{s}"].head_local
+            out.append(math.atan2(abs(ankle.x) - width / 2, hip.z - ankle.z))
+        return sum(out) / 2
+
+    stand_in = adduction(0.26) + 0.5 * P["stance"]
+    walk_in = adduction(0.12)
+
     def base():
         r = {}
         # Arms from the A-pose down to the sides (about the forward axis), hands turned in towards the thighs.
@@ -1416,10 +1430,10 @@ def build_actions(rig, P):
         r["head"] = [(X, 0.02 * breath), (Z, 0.06 * math.sin(t * 2 * math.pi / 8.0 + 2.0))]
         r["lowerarm_l"] = [(X, P["fore_l"])]
         r["lowerarm_r"] = [(X, P["fore_r"])]
-        r["thigh_l"] = [(Y, 0.02 * shift + P["stance"])]
-        r["thigh_r"] = [(Y, 0.02 * shift - P["stance"])]
-        r["foot_l"] = [(Y, -P["stance"])]
-        r["foot_r"] = [(Y, P["stance"])]
+        r["thigh_l"] = [(Y, 0.02 * shift + stand_in)]
+        r["thigh_r"] = [(Y, 0.02 * shift - stand_in)]
+        r["foot_l"] = [(Y, -stand_in)]
+        r["foot_r"] = [(Y, stand_in)]
         return r, (0.01 * shift, 0, 0)
 
     def walk(f):
@@ -1427,12 +1441,14 @@ def build_actions(rig, P):
         sw = math.sin(t)
         r = base()
         st = P["stride"]
-        r["thigh_l"] = [(X, -st * sw)]
-        r["thigh_r"] = [(X, st * sw)]
+        r["thigh_l"] = [(Y, walk_in), (X, -st * sw)]
+        r["thigh_r"] = [(Y, -walk_in), (X, st * sw)]
         r["calf_l"] = [(X, P["knee"] * max(0.0, -math.sin(t + 0.6)))]
         r["calf_r"] = [(X, P["knee"] * max(0.0, math.sin(t + 0.6)))]
-        r["foot_l"] = [(X, -0.15 * math.sin(t + 0.3))]
-        r["foot_r"] = [(X, 0.15 * math.sin(t + 0.3))]
+        r["foot_l"] = [(Y, -walk_in), (X, -0.15 * math.sin(t + 0.3))]
+        r["foot_r"] = [(Y, walk_in), (X, 0.15 * math.sin(t + 0.3))]
+        # The weight shifts over the stance leg (the left one around t = pi/2): a small sideways sway of the pelvis.
+        sway = 0.012 * math.sin(t)
         r["upperarm_l"] += [(X, P["swing_l"] * sw)]
         r["upperarm_r"] += [(X, -P["swing_r"] * sw)]
         r["lowerarm_l"] = [(X, P["fore_l"] - 0.1 * max(0.0, sw) * (P["swing_l"] > 0.1))]
@@ -1440,7 +1456,7 @@ def build_actions(rig, P):
         r["spine_01"] = [(X, stoop * 0.6), (Z, 0.05 * sw)]
         r["spine_03"] = [(X, stoop * 0.4), (Z, -0.07 * sw)]
         r["neck_01"] = [(X, -stoop * 0.5)]
-        return r, (0, 0, -P["bob"] * abs(math.cos(t)))
+        return r, (sway, 0, -P["bob"] * abs(math.cos(t)))
 
     def talk(f):
         t = (f - 1) / fps

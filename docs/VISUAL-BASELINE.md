@@ -187,7 +187,7 @@ Sichtprüfung: `tools/character-viewer/` (Vite-Seite `/tools/character-viewer/in
 |---|---|
 | Format, Ort | GLB unter `public/models/residents/<asset-id>.glb`, eingetragen in `RESIDENT_MODELS` (`src/world/assets/residents/glbResident.ts`) |
 | Maßstab, Pivot, Richtung | 1 Einheit = 1 m, Pivot zwischen den Füßen auf dem Boden, Blick nach +Z (wie die prozeduralen Figuren) |
-| Clips | `idle`, `walk` (ein Schrittzyklus bei `walkSpeed` m/s), `talk`; fehlende Clips werden übersprungen |
+| Clips | `idle`, `walk` (ein Schrittzyklus bei `walkSpeed` m/s), `talk`; Beine im Stand auf etwa 26 cm, beim Gehen auf etwa 12 cm Knöchelabstand zusammengeführt (Adduktion aus dem Skelett berechnet, nicht die gespreizte Grundhaltung); fehlende Clips werden übersprungen |
 | Mimik (seit 04.6) | optionale Morph Targets `friendly`, `thoughtful`, `blink` an Körper, Brauen und Wimpern (dünn besetzt, ohne Normalen); fehlen sie, bleibt das Gesicht neutral |
 | Skelett | ein Skin; jede Instanz erhält eine eigene Kopie (`SkeletonUtils.clone`), Geometrien, Materialien und Texturen werden geteilt |
 | Materialien | glTF-PBR (`MeshStandardMaterial`), nicht metallisch, Rauheit 0,3 (Augen) bis 0,95 (Mütze); Haare, Brauen, Wimpern mit Alpha-Maske (kein Sortieren nötig) |
