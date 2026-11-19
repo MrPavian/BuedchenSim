@@ -35,6 +35,7 @@ const frikadelle = (quantity: number): WishDef['lines'] => [{ productId: SPECIAL
 
 export const frikadellenFreitag: EventDef = {
   id: FRIDAY,
+  ambience: 'market',
   name: 'Frikadellen-Freitag',
   description:
     'Seit die Frikadelle im Brötchen im Viertel Kult ist, stehen freitags mittags Handwerker, Rentner und Schüler am Büdchen. ' +

@@ -8,6 +8,7 @@ import tseslint from 'typescript-eslint';
  *   content -> game (types), core
  *   world   -> game, core, three   (receives the ContentPack as a parameter)
  *   ui      -> game, core
+ *   audio   -> game, core   (Web Audio; no three, no world/ui/content)
  *   main.ts, integration/ -> everything
  * Test files follow the rules of their layer.
  */
@@ -101,6 +102,10 @@ export default tseslint.config(
   {
     files: ['src/ui/**/*.ts'],
     rules: restrict([threePatterns, layerGlobs(['world', 'content'])], 'ui'),
+  },
+  {
+    files: ['src/audio/**/*.ts'],
+    rules: restrict([threePatterns, layerGlobs(['world', 'ui', 'content'])], 'audio'),
   },
   {
     // Integration tests span layers on purpose (content + world); only the base rules apply here.

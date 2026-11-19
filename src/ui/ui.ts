@@ -24,7 +24,13 @@ export interface UiCallbacks {
   /** The player changed the weather particle setting (a device setting; main applies it to the world and stores it). */
   onWeatherEffects(level: EffectsLevel): void;
   weatherEffects(): EffectsLevel;
+  /** The player changed the sound setting (device setting; main applies it to the audio and stores it). */
+  onSoundLevel(level: SoundSetting): void;
+  soundLevel(): SoundSetting;
 }
+
+/** Sound: off, quiet or normal (Auftrag 06, 6.4). */
+export type SoundSetting = 'off' | 'quiet' | 'normal';
 
 /** Weather particles: full, a quarter, or none (lighting and wet ground stay). */
 export type EffectsLevel = 'full' | 'reduced' | 'off';
@@ -182,6 +188,8 @@ export function createUi(game: Game, root: HTMLElement, callbacks: UiCallbacks):
     open: (id) => modal.open(id),
     weatherEffects: () => callbacks.weatherEffects(),
     setWeatherEffects: (level) => callbacks.onWeatherEffects(level),
+    soundLevel: () => callbacks.soundLevel(),
+    setSoundLevel: (level) => callbacks.onSoundLevel(level),
   };
   const modal = createModalHost(
     overlay,

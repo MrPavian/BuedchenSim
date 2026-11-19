@@ -15,6 +15,9 @@ export interface PanelContext {
   /** Device setting for weather particles. */
   weatherEffects(): 'full' | 'reduced' | 'off';
   setWeatherEffects(level: 'full' | 'reduced' | 'off'): void;
+  /** Device setting for sound (Auftrag 06, 6.4). */
+  soundLevel(): 'off' | 'quiet' | 'normal';
+  setSoundLevel(level: 'off' | 'quiet' | 'normal'): void;
 }
 
 export interface Panel {

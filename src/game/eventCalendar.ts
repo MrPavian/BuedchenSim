@@ -22,6 +22,8 @@ export type EventSchedule =
 
 export type EventStatus = 'planned' | 'announced' | 'active' | 'completed';
 
+export type EventAmbience = 'crowd' | 'music' | 'market' | 'bells';
+
 export interface EventDef {
   /** Prefix 'event.'. */
   id: string;
@@ -40,6 +42,8 @@ export interface EventDef {
   visitorBonus: number;
   /** Decoration the world shows while the event is on (today), e.g. 'decor.football'. */
   decoration?: string;
+  /** Sound layer while the event is active (Auftrag 06, 6.4): distant crowd, muffled music, market chatter or bells. */
+  ambience?: EventAmbience;
   /** Memory residents get when they visit the kiosk while the event is active. */
   memory?: string;
   /**

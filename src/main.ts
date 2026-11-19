@@ -8,6 +8,8 @@ import { createUi, showFatalError, type Ui } from './ui/ui';
 import { texts } from './ui/texts';
 import { WebGLUnavailableError, createWorld, type World } from './world/world';
 import type { EffectsLevel } from './ui/ui';
+import { createAudio, type GameAudio } from './audio/audio';
+import type { SoundLevel } from './audio/mix';
 
 const AUTOSAVE_INTERVAL_MS = 10_000;
 const SAVE_DEBOUNCE_MS = 300;
@@ -77,6 +79,16 @@ function start(): void {
   } catch {
     // keep the default
   }
+  // Sound setting (device setting, not game state; Auftrag 06, 6.4). The audio starts on the first key or click.
+  const SOUND_KEY = 'buedchensim.settings.sound';
+  let soundLevel: SoundLevel = 'normal';
+  try {
+    const stored = window.localStorage.getItem(SOUND_KEY);
+    if (stored === 'off' || stored === 'quiet' || stored === 'normal') soundLevel = stored;
+  } catch {
+    // keep the default
+  }
+  let audio: GameAudio | null = null;
   ui = createUi(game, appRoot, {
     onNewGame() {
       saveStore.clear();
@@ -98,6 +110,16 @@ function start(): void {
       }
     },
     weatherEffects: () => weatherEffects,
+    onSoundLevel(level) {
+      soundLevel = level;
+      audio?.setLevel(level);
+      try {
+        window.localStorage.setItem(SOUND_KEY, level);
+      } catch {
+        // Per-device convenience only.
+      }
+    },
+    soundLevel: () => soundLevel,
   });
 
   try {
@@ -153,8 +175,14 @@ function start(): void {
   });
   window.addEventListener('pagehide', persist);
 
+  // Sound (Auftrag 06, 6.4): created now, the audio context only on the first player gesture (browser rule).
+  audio = createAudio(game, soundLevel);
+  const unlockAudio = (): void => audio?.unlock();
+  window.addEventListener('keydown', unlockAudio);
+  window.addEventListener('pointerdown', unlockAudio);
+
   if (import.meta.env.DEV || new URLSearchParams(window.location.search).has('debug')) {
-    (window as unknown as { __buedchen: { game: Game; world: World; ui: Ui } }).__buedchen = { game, world, ui };
+    (window as unknown as { __buedchen: { game: Game; world: World; ui: Ui; audio: GameAudio } }).__buedchen = { game, world, ui, audio };
   }
 
   const loop = createLoop({

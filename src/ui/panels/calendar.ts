@@ -72,6 +72,20 @@ export function createCalendarPanel(ctx: PanelContext): Panel {
       }
       settings.append(el('span', 'ui-muted ui-small', texts.calendar.effectsHint));
       body.append(settings);
+
+      // Device setting: sound (never changes the simulation).
+      const sound = testId(el('div', 'ui-calendar-settings'), 'calendar-sound');
+      sound.append(el('span', undefined, texts.calendar.sound));
+      for (const level of ['off', 'quiet', 'normal'] as const) {
+        const b = button(texts.calendar.soundLevels[level], `calendar-sound-${level}`, () => {
+          ctx.setSoundLevel(level);
+          ctx.refresh();
+        }, 'ui-btn');
+        b.setAttribute('aria-pressed', String(ctx.soundLevel() === level));
+        sound.append(b);
+      }
+      sound.append(el('span', 'ui-muted ui-small', texts.calendar.soundHint));
+      body.append(sound);
     },
   };
 }

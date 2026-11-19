@@ -7,6 +7,7 @@ import type { EventDef } from '../../../game/eventCalendar';
 export const ruhrgebietEvents: EventDef[] = [
   {
     id: 'event.fussballspieltag',
+    ambience: 'crowd',
     name: 'Heimspiel SV Grubenlicht 09',
     description:
       'Der SV Grubenlicht spielt zu Hause. Ab mittags ziehen Fans in Blau-Gold am Büdchen vorbei, nach dem Abpfiff wird an der Ecke gefachsimpelt.',
@@ -22,6 +23,7 @@ export const ruhrgebietEvents: EventDef[] = [
   },
   {
     id: 'event.strassenfest',
+    ambience: 'music',
     name: 'Straßenfest Am Eck',
     description:
       'Die Nachbarschaft feiert: Wimpelketten, Tische auf dem Gehweg, Musik aus dem Hinterhof. Viele bleiben länger als geplant.',
@@ -37,6 +39,7 @@ export const ruhrgebietEvents: EventDef[] = [
   },
   {
     id: 'event.flohmarkt',
+    ambience: 'market',
     name: 'Flohmarkt im Hof',
     description: 'Am ersten Sonntag im Monat stehen Tapeziertische im Hof. Früh am Morgen kommen die Sammler, später die Familien.',
     // First Sunday of April to October.
@@ -51,6 +54,7 @@ export const ruhrgebietEvents: EventDef[] = [
   },
   {
     id: 'event.weihnachtszeit',
+    ambience: 'bells',
     name: 'Weihnachtszeit',
     description: 'Lichterketten am Büdchen, Tannengrün an der Tür. Die Leute bleiben auf einen Plausch stehen und kaufen Süßes für die Lieben.',
     schedule: { kind: 'dateRange', from: { month: 12, dayOfMonth: 1 }, to: { month: 12, dayOfMonth: 24 } },
