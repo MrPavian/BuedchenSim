@@ -1,5 +1,6 @@
 import {
   BoxGeometry,
+  BufferAttribute,
   CylinderGeometry,
   Group,
   Mesh,
@@ -18,7 +19,23 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 export class PartBuilder {
   private readonly buckets = new Map<Material, BufferGeometry[]>();
 
+  /**
+   * `vertexColors`: parts are baked with the colour of the material they were added with and share this one
+   * vertex-colour material (one draw call for the whole asset); materials in `keep` stay separate (glass, emissive).
+   */
+  constructor(private readonly options: { vertexColors?: Material; keep?: Material[] } = {}) {}
+
   private push(material: Material, geometry: BufferGeometry): void {
+    const { vertexColors, keep } = this.options;
+    if (vertexColors && material !== vertexColors && !keep?.includes(material) && 'color' in material) {
+      const c = (material as Material & { color: { r: number; g: number; b: number } }).color;
+      const count = geometry.getAttribute('position').count;
+      const data = new Float32Array(count * 3);
+      for (let i = 0; i < count; i += 1) data.set([c.r, c.g, c.b], i * 3);
+      geometry.deleteAttribute('color');
+      geometry.setAttribute('color', new BufferAttribute(data, 3));
+      material = vertexColors;
+    }
     const list = this.buckets.get(material);
     if (list) list.push(geometry);
     else this.buckets.set(material, [geometry]);
@@ -63,6 +80,12 @@ export class PartBuilder {
   /** Cylinder whose axis runs along Z from z0 to z1 (knobs, handles). */
   cylinderZ(material: Material, r: number, cx: number, cy: number, z0: number, z1: number, segments = 10): this {
     this.push(material, new CylinderGeometry(r, r, z1 - z0, segments).rotateX(Math.PI / 2).translate(cx, cy, (z0 + z1) / 2));
+    return this;
+  }
+
+  /** Adds any prepared geometry (already positioned in asset space) to the bucket of `material`. */
+  geometry(material: Material, geometry: BufferGeometry): this {
+    this.push(material, geometry);
     return this;
   }
 

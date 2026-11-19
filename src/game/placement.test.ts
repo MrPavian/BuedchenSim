@@ -46,6 +46,23 @@ describe('placementFootprint', () => {
   });
 });
 
+describe('collider', () => {
+  it('replaces the full size in placementColliders, centred and rotated like the asset', () => {
+    const tree = asset({ size: { width: 3, depth: 3, height: 6 }, collider: { width: 0.4, depth: 0.2 } });
+    const at = (rotation: 0 | 90) => placementColliders({ placements: [placement({ assetId: 'tree', rotation })] }, { tree })[0]?.rect;
+    const r0 = at(0);
+    expect(r0?.minX).toBeCloseTo(9.8, 9);
+    expect(r0?.maxX).toBeCloseTo(10.2, 9);
+    expect(r0?.minZ).toBeCloseTo(19.9, 9);
+    expect(r0?.maxZ).toBeCloseTo(20.1, 9);
+    const r90 = at(90);
+    expect(r90?.maxX).toBeCloseTo(10.1, 9);
+    expect(r90?.maxZ).toBeCloseTo(20.2, 9);
+    // The visual footprint stays the full size.
+    expect(placementFootprint(placement({ assetId: 'tree' }), tree).maxX).toBeCloseTo(11.5, 9);
+  });
+});
+
 describe('placementFront', () => {
   it('matches three.js rotation.y = deg * PI / 180 applied to +Z', () => {
     for (const rotation of [0, 90, 180, 270] as const) {

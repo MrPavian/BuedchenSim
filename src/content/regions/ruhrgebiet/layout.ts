@@ -64,10 +64,26 @@ export const ruhrgebietLayout: RegionLayout = {
     // Kultstatus: board on the south facade between window (to x 0.4) and door (from x 1.5); back against the wall's
     // outer face (z 2.075).
     { id: 'placement.frikadelle-board', assetId: 'I-015', position: { x: 0.95, z: 2.11 }, rotation: 0, requiresFlag: 'specialty.frikadelle.cult' },
+    // Street space (Auftrag 06.1). All on the sidewalk strips off the resident lanes A (z 3.3) and B (z 4.3); colliders keep >= 0.3 m
+    // to every lane. Lamps and the sign stand on the kerb side (collision mast only), the bench and the box on the kiosk side.
+    { id: 'placement.lantern-west', assetId: 'E-003', position: { x: -6.5, z: 4.7 }, rotation: 180 },
+    { id: 'placement.lantern-east', assetId: 'E-003', position: { x: 6.5, z: 4.7 }, rotation: 180 },
+    { id: 'placement.bin', assetId: 'E-005', position: { x: -3.9, z: 2.3 }, rotation: 0 },
+    // Lamps and sign face north (rotation 180): their front must be reachable and the street side lies beyond the walk limit.
+    // Rack with the bike between its two hoops (z 2.05..2.85); the rack is decorative-only here because the bike's footprint
+    // covers it (overlapping colliders are invalid); the bike blocks the strip z 2.2..2.7 instead.
+    { id: 'placement.bike-rack', assetId: 'E-008', position: { x: 7.6, z: 2.45 }, rotation: 0, collides: false },
+    { id: 'placement.bike-1', assetId: 'E-006', position: { x: 7.6, z: 2.45 }, rotation: 0 },
+    { id: 'placement.street-tree', assetId: 'E-007', position: { x: 8.5, z: -3.0 }, rotation: 0 },
+    { id: 'placement.street-tree-west', assetId: 'E-007', position: { x: -10.4, z: -2.6 }, rotation: 0 },
+    { id: 'placement.street-sign', assetId: 'E-012', position: { x: 10.2, z: 4.74 }, rotation: 180 },
+    { id: 'placement.utility-box', assetId: 'E-013', position: { x: -9.8, z: 2.25 }, rotation: 0 },
+    { id: 'placement.sidewalk-bench', assetId: 'E-014', position: { x: -7.0, z: 2.35 }, rotation: 0 },
   ],
   ground: [
     { id: 'ground.sidewalk', assetId: 'E-001', kind: 'sidewalk', rect: { minX: -12, maxX: 12, minZ: 2, maxZ: 5 } },
-    { id: 'ground.curb', kind: 'curb', rect: { minX: -12, maxX: 12, minZ: 5, maxZ: 5.2 } },
+    // Lowered kerb (x 1.0..2.6) in front of the kiosk door: flush access to the street, a crossing spot.
+    { id: 'ground.curb', kind: 'curb', rect: { minX: -12, maxX: 12, minZ: 5, maxZ: 5.2 }, lowered: [{ from: 1.0, to: 2.6 }] },
     { id: 'ground.street', assetId: 'E-002', kind: 'street', rect: { minX: -12, maxX: 12, minZ: 5.2, maxZ: 11 } },
     { id: 'ground.yard', kind: 'yard', rect: { minX: -12, maxX: 12, minZ: -8, maxZ: 2 } },
   ],

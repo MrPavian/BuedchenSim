@@ -71,6 +71,8 @@ export interface AssetDef {
   size: { width: number; depth: number; height: number };
   /** At rotation 0 the asset's front (customer/use side) faces +Z (south). */
   collides: boolean;
+  /** Optional collision footprint (centred on the pivot, rotated like the asset) used instead of `size`, e.g. trunk of a tree. */
+  collider?: { width: number; depth: number };
   allowedRotations: QuarterTurn[];
   scalable: boolean;
   /** May only be placed on top of another placement (e.g. cash register on the counter). */
@@ -105,6 +107,8 @@ export interface GroundAreaDef {
   assetId?: string;
   kind: 'sidewalk' | 'street' | 'yard' | 'curb';
   rect: Rect;
+  /** Curb only: X ranges where the curb is lowered (crossings, doorways). */
+  lowered?: Array<{ from: number; to: number }>;
 }
 
 /** `door` and `shutter` toggle a wall opening; `register` (till) and `storage` (goods management) only ask the UI to open a panel. */

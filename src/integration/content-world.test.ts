@@ -63,7 +63,7 @@ describe('content <-> world', () => {
 
   it('every placed asset has a dedicated factory (no placeholder fallback)', () => {
     const ids = [...new Set(layout.placements.map((p) => p.assetId))].sort();
-    expect(ids).toEqual(['E-004', 'I-001', 'I-002', 'I-003', 'I-004', 'I-005', 'I-006', 'I-007', 'I-011', 'I-012', 'I-013', 'I-014', 'I-015']);
+    expect(ids).toEqual(['E-003', 'E-004', 'E-005', 'E-006', 'E-007', 'E-008', 'E-012', 'E-013', 'E-014', 'I-001', 'I-002', 'I-003', 'I-004', 'I-005', 'I-006', 'I-007', 'I-011', 'I-012', 'I-013', 'I-014', 'I-015']);
     for (const id of ids) expect(hasFurnitureFactory(id), id).toBe(true);
   });
 

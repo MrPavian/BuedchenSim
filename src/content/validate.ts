@@ -2,6 +2,7 @@ import { validateWorldContent } from './validateWorld';
 import { PLAYER_RADIUS } from '../game/constants';
 import {
   placementCollides,
+  placementCollisionRect,
   placementFootprint,
   placementFront,
   frontStrip,
@@ -109,7 +110,7 @@ function validatePlacements(pack: ContentPack, interior: Rect, errors: string[])
       if (!insideInterior && !outsideBuilding) {
         errors.push(`placement "${p.id}" straddles a kiosk wall (must be fully inside the interior or fully outside the building)`);
       }
-      if (!rectContainsRect(layout.walkBounds, rect)) errors.push(`placement "${p.id}" is not inside walkBounds`);
+      if (!rectContainsRect(layout.walkBounds, placementCollisionRect(p, asset))) errors.push(`placement "${p.id}" is not inside walkBounds`);
     } else {
       const supporter = byId.get(p.on);
       if (p.on === p.id) errors.push(`placement "${p.id}" cannot stand on itself`);
@@ -126,7 +127,7 @@ function validatePlacements(pack: ContentPack, interior: Rect, errors: string[])
         }
       }
     }
-    if (placementCollides(p, asset)) state.colliders.push({ placementId: p.id, rect });
+    if (placementCollides(p, asset)) state.colliders.push({ placementId: p.id, rect: placementCollisionRect(p, asset) });
   }
 
   // Forbidden overlaps between colliding footprints (touching edges are fine).

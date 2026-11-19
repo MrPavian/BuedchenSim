@@ -7,6 +7,7 @@ import {
   Mesh,
   type MeshLambertMaterial,
   PlaneGeometry,
+  PointLight,
   Scene,
   Vector3,
   type BufferGeometry,
@@ -184,6 +185,23 @@ export function createWorld(game: Game, container: HTMLElement): World {
     if (m.name === 'yard' && !vegetation.includes(m)) vegetation.push(m);
     if (m.name === 'paved' && !paved.includes(m)) paved.push(m);
   });
+  // Street lamps (E-003, Auftrag 06.3): the glass glows and a warm light per lamp goes on at dusk. The lights always
+  // exist (intensity 0 by day), so the light count and with it the shader variants never change.
+  const lampGlow: MeshLambertMaterial[] = [];
+  scene.traverse((o) => {
+    const m = (o as Mesh).material as MeshLambertMaterial | undefined;
+    if (m && !Array.isArray(m) && m.name === 'lampGlow' && !lampGlow.includes(m)) lampGlow.push(m);
+  });
+  const lampLights: PointLight[] = [];
+  for (const placement of layout.placements) {
+    if (placement.assetId !== 'E-003') continue;
+    const height = game.content.assets['E-003']?.size.height ?? 4.6;
+    const light = new PointLight(0xffd29a, 0, 11, 1.4);
+    light.name = `${placement.id}.light`;
+    light.position.set(placement.position.x, height - 0.45, placement.position.z);
+    scene.add(light);
+    lampLights.push(light);
+  }
   const atmosphere = createAtmosphereView(game, { scene, fog, sun, hemisphere, vegetation, paved });
   scene.add(atmosphere.root);
   const decor = createEventDecorView(game, layout.kiosk);
@@ -302,6 +320,13 @@ export function createWorld(game: Game, container: HTMLElement): World {
 
       kioskView.update(needsSnap ? 1e3 : dt);
       atmosphere.update(needsSnap ? 1e3 : dt, pose);
+      {
+        // Lamps switch on below about 40 % daylight (civil dusk) and fade in over the twilight.
+        const daylight = atmosphere.info().daylight;
+        const on = Math.min(1, Math.max(0, (0.55 - daylight) / 0.35));
+        for (const m of lampGlow) m.emissiveIntensity = 1.6 * on;
+        for (const l of lampLights) l.intensity = 34 * on;
+      }
       decor.update();
       markers.update(elapsed);
       scene.updateMatrixWorld(true);

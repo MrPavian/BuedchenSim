@@ -11,10 +11,19 @@ export const quarterTurnToRadians = (rotation: QuarterTurn): number => (rotation
 
 /** World-space AABB of a placement: rotation 90/270 swaps width and depth; scale is applied. */
 export function placementFootprint(placement: PlacementDef, asset: AssetDef): Rect {
+  return footprintOf(placement, asset.size);
+}
+
+/** Collision rectangle: the asset's `collider` footprint when it has one (trunk, mast), else the full footprint. */
+export function placementCollisionRect(placement: PlacementDef, asset: AssetDef): Rect {
+  return footprintOf(placement, asset.collider ?? asset.size);
+}
+
+function footprintOf(placement: PlacementDef, size: { width: number; depth: number }): Rect {
   const scale = placement.scale ?? 1;
   const swapped = placement.rotation === 90 || placement.rotation === 270;
-  const halfW = ((swapped ? asset.size.depth : asset.size.width) * scale) / 2;
-  const halfD = ((swapped ? asset.size.width : asset.size.depth) * scale) / 2;
+  const halfW = ((swapped ? size.depth : size.width) * scale) / 2;
+  const halfD = ((swapped ? size.width : size.depth) * scale) / 2;
   const { x, z } = placement.position;
   return { minX: x - halfW, maxX: x + halfW, minZ: z - halfD, maxZ: z + halfD };
 }
@@ -54,7 +63,7 @@ export function placementColliders(
     if (!placementPresent(placement, flags)) continue;
     const asset = assets[placement.assetId];
     if (asset && placementCollides(placement, asset)) {
-      out.push({ placementId: placement.id, rect: placementFootprint(placement, asset) });
+      out.push({ placementId: placement.id, rect: placementCollisionRect(placement, asset) });
     }
   }
   return out;

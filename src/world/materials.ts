@@ -26,7 +26,7 @@ export const palette = {
   counterTop: 0xe6e0d2,
   signBoard: 0x25483f,
   sidewalk: 0xbdb8ae,
-  curb: 0xd2cec4,
+  curb: 0xa6a49e, // granite grey kerb stone
   asphalt: 0x585b60, // Auftrag 04.5: lighter, tone mapping darkened it
   roadLine: 0xe8e2c8,
   yard: 0x7d935f, // Auftrag 04.5: a little fresher, still muted (urban lawn, not golf course)
@@ -64,30 +64,137 @@ function finishTexture(canvas: HTMLCanvasElement, repeat: boolean): CanvasTextur
   return texture;
 }
 
-/** 4 x 4 concrete slabs with visible joints and slight per-slab tone variation (covers 4 x 4 m). */
-export function createSlabTexture(): CanvasTexture {
-  const cell = 64;
-  const { canvas, ctx } = makeCanvas(cell * 4, cell * 4);
+/**
+ * E-001 concrete plates 0.5 x 0.5 m over the whole sidewalk (one texture, no repetition, so stains and cracks do not
+ * form a visible grid): per-plate tone, darker joints, a few newer replacement plates, faint stains and hairline cracks
+ * on randomly chosen plates. Deterministic (fixed seed).
+ */
+export function createSlabTexture(widthM = 4, depthM = 4): CanvasTexture {
+  const px = Math.max(1, Math.round(widthM / 0.5));
+  const pz = Math.max(1, Math.round(depthM / 0.5));
+  const cell = Math.max(16, Math.min(64, Math.floor(2048 / px)));
+  const { canvas, ctx } = makeCanvas(cell * px, cell * pz);
   const rand = rng(11);
   const base = new Color(palette.sidewalk);
-  for (let ix = 0; ix < 4; ix += 1) {
-    for (let iz = 0; iz < 4; iz += 1) {
-      const shade = 0.94 + rand() * 0.1;
+  for (let iz = 0; iz < pz; iz += 1) {
+    for (let ix = 0; ix < px; ix += 1) {
+      const roll = rand();
+      const replaced = roll < 0.04;
+      const shade = (replaced ? 1.04 : 0.93) + rand() * 0.08;
       ctx.fillStyle = `#${base.clone().multiplyScalar(shade).getHexString()}`;
       ctx.fillRect(ix * cell, iz * cell, cell, cell);
+      for (let i = 0; i < 18; i += 1) {
+        ctx.fillStyle = `#${base.clone().multiplyScalar(shade * (0.92 + rand() * 0.16)).getHexString()}`;
+        ctx.fillRect(ix * cell + rand() * cell, iz * cell + rand() * cell, 2, 2);
+      }
+      if (roll > 0.94) {
+        ctx.fillStyle = `rgba(70, 62, 50, ${0.06 + rand() * 0.08})`;
+        ctx.beginPath();
+        ctx.ellipse(ix * cell + cell * (0.25 + rand() * 0.5), iz * cell + cell * (0.25 + rand() * 0.5), cell * (0.12 + rand() * 0.2), cell * (0.08 + rand() * 0.15), rand() * 3, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (roll > 0.9) {
+        ctx.strokeStyle = 'rgba(60, 56, 50, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        let x = ix * cell + cell * (0.1 + rand() * 0.4);
+        let y = iz * cell + 2;
+        ctx.moveTo(x, y);
+        for (let k = 0; k < 5; k += 1) {
+          x += (rand() - 0.4) * cell * 0.2;
+          y += cell * (0.12 + rand() * 0.12);
+          ctx.lineTo(Math.min(ix * cell + cell - 2, Math.max(ix * cell + 2, x)), Math.min(iz * cell + cell - 1, y));
+        }
+        ctx.stroke();
+      }
     }
   }
-  ctx.strokeStyle = '#8b8780';
-  ctx.lineWidth = 3;
-  for (let i = 0; i <= 4; i += 1) {
-    ctx.beginPath();
+  ctx.strokeStyle = '#77736b';
+  ctx.lineWidth = Math.max(2, cell / 24);
+  ctx.beginPath();
+  for (let i = 0; i <= px; i += 1) {
     ctx.moveTo(i * cell, 0);
     ctx.lineTo(i * cell, canvas.height);
+  }
+  for (let i = 0; i <= pz; i += 1) {
     ctx.moveTo(0, i * cell);
     ctx.lineTo(canvas.width, i * cell);
+  }
+  ctx.stroke();
+  return finishTexture(canvas, false);
+}
+
+/**
+ * E-002 asphalt over the whole street (one texture, no repetition): speckle, a few irregular, low-contrast repair
+ * patches of different sizes, a longitudinal seam and some hairline cracks. Deterministic.
+ */
+export function createAsphaltTexture(widthM = 4, depthM = 4): CanvasTexture {
+  const ppm = Math.max(16, Math.min(80, Math.floor(2048 / widthM)));
+  const W = Math.round(widthM * ppm);
+  const H = Math.round(depthM * ppm);
+  const { canvas, ctx } = makeCanvas(W, H);
+  const rand = rng(23);
+  const base = new Color(palette.asphalt);
+  ctx.fillStyle = `#${base.getHexString()}`;
+  ctx.fillRect(0, 0, W, H);
+  // Large soft tone variation (worn wheel tracks are lighter), then fine speckle.
+  for (let i = 0; i < 40; i += 1) {
+    ctx.fillStyle = `#${base.clone().multiplyScalar(0.96 + rand() * 0.08).getHexString()}`;
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.ellipse(rand() * W, rand() * H, ppm * (1 + rand() * 2), ppm * (0.4 + rand()), 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  for (let i = 0; i < (W * H) / 60; i += 1) {
+    ctx.fillStyle = `#${base.clone().multiplyScalar(1 + (rand() - 0.5) * 0.14).getHexString()}`;
+    ctx.fillRect(rand() * W, rand() * H, 2 + rand() * 2, 2 + rand() * 2);
+  }
+  // Repair patches: one per ~6 m, irregular quadrilaterals, only slightly darker.
+  const count = Math.max(1, Math.round(widthM / 6));
+  for (let i = 0; i < count; i += 1) {
+    const cx = ((i + 0.2 + rand() * 0.6) / count) * W;
+    const cy = (0.2 + rand() * 0.6) * H;
+    const hw = ppm * (0.5 + rand() * 1.2);
+    const hh = ppm * (0.4 + rand() * 0.8);
+    const pts: Array<[number, number]> = [
+      [cx - hw + (rand() - 0.5) * ppm * 0.2, cy - hh],
+      [cx + hw, cy - hh + (rand() - 0.5) * ppm * 0.2],
+      [cx + hw + (rand() - 0.5) * ppm * 0.2, cy + hh],
+      [cx - hw, cy + hh + (rand() - 0.5) * ppm * 0.2],
+    ];
+    ctx.fillStyle = `#${base.clone().multiplyScalar(0.9 + rand() * 0.04).getHexString()}`;
+    ctx.beginPath();
+    pts.forEach(([x, y], k) => (k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(28, 28, 30, 0.18)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
   }
-  return finishTexture(canvas, true);
+  // Longitudinal seam a little off the centre line and a few hairline cracks.
+  ctx.strokeStyle = 'rgba(26, 26, 30, 0.28)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  let y = H * 0.32;
+  ctx.moveTo(0, y);
+  for (let x = 0; x <= W; x += ppm) {
+    y += (rand() - 0.5) * ppm * 0.06;
+    ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  for (let i = 0; i < Math.round(widthM / 4); i += 1) {
+    let x = rand() * W;
+    let yy = rand() * H;
+    ctx.beginPath();
+    ctx.moveTo(x, yy);
+    for (let k = 0; k < 6; k += 1) {
+      x += (rand() - 0.5) * ppm * 0.5;
+      yy += (rand() - 0.5) * ppm * 0.5;
+      ctx.lineTo(x, yy);
+    }
+    ctx.stroke();
+  }
+  return finishTexture(canvas, false);
 }
 
 /** Subtle speckle noise around a base colour (asphalt, yard). */

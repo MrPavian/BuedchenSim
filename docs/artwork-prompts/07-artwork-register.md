@@ -62,13 +62,17 @@ Dieses Register ist die zentrale Liste für geplante und umgesetzte Artworks. St
 | P-030 | Zur Glocke Frikadellenmasse für 6, Zutat (Fabrik `box`, nur Lager; Auftrag 05) | Ruhrgebiet | P2 | Im Spiel integriert |
 | P-031 | Pottgold Senf mittelscharf, Zutat (Fabrik `box`, nur Lager; Auftrag 05) | Ruhrgebiet | P2 | Im Spiel integriert |
 | P-032 | Pottgold Röstzwiebeln, optionale Zutat (Fabrik `bag`, nur Lager; Auftrag 05) | Ruhrgebiet | P2 | Im Spiel integriert |
-| E-001 | Gehweg / Bordstein | Ruhrgebiet | P0 | In Arbeit (Greybox) |
-| E-002 | Straßenbelag | Ruhrgebiet | P0 | In Arbeit (Greybox) |
-| E-003 | Laterne | Ruhrgebiet | P1 | Geplant |
+| E-001 | Gehweg / Bordstein (Platten 0,5 × 0,5 m in einer 512-px-Textur mit Fugen, Flecken, Rissen; Bordstein Granitgrau mit Fase und abgesenkter Stelle x 1,0 bis 2,6, `GroundAreaDef.lowered`; Auftrag 06.1) | Ruhrgebiet | P0 | Im Spiel integriert |
+| E-002 | Straßenbelag (Asphalt mit Flicken und Teerfugen, gestrichelte Mittellinie, Gullys alle 8 m, Kanaldeckel; Auftrag 06.1) | Ruhrgebiet | P0 | Im Spiel integriert |
+| E-003 | Laterne (Pilzleuchte, 4,6 m, Material `lampGlow` emissiv aus; Kollision nur Mast; Auftrag 06.1) | Ruhrgebiet | P1 | Im Spiel integriert |
 | E-004 | Bank (Hofbank, steht nur mit dem Story-Flag `yard.bench`, Auftrag 04) | Ruhrgebiet | P2 | Im Spiel integriert |
-| E-005 | Mülleimer | Ruhrgebiet | P1 | Geplant |
-| E-006 | Fahrrad | Ruhrgebiet | P1 | Geplant |
-| E-007 | Baum / Pflanzkübel | Ruhrgebiet | P2 | Geplant |
+| E-005 | Mülleimer (Auftrag 06.1; Füllstand folgt in 06.6) | Ruhrgebiet | P1 | Im Spiel integriert |
+| E-006 | Fahrrad (grüner Rahmen, ohne Beschriftung; Auftrag 06.1) | Ruhrgebiet | P1 | Im Spiel integriert |
+| E-007 | Baum / Pflanzkübel (Straßenbaum mit Gruppe `crown` für Wind, Kollision nur Stamm; Pflanzkübel steht aus; Auftrag 06.1) | Ruhrgebiet | P2 | Im Spiel integriert (Baum) |
+| E-008 | Fahrradständer (zwei Bügel, Auftrag 06.1) | Ruhrgebiet | P1 | Im Spiel integriert |
+| E-012 | Straßenschild „Kokereistraße“ (fiktiv, Auftrag 06.1) | Ruhrgebiet | P2 | Im Spiel integriert |
+| E-013 | Verteilerkasten (Auftrag 06.1; Poller und Kippen stehen aus) | Ruhrgebiet | P2 | Im Spiel integriert |
+| E-014 | Gehwegbank (Auftrag 06.1) | Ruhrgebiet | P1 | Im Spiel integriert |
 | N-001 | Kioskbetreiber | Ruhrgebiet | P0 | Geplant |
 | N-002 | Stammkunde (Günter Wollny, `npc.guenter`; GLB `public/models/residents/n-002.glb` aus CC0-MakeHuman-Daten über `tools/characters/build_mh_resident.py`, prozedurale Fabrik als Fallback) | Ruhrgebiet | P1 | Im Spiel integriert (Stil bestätigt) |
 | N-003 | Handwerker (Handwerkerin Derya Aksoy, `npc.derya`; GLB `public/models/residents/n-003.glb`, prozedurale Fabrik als Fallback) | Ruhrgebiet | P1 | Im Spiel integriert |
@@ -104,3 +108,4 @@ Bei jeder neuen oder geänderten Asset-Version Datum, Änderung, verantwortliche
 | 2026-11-14 | Auftrag 04.6: N-002 korrigiert (Arme, Hand am Stock, Nasenlöcher, Schirmkanten) und N-003, N-006, N-007 als GLB-Figuren aus derselben Pipeline (eigene Körper, Gesichter, Kleidung, Requisiten, Gang); Mimik als Morph Targets (`friendly`, `thoughtful`, `blink`); 30.234–31.607 Dreiecke und 1,43–1,54 MB je Datei; prozedurale Figuren bleiben Fallback; Parameter in `docs/VISUAL-BASELINE.md` 8.6 | Claude Code (Auftrag 04.6) | `tools/characters/build_mh_resident.py`, `public/models/residents/`, `src/world/assets/residents/glbResident.ts` |
 | 2026-11-14 | Auftrag 05: N-008 (Ole) und N-009 (Hilde) als Gäste zu Veranstaltungen; P-029 Frikadelle im Brötchen und die Zutaten P-030 bis P-032 (Zutaten nur im Lager, nie auf einem Warenplatz); I-014 Kundenstopper und I-015 Kult-Tafel als flaggebundene Belohnungen der Spezialität; Veranstaltungsdekorationen (Wimpelketten, Fahne, Wimpel des Straßenfests, Flohmarkttische, Lichterkette und Tanne, Sonnenschirm) als prozedurale Geometrie in `eventDecorView.ts` ohne eigene Asset-ID. Sichtprüfung in Headless-Chromium mit Software-Rendering, nicht auf echter Grafikhardware | Claude Code (Auftrag 05) | `src/world/assets/furniture/frikadelleProps.ts`, `src/world/views/eventDecorView.ts`, `src/content/regions/ruhrgebiet/{guests,specialty,layout}.ts`, `src/content/assets/{catalog,productAssets}.ts` |
 | 2026-11-18 | N-002, N-003, N-006 bis N-009: Gang korrigiert (Rückmeldung des Nutzers: „sehr breitbeinig“). Die Beine standen in der gespreizten MakeHuman-Grundhaltung (Knöchel 35–39 cm auseinander, weiter als die Hüftgelenke); jetzt Beinadduktion je Figur aus dem Skelett berechnet: Spurbreite beim Gehen etwa 12 cm, im Stand 21–26 cm, dazu leichtes seitliches Becken-Pendeln. Alle sechs GLB neu gebaut; Sichtprüfung im Charakter-Viewer (Headless-Chromium) | Claude Code | `tools/characters/build_mh_resident.py`, `public/models/residents/` |
+| 2026-11-19 | Auftrag 06.1: E-001 (Plattenraster), E-002 (Flicken, Gullys, Kanaldeckel), Bordstein mit Absenkung; neue Fabriken E-003, E-005, E-006, E-007, E-008, E-012, E-013, E-014 unter `src/world/assets/street/`, Platzierungen in `layout.ts`, `AssetDef.collider` (Kollision kleiner als die Box) | Claude Code (Auftrag 06) | `src/world/assets/street/`, `src/world/assets/ground.ts`, `src/content/assets/catalog.ts`, `src/content/regions/ruhrgebiet/layout.ts` |

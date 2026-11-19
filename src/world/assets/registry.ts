@@ -26,6 +26,16 @@ import {
   createYard,
 } from './ground';
 import { createKioskK001 } from './kiosk';
+import {
+  createBikeE006,
+  createBikeRackE008,
+  createBinE005,
+  createLanternE003,
+  createSidewalkBenchE014,
+  createStreetSignE012,
+  createTreeE007,
+  createUtilityBoxE013,
+} from './street';
 
 export { createResident, hasResidentFactory, residentAssetIds, type ResidentAnimation, type ResidentFigure } from './residents';
 export { createProductModel, hasProductFactory, productFactories, type ProductFactory } from './products';
@@ -57,6 +67,15 @@ const furnitureFactories: Record<string, FurnitureFactory> = {
   'I-015': createFrikadellenFreitagI015,
   // Yard furniture (E = environment) is built by the same furniture factories.
   'E-004': createBenchE004,
+  // Street furniture (Auftrag 06.1).
+  'E-003': createLanternE003,
+  'E-005': createBinE005,
+  'E-006': createBikeE006,
+  'E-007': createTreeE007,
+  'E-008': createBikeRackE008,
+  'E-012': createStreetSignE012,
+  'E-013': createUtilityBoxE013,
+  'E-014': createSidewalkBenchE014,
 };
 
 const groundFactories: Record<string, (def: GroundAreaDef, m: Materials) => Object3D> = {
