@@ -206,7 +206,7 @@ Umfang:
 ## Phase 6 – Viertel und Atmosphäre
 **Ziel:** das Umfeld macht den Ort glaubwürdig.
 
-**Konkreter Auftrag:** [Auftrag 06 – Viertel und Atmosphäre](auftraege/06-viertel-und-atmosphaere.md) (Entwurf vom 2026-11-19, wartet auf Freigabe; offene Entscheidungen O-6 bis O-8).
+**Konkreter Auftrag:** [Auftrag 06 – Viertel und Atmosphäre](auftraege/06-viertel-und-atmosphaere.md) (freigegeben am 2026-11-19; Entscheidungen O-6 bis O-8 nach den Vorschlägen des Auftrags).
 
 Aufgaben:
 - Straße, Bordstein, Gehweg, Laterne, Bank, Mülleimer, Fahrrad, Bäume, Nachbargebäude und kleine Alltagsrequisiten ergänzen.

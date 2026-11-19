@@ -2,7 +2,7 @@
 
 **Projekt:** BÜDCHEN-SIM  
 **Phase:** 6  
-**Status:** Entwurf, wartet auf Freigabe durch den Nutzer (erstellt 2026-11-19 nach Abschluss von Auftrag 05)  
+**Status:** freigegeben am 2026-11-19 (Nutzer: „Weiter“, damit gelten die Vorschläge zu O-6 bis O-8); in Umsetzung  
 **Ziel:** Das Büdchen steht in einer glaubwürdigen Ruhrgebietsstraße. Straßenraum, Nachbarhäuser, Tageslicht, Klang und kleine Bewegungen machen aus der Kulisse einen belebten Ort. Bewohner nutzen diesen Raum, und Entscheidungen des Spielers werden im Viertel sichtbar.
 
 > **Arbeitsregel:** Dieser Auftrag ist die verbindliche fachliche Spezifikation. Er beruht auf der Bestandsaufnahme vom 2026-11-19 (Abschnitt 3). Vor jedem Paket den tatsächlichen Code erneut prüfen. Dateinamen und Pfade in diesem Dokument sind Vorschläge; vorhandene passende Module sind zu erweitern, nicht zu duplizieren.
@@ -21,7 +21,7 @@ Der Spieler soll spüren:
 
 **Leitprinzip:** Jedes neue Element hat entweder eine Funktion im Spiel oder trägt messbar zur Atmosphäre bei. Keine Dekoration ohne Bezug zum Ort.
 
-## 2. Verbindliche Produktentscheidungen (Vorschlag, mit der Freigabe verbindlich)
+## 2. Verbindliche Produktentscheidungen
 
 ### 2.1 Straßenraum
 - Die Spielfläche bleibt die bestehende Ecke (x −12…12, z −8…11). Die Welt wird **nicht** zu einer begehbaren Stadt erweitert; was außerhalb liegt, ist Kulisse.
@@ -75,13 +75,13 @@ Assets (IDs im Register nachtragen, Status erst nach Sichtprüfung auf „Im Spi
 | E-002 | Straße ausgearbeitet | Asphalt mit Flicken, Mittelmarkierung, Gullydeckel, Querungsstelle mit abgesenktem Bordstein |
 | E-001-B | Bordstein | echte Kante (Höhe etwa 0,12 m), Absenkung an der Querung |
 | E-003 | Laterne | Ruhrgebietstyp (schlanker Mast, Pilz- oder Auslegerleuchte), 2 Stück; abends leuchtend (Abschnitt 7) |
-| E-004 | Bank | zweite Platzierung am Gehweg, immer vorhanden (die Hofbank bleibt flaggebunden) |
+| E-014 | Gehwegbank | eigene städtische Bank am Gehweg, immer vorhanden; die Hofbank E-004 bleibt ein flaggebundenes Story-Requisit aus Brettresten (Abweichung vom Entwurf, der E-004 wiederverwenden wollte: eine Stadtbank sieht anders aus als die selbstgebaute Hofbank) |
 | E-005 | Mülleimer | Gehwegmülleimer am Mast, Füllstand sichtbar (Abschnitt 9) |
 | E-006 | Fahrrad | 2–3 Varianten über Farbe; Jonas' Fahrrad steht nur, während er da ist |
-| E-007 | Baum / Pflanzkübel | ein Straßenbaum in Baumscheibe, ein Pflanzkübel; Krone bewegt sich mit Wind |
+| E-007 | Baum / Pflanzkübel | Straßenbaum (im Hof, damit die Krone die Kamera nicht verdeckt), Pflanzkübel; Krone bewegt sich mit Wind |
 | E-008 | Fahrradständer | Anlehnbügel, 3 Plätze |
 | E-012 | Straßenschild | fiktiver Straßenname (Vorschlag „Zechenstraße“ oder frei erfunden, gegen reale Marken geprüft) |
-| E-013 | Kleinrequisiten | Poller, Verteilerkasten mit fiktiven Aufklebern, Gully, Zigarettenkippen-Andeutung nur bei geringer Sauberkeit |
+| E-013 | Verteilerkasten | Verteilerkasten mit verblassten fiktiven Aufklebern; Gullys und Kanaldeckel gehören zur Straße E-002 |
 
 Regeln:
 - Alle Möbel mit Kollision für den Spieler; Bewohner-Navigation (`nav.ts`) bleibt gültig, die Validierung (Kanten frei von Kollidern) muss weiter grün sein.
@@ -166,9 +166,9 @@ Verbindlicher Test (Vitest-Integration und Browserprüfung):
 - keine neuen Waren und kein neues Wirtschaftssystem außer Sauberkeit;
 - keine weiteren Regionen.
 
-## 14. Offene Entscheidungen für den Nutzer
+## 14. Entscheidungen (am 2026-11-19 mit der Freigabe angenommen)
 
-| Nr. | Frage | Vorschlag |
+| Nr. | Frage | Entscheidung |
 |---|---|---|
 | O-6 | Klangquelle: nur Synthese oder zusätzlich CC0-Aufnahmen (mit Lizenzregister `docs/AUDIO-QUELLEN.md`)? | Synthese als Grundlage, CC0 nur für Vögel, Regen und Menge, falls Synthese nicht überzeugt |
 | O-7 | Sauberkeit als kleine Mechanik oder rein optisch? | kleine Mechanik wie in Abschnitt 10 |

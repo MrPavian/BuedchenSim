@@ -1,5 +1,6 @@
 import { Color, type DirectionalLight, type Fog, type HemisphereLight, type MeshLambertMaterial, type Object3D, type Scene } from 'three';
 import type { Season } from '../../game/date';
+import { sunOf, type SunState } from '../../game/sun';
 import { environmentOf } from '../../game/environment';
 import type { Game } from '../../game/game';
 import type { WeatherCondition } from '../../game/weather';
@@ -38,6 +39,9 @@ export interface AtmosphereLook {
 
 export interface AtmosphereInfo {
   season: Season;
+  /** Sun height (deg) and daylight (0 night .. 1 day) from date and clock time (Auftrag 06, 6.3). */
+  sunElevation: number;
+  daylight: number;
   weather: WeatherCondition;
   temperature: number;
   precipitation: PrecipitationKind;
@@ -91,6 +95,44 @@ export function lookFor(season: Season, weather: WeatherCondition = 'sunny'): At
   return { ...BASE_LOOK, ...SEASON_LOOK[season], ...WEATHER_LOOK[weather] };
 }
 
+/** Night and dusk colours (Auftrag 06, 6.3). */
+export const NIGHT_SKY = 0x1c2638;
+export const DUSK_SKY = 0xe2a27a;
+const NIGHT_SUN_COLOR = 0x9fb4d8;
+const LOW_SUN_COLOR = 0xffa45c;
+/** Fill light that stays at night (moonlight and street glow), as a fraction of the day value. */
+const NIGHT_FILL = 0.3;
+
+const smooth = (a: number, b: number, x: number): number => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+function mixHex(a: number, b: number, t: number): number {
+  return new Color(a).lerp(new Color(b), t).getHex();
+}
+
+/**
+ * Applies the time of day to a season/weather look: the sun weakens and warms towards the horizon and goes out at
+ * night, the sky darkens through a warm dusk to night blue, the fill light keeps a night rest so the scene stays
+ * readable. Fog stays as it is (its colour follows the sky).
+ */
+export function timeOfDayLook(look: AtmosphereLook, sun: Pick<SunState, 'elevationDeg' | 'daylight'>): AtmosphereLook {
+  const day = sun.daylight;
+  const low = 1 - smooth(4, 24, sun.elevationDeg);
+  // Dusk glow peaks around the horizon and fades into the night; weaker under clouds (a darker base sky).
+  const dusk = Math.max(0, 1 - Math.abs(sun.elevationDeg - 0.5) / 7) * (new Color(look.sky).getHSL({ h: 0, s: 0, l: 0 }).l > 0.72 ? 0.55 : 0.25);
+  let sky = mixHex(look.sky, DUSK_SKY, dusk);
+  sky = mixHex(NIGHT_SKY, sky, day);
+  return {
+    ...look,
+    sky,
+    sun: look.sun * smooth(-2, 10, sun.elevationDeg) * (1 - 0.35 * low),
+    sunColor: day > 0 ? mixHex(look.sunColor, LOW_SUN_COLOR, low * 0.8) : NIGHT_SUN_COLOR,
+    hemisphere: look.hemisphere * (NIGHT_FILL + (1 - NIGHT_FILL) * day),
+  };
+}
+
 export function precipitationFor(weather: WeatherCondition): PrecipitationKind {
   if (weather === 'light-rain') return 'rain';
   if (weather === 'heavy-rain') return 'heavy-rain';
@@ -121,6 +163,7 @@ export function createAtmosphereView(game: Game, t: AtmosphereTargets): Atmosphe
   let effects: EffectsLevel = 'full';
   let precipitation: PrecipitationKind = 'none';
   let first = true;
+  let sun: SunState = sunOf(1, 12 * 60);
   const vegetationBase = t.vegetation.map((m) => m.color.clone());
   const pavedBase = t.paved.map((m) => m.color.clone());
   const background = t.scene.background instanceof Color ? t.scene.background : new Color();
@@ -134,6 +177,16 @@ export function createAtmosphereView(game: Game, t: AtmosphereTargets): Atmosphe
     t.fog.far = current.fogFar;
     t.sun.color.copy(current.sunColor);
     t.sun.intensity = current.sun;
+    // The sun light follows the sun around the scene; kept at least 12 deg high so shadows stay inside the shadow map.
+    const d = sun.direction;
+    const flat = Math.hypot(d.x, d.z) || 1;
+    const elevation = Math.max(sun.elevationDeg, 12) * (Math.PI / 180);
+    const dist = 22;
+    t.sun.position.set(
+      t.sun.target.position.x + (d.x / flat) * Math.cos(elevation) * dist,
+      t.sun.target.position.y + Math.sin(elevation) * dist,
+      t.sun.target.position.z + (d.z / flat) * Math.cos(elevation) * dist,
+    );
     t.hemisphere.intensity = current.hemisphere;
     // Lawn textures are multiplied by the material colour: mixing towards the target colour (relative to the lawn's own
     // green) shifts them to dry, autumn or snowy tones.
@@ -154,7 +207,8 @@ export function createAtmosphereView(game: Game, t: AtmosphereTargets): Atmosphe
       season = env.season;
       weather = env.weather.condition;
       temperature = env.temperature;
-      target = lookFor(season, weather);
+      sun = sunOf(game.state.calendar.day, game.state.calendar.minute);
+      target = timeOfDayLook(lookFor(season, weather), sun);
       const kind = precipitationFor(weather);
       if (kind !== precipitation || first) {
         precipitation = kind;
@@ -181,7 +235,7 @@ export function createAtmosphereView(game: Game, t: AtmosphereTargets): Atmosphe
       effects = level;
       particles.set(precipitation, effects);
     },
-    info: () => ({ season, weather, temperature, precipitation, particles: particles.visibleCount(), effects, target: { ...target } }),
+    info: () => ({ season, sunElevation: sun.elevationDeg, daylight: sun.daylight, weather, temperature, precipitation, particles: particles.visibleCount(), effects, target: { ...target } }),
     dispose() {
       particles.dispose();
     },
