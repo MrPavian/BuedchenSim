@@ -7,7 +7,8 @@ export type InteractionAction =
   | 'shutter.open'
   | 'shutter.close'
   | 'register.use'
-  | 'storage.use';
+  | 'storage.use'
+  | 'bin.clean';
 
 export interface AvailableInteraction {
   pointId: string;
@@ -51,6 +52,7 @@ export function findNearestInteractionPoint(
 export function actionFor(kind: InteractionKind, kiosk: KioskOpenState): InteractionAction {
   if (kind === 'door') return kiosk.doorOpen ? 'door.close' : 'door.open';
   if (kind === 'shutter') return kiosk.shutterOpen ? 'shutter.close' : 'shutter.open';
+  if (kind === 'bin') return 'bin.clean';
   return kind === 'register' ? 'register.use' : 'storage.use';
 }
 

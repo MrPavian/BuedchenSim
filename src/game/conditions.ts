@@ -10,6 +10,7 @@ import type { DeepReadonly, GameState } from './state';
 export type ConditionContext = DeepReadonly<Pick<GameState, 'npcs' | 'story' | 'calendar'>> & {
   readonly env?: Environment;
   readonly households?: DeepReadonly<GameState['households']>;
+  readonly street?: DeepReadonly<GameState['street']>;
 };
 
 function has(record: object, key: string): boolean {
@@ -63,6 +64,8 @@ export function evaluateCondition(cond: DeepReadonly<Condition>, ctx: ConditionC
       return ctx.env !== undefined && ctx.env.eventsToday.includes(cond.eventId);
     case 'householdMemory':
       return ctx.households !== undefined && has(ctx.households, cond.householdId) && (ctx.households[cond.householdId]?.memories.includes(cond.memoryId) ?? false);
+    case 'litterAtLeast':
+      return ctx.street !== undefined && ctx.street.litter >= cond.value;
     case 'not':
       return !evaluateCondition(cond.condition, ctx);
     case 'any':

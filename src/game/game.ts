@@ -19,6 +19,7 @@ import {
 import { createNpcApi, type NpcApi } from './npcs';
 import { createNpcSim } from './npcSim';
 import { createSpecialtyApi, type SpecialtyApi } from './specialty';
+import { createStreetApi } from './street';
 import type { ActionResult } from './result';
 import { CURRENT_SCHEMA_VERSION, type SaveFile } from './save/save';
 import { createInitialState, type DeepReadonly, type GameState } from './state';
@@ -169,10 +170,13 @@ export function createGame(content: ContentPack, initialState?: GameState, seed?
   };
   const npcs = createNpcApi(ctx, talk);
   const specialty = createSpecialtyApi(ctx);
+  const street = createStreetApi(ctx);
   signals.on('sale.completed', ({ transactionId }) => {
     const t = state.economy.transactions.find((x) => x.id === transactionId);
     if (t) specialty.onSale(t);
+    if (t) street.onSale(t);
   });
+  signals.on('day.started', () => street.onDayStarted());
   const dialogue: DialogueApi = {
     current: () => dialogueEngine.api.current(),
     choose(optionId) {
@@ -287,6 +291,11 @@ export function createGame(content: ContentPack, initialState?: GameState, seed?
       if (!target) return { ok: false, reason: 'nothing_in_range' };
       if (target.kind === 'npc') return talk(target.npcId);
       const available = target;
+      if (available.kind === 'bin') {
+        street.clean();
+        signals.emit('interaction.triggered', { pointId: available.pointId, kind: available.kind });
+        return { ok: true };
+      }
       if (available.kind === 'register' || available.kind === 'storage') {
         signals.emit('interaction.triggered', { pointId: available.pointId, kind: available.kind });
         return { ok: true };

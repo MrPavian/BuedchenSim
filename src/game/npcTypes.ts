@@ -66,6 +66,8 @@ export type Condition =
   | { type: 'eventToday'; eventId: string }
   /** The household shares this memory (an event its members lived through; Auftrag 05, 5.6). */
   | { type: 'householdMemory'; householdId: string; memoryId: string }
+  /** At least this much rubbish lies in front of the kiosk (0..100; Auftrag 06, 6.6). */
+  | { type: 'litterAtLeast'; value: number }
   | { type: 'not'; condition: Condition }
   | { type: 'any'; conditions: Condition[] };
 

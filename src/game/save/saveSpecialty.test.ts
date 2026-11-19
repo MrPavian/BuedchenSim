@@ -8,8 +8,8 @@ import { CURRENT_SCHEMA_VERSION, parseSave, serializeSave } from './save';
 /** Schema version 4 (Auftrag 05): specialties. Calendar day, weather and events are derived and not saved. */
 
 describe('schema version 4 (specialties)', () => {
-  it('is the current version', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(4);
+  it('was followed by version 5 (Auftrag 06)', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBe(5);
   });
 
   it('3 -> 4 adds the specialties and keeps everything else', () => {

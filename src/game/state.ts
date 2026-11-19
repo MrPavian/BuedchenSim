@@ -1,3 +1,4 @@
+import { createInitialStreet, type StreetState } from './street';
 import { DAY_START_MINUTE, DEFAULT_SPEED, START_CASH_CENTS, type GameSpeed } from './balance';
 import { createInitialSpecialty, type SpecialtyState } from './specialty';
 import type { ContentPack, NpcDef, Vec2 } from './types';
@@ -170,6 +171,8 @@ export interface GameState {
   specialties: Record<string, SpecialtyState>;
   /** What households share (Auftrag 05, 5.6), by household id. Membership and home are content, not state. */
   households: Record<string, HouseholdState>;
+  /** Cleanliness in front of the kiosk (Auftrag 06, 6.6): bin fill and rubbish on the sidewalk. */
+  street: StreetState;
 }
 
 export type DeepReadonly<T> = T extends readonly (infer U)[]
@@ -254,5 +257,6 @@ export function createInitialState(content: ContentPack, seed: number = DEFAULT_
     story: createInitialStory(),
     specialties: Object.fromEntries((content.specialties ?? []).map((s) => [s.id, createInitialSpecialty()])),
     households: Object.fromEntries((content.households ?? []).map((h) => [h.id, { memories: [] }])),
+    street: createInitialStreet(),
   };
 }

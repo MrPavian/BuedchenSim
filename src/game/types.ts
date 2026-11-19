@@ -112,7 +112,7 @@ export interface GroundAreaDef {
 }
 
 /** `door` and `shutter` toggle a wall opening; `register` (till) and `storage` (goods management) only ask the UI to open a panel. */
-export type InteractionKind = 'door' | 'shutter' | 'register' | 'storage';
+export type InteractionKind = 'door' | 'shutter' | 'register' | 'storage' | 'bin';
 
 export interface InteractionPointDef {
   id: string;

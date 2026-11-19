@@ -71,6 +71,7 @@ export const texts = {
     'shutter.close': 'Verkaufsklappe schließen',
     'register.use': 'Kasse bedienen',
     'storage.use': 'Lager öffnen',
+    'bin.clean': 'Mülleimer leeren und fegen',
   } satisfies Record<InteractionAction, string>,
   /** Prompt of a resident in range (kind 'npc'); the name comes from the content. */
   interactionNpc: { 'npc.talk': (name: string) => `Mit ${name} sprechen` },

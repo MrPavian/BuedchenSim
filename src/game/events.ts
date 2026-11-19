@@ -41,6 +41,8 @@ export type GameEvents = {
   'memory.added': { npcId: string; memoryId: string };
   /** Any change of a specialty's state (production, fame, stage, feedback). */
   'specialty.changed': { specialtyId: string };
+  /** Bin fill or rubbish in front of the kiosk changed (Auftrag 06, 6.6). */
+  'street.changed': { binFill: number; litter: number };
   /** A production finished: the units are in storage. */
   'specialty.produced': { specialtyId: string; units: number; quality: number };
   /** A resident tasted the specialty and said something about it. */

@@ -55,7 +55,7 @@ describe('serialize / parse', () => {
   });
 
   it('flags newer versions as unsupported', () => {
-    expect(parseSave(saveJson({ schemaVersion: 5 }), content)).toEqual({ status: 'unsupported_version', version: 5 });
+    expect(parseSave(saveJson({ schemaVersion: 6 }), content)).toEqual({ status: 'unsupported_version', version: 6 });
     expect(parseSave(saveJson({ schemaVersion: 99 }), content)).toEqual({ status: 'unsupported_version', version: 99 });
   });
 
@@ -335,7 +335,7 @@ describe('schema version 2 (calendar and economy)', () => {
   });
 
   it('exposes the migration in the chain', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(4);
+    expect(CURRENT_SCHEMA_VERSION).toBe(5);
   });
 
   const economy = () => structuredClone(richState().economy) as unknown as Record<string, unknown>;

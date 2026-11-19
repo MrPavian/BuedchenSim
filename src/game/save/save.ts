@@ -1,3 +1,4 @@
+import { createInitialStreet, type StreetState } from '../street';
 import { FEEDBACK_LIMIT, createInitialSpecialty, type FeedbackRating, type ProductionState, type SpecialtyFeedback, type SpecialtyState } from '../specialty';
 import { log } from '../../core/log';
 import {
@@ -39,7 +40,7 @@ import {
 } from '../state';
 import type { ContentPack, NpcDef } from '../types';
 
-export const CURRENT_SCHEMA_VERSION = 4;
+export const CURRENT_SCHEMA_VERSION = 5;
 
 export interface SaveFile {
   schemaVersion: number;
@@ -92,8 +93,16 @@ const migrateV3toV4: Migration = (save) => {
   return { ...save, state: { ...state, specialties: {}, households: {} } };
 };
 
+/** 4 -> 5 (Auftrag 06, 6.6): adds the cleanliness in front of the kiosk (empty bin, clean sidewalk). Light, sound and
+ * the time of day are derived from the calendar and need nothing. */
+const migrateV4toV5: Migration = (save) => {
+  const state = save['state'];
+  if (!isRecord(state)) return save; // validation reports it
+  return { ...save, state: { ...state, street: createInitialStreet() } };
+};
+
 /** migrations[n] converts version n to n+1. */
-export const migrations: Readonly<Record<number, Migration>> = { 1: migrateV1toV2, 2: migrateV2toV3, 3: migrateV3toV4 };
+export const migrations: Readonly<Record<number, Migration>> = { 1: migrateV1toV2, 2: migrateV2toV3, 3: migrateV3toV4, 4: migrateV4toV5 };
 
 export interface ParseOptions {
   /** Injectable for tests. */
@@ -679,6 +688,8 @@ function validateState(raw: unknown, content: ContentPack, warnings: string[]): 
   if (!specialties.ok) return specialties;
   const households = validateHouseholds(raw['households'], content, warnings);
   if (!households.ok) return households;
+  const street = validateStreet(raw['street']);
+  if (!street.ok) return street;
 
   const b = content.layout.walkBounds;
   return {
@@ -697,8 +708,23 @@ function validateState(raw: unknown, content: ContentPack, warnings: string[]): 
       story: story.value,
       specialties: specialties.value,
       households: households.value,
+      street: street.value,
     },
   };
+}
+
+/** Cleanliness (version 5): two numbers 0..100. */
+function validateStreet(raw: unknown): Checked<StreetState> {
+  const obj = objectAt(raw, 'state.street');
+  if (!obj.ok) return obj;
+  const out: StreetState = { binFill: 0, litter: 0 };
+  for (const key of ['binFill', 'litter'] as const) {
+    const v = finite(obj.value[key], `state.street.${key}`);
+    if (!v.ok) return v;
+    if (v.value < 0 || v.value > 100) return { ok: false, reason: `state.street.${key} must be within 0..100` };
+    out[key] = v.value;
+  }
+  return { ok: true, value: out };
 }
 
 /** Households (version 4): shared memories per household of the content; unknown households are dropped. */

@@ -30,6 +30,7 @@ describe('game facade', () => {
       story: { flags: {}, quests: {}, seenDialogues: [], effectKeys: [] },
       specialties: {},
       households: {},
+      street: { binFill: 0, litter: 0 },
     });
     expect(game.getAvailableInteraction()).toBeNull();
   });
@@ -107,7 +108,7 @@ describe('game facade', () => {
   it('save() returns a deep copy', () => {
     const game = createGame(content);
     const snapshot = game.save();
-    expect(snapshot.schemaVersion).toBe(4);
+    expect(snapshot.schemaVersion).toBe(5);
     expect(typeof snapshot.savedAt).toBe('string');
     snapshot.state.player.position.x = 5;
     snapshot.state.kiosk.doorOpen = true;
