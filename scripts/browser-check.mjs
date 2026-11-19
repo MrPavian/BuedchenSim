@@ -454,6 +454,15 @@ try {
     const hd = ((swapped ? a.size.width : a.size.depth) * s) / 2;
     return { minX: p.position.x - hw, maxX: p.position.x + hw, minZ: p.position.z - hd, maxZ: p.position.z + hd };
   };
+  /** What the game collides with (src/game/placement.ts placementCollisionRect): the asset's `collider` when it has one (trunk, mast), else the footprint. */
+  const collisionRect = (p) => {
+    const a = data.assets[p.assetId];
+    if (!a.collider) return footprint(p);
+    const swapped = p.rotation === 90 || p.rotation === 270;
+    const hw = (swapped ? a.collider.depth : a.collider.width) / 2;
+    const hd = (swapped ? a.collider.width : a.collider.depth) / 2;
+    return { minX: p.position.x - hw, maxX: p.position.x + hw, minZ: p.position.z - hd, maxZ: p.position.z + hd };
+  };
   const baseHeight = (p, depth = 0) => {
     if (p.on === undefined || depth > 8) return 0;
     const sup = placementOf(p.on);
@@ -717,7 +726,7 @@ try {
     const clear = placements
       .filter((p) => p.on === undefined && (p.collides ?? data.assets[p.assetId].collides))
       .every((p) => {
-        const r = footprint(p);
+        const r = collisionRect(p);
         const dx = aisle.x - Math.min(Math.max(aisle.x, r.minX), r.maxX);
         const dz = aisle.z - Math.min(Math.max(aisle.z, r.minZ), r.maxZ);
         return Math.hypot(dx, dz) >= PLAYER_RADIUS;
@@ -1554,7 +1563,7 @@ try {
     data.layout.kiosk.footprint,
     ...placements
       .filter((p) => p.on === undefined && (p.collides ?? data.assets[p.assetId].collides) && (p.requiresFlag === undefined || flags[p.requiresFlag]))
-      .map(footprint),
+      .map(collisionRect),
   ];
 
   /** In-page helpers (survive reloads through the init script). */
@@ -2385,7 +2394,8 @@ try {
   // ================================================================ Auftrag 05 "Das lebendige Viertel"
   // Calendar, weather, events, guests, specialty. The state is set up through game.load (debug hook, like the R sections);
   // everything that is asserted about the UI goes through the real HUD/panels, key presses and clicks.
-  const shotDir05 = path.join(root, 'docs', 'screenshots', 'auftrag-05');
+  // Frozen documentation since the end of Auftrag 05: written to the temp directory unless BC_SHOTS05_DOCS=1.
+  const shotDir05 = process.env.BC_SHOTS05_DOCS === '1' ? path.join(root, 'docs', 'screenshots', 'auftrag-05') : path.join(shotDir, 'auftrag-05');
   mkdirSync(shotDir05, { recursive: true });
   const STORAGE_SPOT = { x: 1.75, z: -1.0, h: Math.PI }; // standing spot at the back storage (opens the goods panel with E)
   const FOOT = 'event.fussballspieltag';
